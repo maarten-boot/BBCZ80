@@ -235,3 +235,25 @@ Mid-turn side question:
   implemented in this source, LOCAL ERROR is a no-op, the READ `:` edge case,
   and the assembler's LD (nn) forms.
 - Phase 2 committed as `557a113`.
+
+## Entry 6 — 2026-10-20
+
+### User request
+> ok i messed up ; my code transfer tool erased all code and branh you created
+> we will have to sync up again
+
+### Actions taken
+1. Inspected the workspace. `BBCZ80-s-8250` had been re-cloned: `master`
+   only, reflog showing just the clone. A stale remote-tracking ref
+   `agent-s-8250/mboot/conversation-log` was still present at `d27fd77`,
+   with all objects local. Only ignored build products were left in
+   `src68k/`.
+2. Recreated `mboot/conversation-log` from that ref (`git checkout -b`). No
+   work was lost: all four commits are back (`3da67f5`, `0e82421`,
+   `557a113`, `d27fd77`).
+3. The sibling repos are intact: `minix-st-2.0.4` (ACK + libc built),
+   `r68k` (fix `2d92829`, not pushed), `rosco-emulator` and `RunCPM`.
+4. `make clean && make && make check` passes (`hello from 68k`,
+   `utiltest=0`).
+
+---
