@@ -184,3 +184,34 @@ little-endian; D3 = stub first, 68000 assembler in a later phase.
     `extb.l`, scaled indexing, bit fields), so avoid them by rule.
   * Minix reports `Available = 330K` for user programs, which is the memory
     budget for BASIC's code, its workspace and its stack.
+
+## 8. Phase 1 results (2026-10-20): done
+
+* `src68k/CONVENTIONS.md` covers:
+  * the ACK dialect, as probed (quick forms and branch sizes are chosen
+    automatically; `[ ]` groups expressions; cpp runs only when line 1 is `#`;
+    function-like macros cannot contain immediates);
+  * the register map (a4 = IY, a5 = IX, d4.b = A, d0.l/d1.b = accumulator,
+    d2.l/d3.b = second operand);
+  * the flag rules (no saving of CCR; `move.w #n,ccr` for status returns);
+  * the memory rules (32-bit pointers; little-endian, byte-wise access to
+    BASIC data);
+  * the C ABI and the run-time layout.
+* `src68k/Makefile` (`make`, `make check`), `bbc.h`, and `util.s` (`LDLE4`,
+  `STLE4`, `LDLE2`, `STLE2`), with `test/utiltest.s` passing at odd
+  addresses on r68k.
+* **r68k bug found and fixed locally** (`/home/mboot/vibe/r68k`,
+  `main.cpp`, not committed):
+  * the illegal-instruction callback returned "handled" for every illegal
+    opcode, not just the firmware-trap magic, so illegal instructions were
+    skipped silently;
+  * the Minix CPU probe (`movec cacr`) therefore reported a 68020;
+  * after the fix the kernel reports a 68010, and `illegal`/`extb` raise
+    SIGILL;
+  * `runminix.py` uses `../r68k/r68k` when it exists (`-e` or `$R68K`
+    override this).
+* MAME rosco-emulator (`maarten-boot/rosco-emulator`, branch
+  `rosco-m68k-ram-bios`) is cloned to `/home/mboot/vibe/rosco-emulator`. It is
+  not built yet: SDL2, GL, ALSA, PulseAudio, Xinerama, Xi and Qt6 dev packages
+  are missing, and installing them needs sudo.
+* **Next:** phase 2, MATH (`math.s`) with a test driver.

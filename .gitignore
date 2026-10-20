@@ -50,5 +50,8 @@ build/
 
 # 68000 port: build output
 build/
-src68k/test/hello
+src68k/*.o
 src68k/test/*.o
+src68k/test/hello
+src68k/test/utiltest
+src68k/test/cpu020

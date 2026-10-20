@@ -143,3 +143,35 @@ Recorded in `mboot/PORT_PLAN.md` §4.
 - About 330 KB is available to user programs.
 
 ---
+
+## Entry 4 — 2026-10-20
+
+### User request
+> yes commit it and start phase 1; a quick emulator for rosco-m68k is available
+> at: https://github.com/maarten-boot/r68k/tree/rosco-minix-duart
+
+Mid-turn addition:
+> for full tests we can use:
+> https://github.com/maarten-boot/rosco-emulator/tree/rosco-m68k-ram-bios
+
+### Actions taken
+1. Committed the setup work as `3da67f5`.
+2. Cloned r68k (`rosco-minix-duart`, `a3d2f10`) to `/home/mboot/vibe/r68k`. Its
+   source is identical to the patched r68k that the Minix tree builds.
+3. Testing whether 68020 instructions trap uncovered an **r68k bug**: the
+   illegal-instruction callback always returned 1, so every illegal opcode
+   (even `illegal`) was skipped silently. That is also why Minix reported a
+   68020. Fixed it in `main.cpp` (return 0 unless d7/d6 hold the firmware
+   magic), copied the ROM from the Minix build, and rebuilt. Now `illegal` and
+   `extb` give SIGILL, and the boot banner shows a 68010. Not committed in the
+   r68k repo.
+4. Added `-e`/`$R68K` to `runminix.py`; it prefers `../r68k/r68k`.
+5. Cloned the MAME rosco-emulator (`rosco-m68k-ram-bios`) to
+   `/home/mboot/vibe/rosco-emulator`. It can't be built yet: the dev packages
+   are missing and need sudo (apt command given to the user).
+6. Probed the ACK assembler and recorded its dialect in `src68k/CONVENTIONS.md`.
+7. Wrote phase 1: `CONVENTIONS.md`, `Makefile`, `bbc.h`, `util.s` (little-endian
+   unaligned helpers) and `test/utiltest.s`. `make check` gives `hello from 68k`
+   and `utiltest=0`.
+
+---

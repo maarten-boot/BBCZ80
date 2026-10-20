@@ -2,7 +2,8 @@
 """Boot Minix on the rosco_m68k in r68k with extra files in the root file
 system, log in on the console, run commands and print the transcript.
 
-	runminix.py [-m MINIX] [-f MINIXPATH=HOSTFILE ...] [-t SECS] [cmd ...]
+	runminix.py [-m MINIX] [-e R68K] [-f MINIXPATH=HOSTFILE ...] [-t SECS]
+		[cmd ...]
 
 MINIX is the minix-st-2.0.4 checkout (rosco-m68k branch, already built:
 make in src/rosco and emu/build-r68k.sh); default ../minix-st-2.0.4 next to
@@ -11,6 +12,9 @@ system as MINIXPATH (mode 755, parent directories are created).  The
 commands run one after another at the shell prompt; -t is the time limit
 for each of them (default 30 s).  The work files (root.img, ROSCODE1.BIN)
 go to build/minix in this repository.  The Minix tree is not changed.
+R68K is the emulator: $R68K, else ../r68k/r68k next to this repository
+(maarten-boot/r68k, branch rosco-minix-duart, with illegal instructions
+trapping), else the one built in the Minix tree.
 """
 
 import argparse
@@ -100,6 +104,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('-m', default=os.environ.get(
         'MINIX', os.path.join(os.path.dirname(TOP), 'minix-st-2.0.4')))
+    ap.add_argument('-e', default=os.environ.get('R68K'))
     ap.add_argument('-f', action='append', default=[])
     ap.add_argument('-t', type=float, default=30)
     ap.add_argument('cmd', nargs='*')
@@ -108,7 +113,12 @@ def main():
     work = os.path.join(TOP, 'build', 'minix')
     os.makedirs(work, exist_ok=True)
     make_root(rosco, work, [x.split('=', 1) for x in a.f])
-    con = Console(os.path.join(rosco, 'emu', 'r68k', 'r68k'),
+    r68k = a.e
+    if not r68k:
+        r68k = os.path.join(os.path.dirname(TOP), 'r68k', 'r68k')
+        if not os.path.exists(r68k):
+            r68k = os.path.join(rosco, 'emu', 'r68k', 'r68k')
+    con = Console(r68k,
                   os.path.join(work, 'ROSCODE1.BIN'))
     ok = False
     try:
