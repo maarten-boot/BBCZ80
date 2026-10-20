@@ -175,3 +175,44 @@ Mid-turn addition:
    and `utiltest=0`.
 
 ---
+
+## Entry 5 — 2026-10-20
+
+### User request
+> yes commit and push the r68k fix, then start phase 2; can you also write a
+> patch so that i can apply in to my copy on my host linux
+
+Mid-turn side question:
+> as a side question can we extract a syntax file in ebnf from the original code ?
+
+### Actions taken
+1. **r68k:** committed the fix as `2d92829` on `rosco-minix-duart` in
+   `/home/mboot/vibe/r68k`. The **push failed**: there are no GitHub
+   credentials on this host (gh is not logged in; the SSH key is not
+   accepted). Wrote `mboot/patches/r68k-0001-illegal-instruction-trap.patch`
+   (`git format-patch`) and checked that `git am` applies it cleanly to
+   `a3d2f10`.
+2. **Reference oracle:** built RunCPM (`/home/mboot/vibe/RunCPM`,
+   `make -f Makefile.posix CCP=INTERNAL`) and wrote `src68k/tools/runcpm.py`
+   to drive the original Z80 `BBCBASIC.COM`. Findings: BASIC parses only
+   uppercase hex; CP/M files are padded with NULs; output lines end in
+   `\r\r\n`.
+3. **Phase 2 — MATH translated** (`src68k/math.s`), with the test driver
+   `test/mathtest.c` + `test/fppglue.s` and the comparison tool
+   `tools/mathcheck.py`.
+   * The first draft got a self-review against the Z80, which found five
+     bugs before any test ran (FDIV bias, SQR counter, ICP0 borrow, octant
+     byte, VAL IX).
+   * The comparison then found LN (exponent lost across ZERO) and ATN/IPOW
+     (68k `move` clobbering flags). All are fixed.
+   * Harness problems on the way: the root image overflowed 1 MB of RAM
+     (now batches of 500); the oracle variable `O%` clashed with the file
+     handle; lowercase hex.
+   * Result: all 39 BASIC-expressible operations match the Z80 bit for bit
+     over thousands of random vectors.
+4. **EBNF side question:** yes, it can be extracted. The grammar is
+   implicit in the keyword table (MAIN), the EXPR0–EXPR5/ITEM precedence
+   chain (EVAL) and the statement handlers (EXEC). A background agent is
+   writing `mboot/BBCBASIC.ebnf`, with a source reference per rule.
+
+---

@@ -215,3 +215,41 @@ little-endian; D3 = stub first, 68000 assembler in a later phase.
   not built yet: SDL2, GL, ALSA, PulseAudio, Xinerama, Xi and Qt6 dev packages
   are missing, and installing them needs sudo.
 * **Next:** phase 2, MATH (`math.s`) with a test driver.
+
+## 9. Phase 2 (MATH), 2026-10-20
+
+* `src68k/math.s` is the complete translation of MATH.Z80, about 1,500
+  lines:
+  * FPP dispatch;
+  * integer and float arithmetic, compares and shifts;
+  * ABS, SGN, INT, NOT, SQR, SIN, COS, TAN, ATN, ASN, ACS, EXP, LN, LOG,
+    DEG, RAD and PI;
+  * integer and float powers;
+  * STR$ and VAL with POWR10, CON and GETEXP.
+* **Method:** each routine is rewritten for 32-bit registers, but makes
+  exactly the same truncation, guard-bit and rounding decisions as the Z80.
+  * The primitives (the DIVA/DIVB restoring division and the SQRA/SQRB
+    square root) are transliterated.
+  * Z80 quirks are kept:
+    * the carry-in to ICP0 from FPOW, which decrements HL;
+    * the sticky A' in FIX;
+    * the STR digit stack of (A, flags) entries.
+* **Reference:** the Z80 BBC BASIC itself. `src68k/tools/runcpm.py` drives
+  `bin/cpm/BBCBASIC.COM` under RunCPM (built in `/home/mboot/vibe/RunCPM`).
+  `src68k/tools/mathcheck.py` does the comparison:
+  * it generates random operands per operation and pokes their raw 5 bytes
+    into BASIC variables;
+  * it evaluates each one there (`C=A+B`, `C=SIN(A)`, `STR$`, `VAL` …);
+  * it runs the same vectors through `test/mathtest` (C driver + FPP)
+    under Minix in r68k, in batches of 500, because the root image must fit
+    in 1 MB;
+  * it compares the results bit for bit.
+* **Result:** all 39 operations BASIC can express match: 0 mismatches in
+  7,401 vectors with seed 2 and again with seed 7. FIX, FLOAT, TEST,
+  COMPARE, ZERO, FONE and TRUE have no BASIC syntax, and are covered only
+  through the other operations.
+* **Bugs found by the comparison:**
+  * LN lost its exponent across ZERO; the Z80 keeps it in A'.
+  * In ATN and in IPOW, a 68k `move` between the flag-setting instruction
+    and the branch destroyed the flags, where a Z80 `LD` keeps them.
+    CONVENTIONS §3.3 warns about exactly this.

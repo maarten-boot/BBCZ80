@@ -12,7 +12,7 @@ ACK	= $(MINIX)/src/rosco/ack
 AS	= $(ACK)/acc
 LD	= $(ACK)/acc-minix
 
-TESTS	= test/hello test/utiltest
+TESTS	= test/hello test/utiltest test/mathtest
 
 all:	$(TESTS)
 
@@ -24,6 +24,9 @@ test/hello:	test/hello.o
 
 test/utiltest:	test/utiltest.o util.o
 	$(LD) -o $@ test/utiltest.o util.o
+
+test/mathtest:	test/mathtest.c test/fppglue.o math.o
+	$(LD) -S 16k -o $@ test/mathtest.c test/fppglue.o math.o
 
 check:	$(TESTS)
 	python3 tools/runminix.py -m $(MINIX) \
