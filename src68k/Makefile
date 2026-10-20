@@ -1,7 +1,11 @@
 # Makefile for BBC BASIC 68k (ACK, Minix on the rosco_m68k).
 #
-#	make		build the tests (and later bbcbasic)
+#	make		build bbcbasic and the tests
 #	make check	run the tests under Minix in r68k (tools/runminix.py)
+#	make install	put bbcbasic on the SD card root of the Minix tree:
+#			$(MINIX)/src/rosco/rootfs/local/bbcbasic, listed in
+#			rootfs/sdproto as /usr/bin/bbcbasic (then make sdcard
+#			there).  The RAM root image has no room for it.
 #	make clean
 #
 # MINIX is the minix-st-2.0.4 checkout, branch rosco-m68k, with the ACK
@@ -59,7 +63,17 @@ oscheck:	test/osmon
 bascheck:	bbcbasic
 	python3 tools/bascheck.py
 
+ROSCO	= $(MINIX)/src/rosco
+PROTOLINE = f /usr/bin/bbcbasic	755 ../rootfs/local/bbcbasic
+
+install:	bbcbasic
+	mkdir -p $(ROSCO)/rootfs/local
+	cp bbcbasic $(ROSCO)/rootfs/local/bbcbasic
+	grep -q '^f /usr/bin/bbcbasic' $(ROSCO)/rootfs/sdproto || \
+		printf '\n# BBC BASIC (src68k in BBCZ80, make install)\n%s\n' \
+		'$(PROTOLINE)' >> $(ROSCO)/rootfs/sdproto
+
 clean:
 	rm -f *.o test/*.o $(TESTS) bbcbasic test/cpu020
 
-.PHONY:	all check oscheck bascheck clean
+.PHONY:	all check oscheck bascheck install clean
