@@ -32,6 +32,9 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# BBC_EMU=mame: the MAME rosco-emulator (runmame.py) instead of r68k
+MAME = os.environ.get('BBC_EMU') == 'mame'
+RUNNER = 'runmame.py' if MAME else 'runminix.py'
 SRC = os.path.dirname(HERE)
 TOP = os.path.dirname(SRC)
 
@@ -81,7 +84,7 @@ def reference(test):
 
 def run68k(tests, secs):
     os.makedirs(WORK, exist_ok=True)
-    args = [sys.executable, os.path.join(HERE, 'runminix.py'), '-t', str(secs),
+    args = [sys.executable, os.path.join(HERE, RUNNER), '-t', str(secs),
             '-f', '/usr/bin/bbcbasic=' + os.path.join(SRC, 'bbcbasic')]
     cmds = ['mkdir -p /usr/bas; cd /usr/bas']
     have = set()
@@ -114,7 +117,7 @@ def groups(tests):
     out, cur, size = [], [], 0
     for t in tests:
         n = sum(os.path.getsize(p) for p in parse(t)[1])
-        if cur and size + n > BUDGET:
+        if cur and size + n > BUDGET and not MAME:
             out.append(cur)
             cur, size = [], 0
         cur.append(t)

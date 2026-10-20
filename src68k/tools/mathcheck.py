@@ -20,6 +20,9 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# BBC_EMU=mame: the MAME rosco-emulator (runmame.py) instead of r68k
+MAME = os.environ.get('BBC_EMU') == 'mame'
+RUNNER = 'runmame.py' if MAME else 'runminix.py'
 TOP = os.path.dirname(os.path.dirname(HERE))
 WORK = os.path.join(TOP, 'build', 'mathcheck')
 
@@ -235,6 +238,8 @@ def run_ref(vecs):
 
 
 def run_68k(vecs, batch=500):
+    if MAME:
+        batch = 20000				# (no RAM root image limit)
     """Run the vectors on the 68k FPP under Minix, in batches (the input
     file goes into the root file system, which must fit in 1MB of RAM)."""
     src68k = os.path.dirname(HERE)
@@ -245,7 +250,7 @@ def run_68k(vecs, batch=500):
         with open(vec, 'w') as f:
             for v in vecs[i:i + batch]:
                 f.write(fmt(v) + '\n')
-        p = subprocess.run([sys.executable, os.path.join(HERE, 'runminix.py'),
+        p = subprocess.run([sys.executable, os.path.join(HERE, RUNNER),
                             '-t', '3600',
                             '-f', '/usr/bin/mathtest=' + os.path.join(src68k, 'test', 'mathtest'),
                             '-f', '/usr/vec.txt=' + vec,

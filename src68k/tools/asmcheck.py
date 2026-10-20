@@ -20,6 +20,9 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# BBC_EMU=mame: the MAME rosco-emulator (runmame.py) instead of r68k
+MAME = os.environ.get('BBC_EMU') == 'mame'
+RUNNER = 'runmame.py' if MAME else 'runminix.py'
 SRC = os.path.dirname(HERE)
 TOP = os.path.dirname(SRC)
 MINIX = os.environ.get('MINIX', os.path.join(os.path.dirname(TOP),
@@ -154,7 +157,7 @@ def main():
     with open(prog, 'w') as f:
         f.write(basic_prog(items))
     out = subprocess.run(
-        [sys.executable, os.path.join(HERE, 'runminix.py'), '-t', '120',
+        [sys.executable, os.path.join(HERE, RUNNER), '-t', '120',
          '-f', '/usr/bin/bbcbasic=' + os.path.join(SRC, 'bbcbasic'),
          '-f', '/usr/asm.in=' + prog, 'bbcbasic < /usr/asm.in'],
         capture_output=True).stdout.decode('latin-1').replace('\r', '')

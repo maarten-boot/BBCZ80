@@ -77,7 +77,14 @@ install:	bbcbasic
 asmcheck:	bbcbasic
 	python3 tools/asmcheck.py
 
+# all of it on the MAME rosco-emulator (podman image localhost/rosco-emulator,
+# build/mame/image-115200.bin: see tools/mamebench.py, runmame.py)
+mamecheck:	bbcbasic test/mathtest
+	BBC_EMU=mame python3 tools/bascheck.py -t 600
+	BBC_EMU=mame python3 tools/asmcheck.py
+	BBC_EMU=mame python3 tools/mathcheck.py -n 400
+
 clean:
 	rm -f *.o test/*.o $(TESTS) bbcbasic test/cpu020
 
-.PHONY:	all check oscheck bascheck asmcheck install clean
+.PHONY:	all check oscheck bascheck asmcheck mamecheck install clean

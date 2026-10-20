@@ -631,3 +631,19 @@ system (732 KB free) the `*` commands that reach the shell work. Tested:
 
 After each command BASIC's raw-mode line input (and INPUT) works
 normally. The "No room" seen under r68k was only the 1 MB RAM-disk root.
+
+**The full test suite on MAME:** `tools/runmame.py` is a drop-in for
+runminix.py.
+* It builds an SD card with the `-f` files and runs the commands in one
+  MAME session. The end of each command is detected with an
+  `echo ==D""ONEn==` marker, which is removed from the transcript.
+* bascheck, asmcheck and mathcheck use it with `BBC_EMU=mame`.
+  `make mamecheck` runs all three.
+* On MAME, bascheck runs all suites in one boot and mathcheck runs one
+  batch, because the SD root has no 1 MB image limit.
+
+**Results on the emulated rosco_m68k** (68010, 1 MB, root on the SD
+card):
+* bascheck: 24 of 24 suites match the Z80 (42 s);
+* asmcheck: 162 of 162;
+* mathcheck: 14801 vectors bit-exact (47 s).

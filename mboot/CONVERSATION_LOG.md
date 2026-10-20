@@ -510,3 +510,19 @@ Ran two console sessions in MAME, kept as `src68k/test/mame`:
 
 All work on the SD-card system. The terminal mode is restored after each
 command.
+
+## Entry 18 — 2026-10-20
+
+### User request
+> run the full test suite on MAME too
+
+### Actions taken
+1. Wrote `tools/runmame.py`, a runminix.py-compatible runner for the MAME
+   rosco-emulator. The harnesses select it with `BBC_EMU=mame`; added
+   `make mamecheck`.
+2. **On MAME** (68010, 1 MB, SD root):
+   * bascheck: 24 of 24 suites match the Z80;
+   * asmcheck: 162 of 162;
+   * mathcheck: 14801 vectors bit-exact.
+
+   All three run in about 2 minutes.
