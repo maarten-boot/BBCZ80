@@ -460,3 +460,49 @@ Within b2float, the bit-by-bit shift loops (DIV2 in FIX, FLOAT) are about
    bit-exact (mathcheck).
 3. **NXT/ITEM/XEQ dispatch tightening;** CHECK only where needed.
 4. **Variable lookup:** compare names as words; a faster TYPE.
+
+## 14. Speed pass, steps 1 and 2 (2026-10-20)
+
+**Little-endian access:**
+* LDLE4/LDLE4A build the value with `lsl.w #8` + `swap` instead of three
+  `lsl.l #8`.
+* STLE4/STLE4A copy the bytes from a stacked copy of the register, which
+  stays intact; NEXT, for example, needs d0 after STOREN.
+* All of these are inlined in LOAD4, STORE4 and the LOCATE chain walk.
+
+**FPP:**
+* **IMOD (DIV, MOD):** divisors of 1-65535 take two DIVUs; the result is
+  exact, as the 33-step loop. 0 and larger divisors keep the loop, so the
+  Z80 quirks stay: `1 DIV 0` = -1, `1 MOD 0` = 1.
+* **FIX** shifts the n bits at once. It gives the same d0, d5 and d7.w;
+  of d6 only bit 7 is kept, the only bit that the callers (INT, FPOW)
+  test.
+* **FLOAT/FLO48** normalise in 16- and 8-bit steps while the exponent
+  stays above the step, then use the old bit loop. This gives the same
+  result.
+* **FDIV:** the mantissa division (FDIVQ) is two 16-bit digits (Knuth D:
+  a DIVU estimate, at most two corrections). A Python model of the
+  68000 code matched a simulation of the DIVA/DIVB loop on 1 M cases.
+
+**Checks:**
+* mathcheck: 14801 vectors (all operations) plus 7500 (the division
+  users), bit-exact.
+* The new suite `t13num` covers DIV/MOD/INT/conversion/division edge
+  cases against the Z80.
+* All 22 suites and asmcheck pass.
+
+**Result:** 247.5 M → 223.2 M cycles, -9.8% (`mboot/bench-step2.txt`).
+
+| Benchmark | Baseline | Now | Change |
+|---|---|---|---|
+| b1int | 81.4 M | 69.5 M | -14.6% |
+| b2float | 20.1 M | 16.5 M | -17.9% |
+| b3str | 27.3 M | 26.2 M | -4.3% |
+| b4sieve | 67.5 M | 65.1 M | -3.5% |
+| b5proc | 17.6 M | 16.8 M | -5.1% |
+| b6vars | 28.0 M | 24.3 M | -13.1% |
+| b7goto | 5.5 M | 4.8 M | -12.4% |
+
+What remains is mostly the interpreter itself (item 3): NXT, ITEM,
+DISPAT, CHECK, CON (constants are parsed on every execution), GETVAR and
+LOCATE.

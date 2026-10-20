@@ -323,16 +323,7 @@ FDIV:	tst.b	d3
 	move.w	d1,-(sp)		! save exponents
 	move.w	d3,-(sp)
 	move.l	d2,d7			! divisor
-	clr.l	d2
-	move.w	#31,d3			! 32 steps
-	bsr	DIVA			! d2 = quotient, d0 = remainder
-	clr.b	d4
-	tst.l	d2
-	bmi	3f
-	clr.w	d3
-	move.w	#0,ccr
-	bsr	DIVB			! normalise
-	move.b	#1,d4			! and inc A
+	bsr	FDIVQ			! d2 = quotient, d0 = remainder, A
 3:	exg	d0,d2			! d0 = quotient, d2 = remainder
 	swap	d2			! remainder MSW ...
 	move.l	d7,d3
@@ -1885,6 +1876,74 @@ POLY:	lea	4(sp),a1		! X
 	move.w	(a1),d3			! X
 	move.l	2(a1),d2
 	bra	1b
+
+! FDIVQ - the mantissa division of FDIV: the result of the Z80's 32-step
+!   DIVA loop and, if the quotient's bit 31 is clear, the extra DIVB step
+!   (d4.b = 1), i.e. d2 = floor(N / D), d0 = N mod D with N = R0 * 2^31
+!   (R0 >= D) or R0 * 2^32 (R0 < D), done as two 16-bit digits (Knuth's
+!   algorithm D: DIVU estimate, at most two corrections).
+!   Inputs:  d0 = R0, d7 = D (both with bit 31 set)
+!   Outputs: d2, d0, d4.b as above; d7 preserved
+FDIVQ:	movem.l	d1/d3/d5-d6/a0-a1,-(sp)
+	clr.b	d4
+	move.l	#0,a0			! the low half of N
+	cmp.l	d7,d0
+	bcs	1f
+	lsr.l	#1,d0			! R0 >= D: N = R0 * 2^31
+	bcc	2f
+	move.l	#0x80000000,a0
+	bra	2f
+1:	move.b	#1,d4			! R0 < D: N = R0 * 2^32
+2:	move.l	d7,d1
+	swap	d1			! d1.w = v1 (the divisor's high digit)
+	clr.l	d2
+	move.l	a0,d3
+	swap	d3			! the next digit of N
+	bsr	FDIGIT
+	move.l	a0,d3
+	bsr	FDIGIT
+	movem.l	(sp)+,d1/d3/d5-d6/a0-a1
+	rts
+! FDIGIT - one quotient digit: (d0:d3.w) / d7 -> d2 = d2 << 16 | digit,
+!   d0 = remainder (d0 < d7 on entry and exit)
+FDIGIT:	move.l	d0,d6
+	move.l	d0,d5
+	swap	d5			! d5.w = the remainder's high digit
+	cmp.w	d1,d5
+	bne	1f
+	move.l	#0xFFFF,d6		! estimate b - 1
+	bra	2f
+1:	divu	d1,d6			! estimate (no overflow: high < v1)
+	and.l	#0xFFFF,d6
+2:	move.l	d6,a1			! the estimate
+	swap	d0
+	move.w	d3,d0			! low 32 bits of the partial dividend
+	and.l	#0xFFFF,d5		! its high part
+	move.l	d6,d3
+	mulu	d7,d3			! estimate * v2
+	sub.l	d3,d0
+	bcc	3f
+	sub.l	#1,d5
+3:	move.l	d6,d3
+	mulu	d1,d3			! estimate * v1
+	swap	d3
+	move.l	d3,d6
+	clr.w	d6			! (estimate * v1) << 16
+	sub.l	d6,d0
+	bcc	4f
+	sub.l	#1,d5
+4:	and.l	#0xFFFF,d3		! (estimate * v1) >> 16
+	sub.l	d3,d5			! high part of the difference
+5:	tst.l	d5			! negative: estimate too big
+	bpl	6f
+	sub.l	#1,a1
+	add.l	d7,d0
+	bcc	5b
+	add.l	#1,d5
+	bra	5b
+6:	swap	d2
+	move.w	a1,d2
+	rts
 
 ! DIVA, DIVB - division primitive (the Z80 restoring loop).
 !   d0:d2 / d7: quotient bits shift into d2, remainder in d0.

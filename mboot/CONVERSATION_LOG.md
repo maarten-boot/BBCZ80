@@ -405,3 +405,24 @@ Explained only; no work was done.
    * little-endian byte access, 8%;
    * bit-serial division in the FPP, 8%.
    No code was changed yet; the candidate list goes to the user.
+
+## Entry 13 — 2026-10-20
+
+### User request
+> yes, start with 1 and 2
+
+### Actions taken
+1. **Little-endian access:** faster helpers, inlined at the three hot
+   sites. -3.0%.
+2. **FPP:**
+   * DIVU fast path for integer DIV/MOD;
+   * multi-bit FIX;
+   * FLOAT/FLO48 in 16/8-bit steps;
+   * FDIV mantissa division with Knuth D. Prototyped in Python against
+     a simulation of the bit loop (1 M cases), then written in 68000.
+3. Everything is bit-exact:
+   * mathcheck: 14801 + 7500 vectors;
+   * the new suite t13num against the Z80;
+   * all 22 suites and asmcheck.
+4. **Total:** 247.5 M → 223.2 M cycles (-9.8%). The integer, float,
+   variable and GOTO benchmarks are 12-18% faster. PORT_PLAN §14.
