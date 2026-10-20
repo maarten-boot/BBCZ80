@@ -374,3 +374,13 @@ Mid-turn side question:
 5. bascheck: `.exp` files for 68k-only tests, `-n` for probing, and 2 MB
    by default.
 6. All 21 differential suites pass. Details in PORT_PLAN §12.
+
+## Entry 11 — 2026-10-20
+
+### User question
+> what is the speed pass ?
+
+### Answer (summary)
+The optional phase 6 item: measure first, then speed up hot paths without
+changing behaviour, rechecked with bascheck and the bit-exact mathcheck.
+Explained only; no work was done.
