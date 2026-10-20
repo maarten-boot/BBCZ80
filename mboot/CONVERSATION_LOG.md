@@ -550,3 +550,10 @@ short CHECK). The algorithmic ones would carry over:
 They cost bytes of the scarce 64 KB, and the gain is unmeasured. It
 could be measured with a cycle-counting Z80 emulator (RunCPM does not
 count T-states). Explained only; no work was done.
+
+## Entry 20 — 2026-10-20
+
+### User message
+> no need just curiosity.
+
+No work was done (the Z80 cycle measurement was not wanted).
