@@ -13,7 +13,7 @@ commands run one after another at the shell prompt; -t is the time limit
 for each of them (default 30 s).  A command "@PATTERN@TEXT" sends TEXT and
 waits for PATTERN (a regular expression) instead of the shell prompt, for
 interactive programs; TEXT takes Python escapes (\x1b, \r ...) and is
-sent with a CR unless it ends in \c.  The work files (root.img, ROSCODE1.BIN)
+sent with a CR unless it ends in \\c.  The work files (root.img, ROSCODE1.BIN)
 go to build/minix in this repository.  The Minix tree is not changed.
 R68K is the emulator: $R68K, else ../r68k/r68k next to this repository
 (maarten-boot/r68k, branch rosco-minix-duart, with illegal instructions

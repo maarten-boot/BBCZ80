@@ -58,3 +58,5 @@ src68k/test/cpu020
 src68k/test/mathtest
 src68k/test/osmon
 __pycache__/
+src68k/bbcbasic
+src68k/main.s

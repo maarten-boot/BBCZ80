@@ -1,0 +1,1419 @@
+#
+! main.s - BBC BASIC 68k: commands and common module (from MAIN.Z80).
+!
+! (C) Copyright R.T. Russell 1981-2025 (Z80 original); 68000 translation
+! for Minix on the rosco_m68k.  See CONVENTIONS.md and PHASE4.md.
+!
+! THE NAME BBC BASIC IS USED WITH THE PERMISSION OF THE BRITISH
+! BROADCASTING CORPORATION AND IS NOT TRANSFERRABLE TO A FORKED OR
+! DERIVED WORK.
+!
+! Generated from main.s.in by tools/mkmain.py (the keyword and error
+! tables are converted from MAIN.Z80 by tools/z80data.py).
+!
+! Registers: a4 = IY (text pointer), a5 = IX, d4.b = A; other registers
+! as noted per routine.
+
+#include "bbc.h"
+
+	.sect	.text
+	.sect	.rom
+	.sect	.data
+	.sect	.bss
+
+	.extern	XEQ, RUN0, CHAIN0, TERMQ, MUL16, X14OR5, SPACES, ESCAPE
+	.extern	CHECK, SEARCH
+	.extern	OSWRCH, OSLINE, OSINIT, OSLOAD, OSSAVE, OSBGET, OSBPUT
+	.extern	OSSHUT, OSSTAT, PROMPT, LTRAP, OSCLI, RESET
+	.extern	COMMA, BRAKET, ZERO, ITEMI, EXPRI, EXPRS, DECODE, LOADN, SFIX
+	.extern	PAGE, ACCS, BUFFER, LOMEM, HIMEM, COUNT, WIDTH, FREE, STAVAR
+	.extern	DYNVAR, ERRTXT, ERR, ERL, CURLIN, ERRTRP, ONERSP, FNPTR, PROPTR
+	.extern	AUTONO, INCREM, LISTON, TRACEN, DATEND
+
+	.define	NXT, NLIST, START, OUTCHR, OUT, ERROR, EXTERR, REPORT, CLOOP
+	.define	WARM, CLEAR, CRLF, SAYLN, LOAD0, TELL, FINDL, GETTOP, SETLIN
+	.define	GETVAR, PUTVAR, GETDEF, LOCATE, CREATE, PBCDL, LEXAN2, RANGE
+	.define	RANGE1, VERMSG, _vermsg, KEYWDS, KEYWDL, TEXT, LINNUM
+
+CR	= 0x0D
+LF	= 0x0A
+
+TERROR	= 0x85
+TLINE	= 0x86
+TELSE	= 0x8B
+TTHEN	= 0x8C
+TLINO	= 0x8D
+TFN	= 0xA4
+TTO	= 0xB8
+TWHILE	= 0xC7
+TCASE	= 0xC8
+TWHEN	= 0xC9
+TOF	= 0xCA
+TENDCASE = 0xCB
+TOTHERWISE = 0xCC
+TENDIF	= 0xCD
+TENDWHILE = 0xCE
+TDATA	= 0xDC
+TDIM	= 0xDE
+TFOR	= 0xE3
+TGOSUB	= 0xE4
+TGOTO	= 0xE5
+TIF	= 0xE7
+TLOCAL	= 0xEA
+TNEXT	= 0xED
+TON	= 0xEE
+TPROC	= 0xF2
+TREM	= 0xF4
+TREPEAT	= 0xF5
+TRESTORE = 0xF7
+TTRACE	= 0xFC
+TUNTIL	= 0xFD
+TEXIT	= 0x10
+
+TOKLO	= 0x8F
+TOKHI	= 0x93
+OFFSET	= 0xCF-TOKLO
+
+	.sect	.text
+
+! COLD START
+START:
+COLD:	lea	STAVAR,a0		! clear the scratchpad
+1:	clr.b	(a0)+
+	cmp.l	#DATEND,a0
+	bcs	1b
+	move.b	#10,STAVAR		! @% = &0000090A
+	move.b	#9,STAVAR+1
+	move.b	#0x37,LISTON		! V3.0
+	move.l	#NOTICE,ERRTXT
+	bsr	OSINIT
+	sne	d7
+	move.l	a2,HIMEM
+	move.l	a3,PAGE
+	bsr	NEWIT
+	tst.b	d7
+	bne	CHAIN0			! AUTO-RUN
+	bsr	TELL
+VERMSG:
+_vermsg: .ascii	"BBC BASIC (Z80) Version 5.00  "
+	.data1	CR, LF
+NOTICE:	.ascii	"(C) Copyright R.T.Russell 2025"
+	.data1	CR, LF, 0
+	.align	2
+
+! WARM / CLOOP - the command loop
+WARM:
+CLOOP:	move.l	HIMEM,sp
+	bsr	PROMPT			! PROMPT USER
+	move.b	LISTON,d4
+	and.b	#0x0F,d4		! LISTO
+	or.b	#0x30,d4		! OPT 3
+	move.b	d4,LISTON
+	clr.l	ERRTRP
+	clr.l	ONERSP
+	clr.l	CURLIN			! For CMOS EDIT->LIST
+	move.l	AUTONO,d0
+	move.l	d0,-(sp)
+	beq	NOAUTO
+	bsr	PBCD			! AUTO NUMBER
+	clr.l	d5
+	move.b	INCREM,d5
+	add.l	d5,d0
+	cmp.l	#0xFFFF,d0
+	bhi	TOOBIG
+	move.l	d0,AUTONO
+	move.b	#' ',d4
+	bsr	OUTCHR
+NOAUTO:	lea	ACCS,a3
+	bsr	OSLINE			! GET CONSOLE INPUT
+	clr.b	COUNT
+	lea	ACCS,a4
+	lea	COMNDS,a3
+	bsr	LEX0
+	movem.l	(sp)+,d0		! (flags kept)
+	bne	NOTCMD
+	tst.l	d0
+	bne	INAUTO
+	and.w	#0x7F,d4		! command number
+	lsl.w	#2,d4
+	lea	CMDTAB,a3
+	move.l	0(a3,d4.w),a3
+	add.l	#1,a4
+	bsr	NXT
+	jmp	(a3)			! EXECUTE COMMAND
+
+INAUTO:	lea	ACCS,a4
+NOTCMD:	tst.l	d0
+	bne	1f
+	bsr	LINNUM
+1:	bsr	NXT
+	lea	BUFFER,a2
+	move.b	#1,d5			! LEFT MODE
+	move.l	d0,-(sp)
+	bsr	LEXAN2			! LEXICAL ANALYSIS
+	move.l	(sp)+,d0
+	move.b	d4,(a2)			! TERMINATOR
+	move.l	a2,d5
+	sub.l	#BUFFER,d5		! d5 = LINE LENGTH
+	clr.b	1(a2)			! ZERO NEXT
+	lea	BUFFER,a4		! FOR XEQ
+	tst.l	d0
+	beq	XEQ			! DIRECT MODE
+	move.l	d5,-(sp)
+	move.l	d0,-(sp)
+	bsr	FINDL
+	bne	1f
+	bsr	DEL
+1:	move.l	(sp)+,d0		! line number
+	move.l	(sp)+,d5		! length
+	tst.b	d5
+	beq	CLOOP			! DELETE LINE ONLY
+	add.w	#4,d5			! LENGTH INCLUSIVE
+	move.l	a3,-(sp)		! insertion point
+	bsr	GETTOP			! a3 = top
+	move.l	a3,d7
+	add.l	d5,d7			! new top
+	add.l	#256,d7
+	cmp.l	sp,d7
+	bcs	2f
+	clr.b	d4
+	bra	ERROR			! "No room"
+2:	move.l	(sp)+,a2		! insertion point
+	lea	0(a3,d5.l),a1		! MAKE SPACE: move [a2,a3) up by d5
+3:	cmp.l	a2,a3
+	bls	4f
+	move.b	-(a3),-(a1)
+	bra	3b
+4:	move.b	d5,(a2)+		! STORE LENGTH
+	move.b	d0,(a2)+		! STORE LINE NUMBER
+	lsr.w	#8,d0
+	move.b	d0,(a2)+
+	lea	BUFFER,a3
+	sub.w	#3,d5
+5:	move.b	(a3)+,(a2)+		! ADD LINE
+	sub.w	#1,d5
+	bne	5b
+	bsr	CLEAN
+	bra	CLOOP
+
+	.sect	.rom
+	.align	2
+! LIST OF TOKENS AND KEYWORDS.
+! IF A KEYWORD IS FOLLOWED BY A SPACE THEN IT WILL ONLY MATCH WITH THE
+! WORD FOLLOWED IMMEDIATELY BY A DELIMITER.
+@@KEYWORDS@@
+	.align	4
+CMDTAB:	.data4	AUTO, DELETE, LIST, LOAD, NEW, OLD, RENUM, SAVE
+
+! ERROR MESSAGES:
+@@ERRWDS@@
+
+! Lists used by LEXAN:
+@@LISTS@@
+	.align	2
+	.sect	.text
+
+! COMMANDS:
+!
+! DELETE line,line
+DELETE:	bsr	DLPAIR
+DELET1:	tst.b	(a3)
+	beq	WARM
+	clr.l	d0
+	move.b	2(a3),d0
+	lsl.w	#8,d0
+	move.b	1(a3),d0
+	cmp.l	d5,d0			! line number > last?
+	bhi	WARM
+	bsr	DEL
+	bra	DELET1
+
+! LISTO expr
+LISTO:	add.l	#1,a4			! SKIP "O"
+	bsr	EXPRI
+	move.b	d0,LISTON
+	bra	CLOOP
+
+! LIST
+! LIST line
+! LIST line,line [IF string]
+! LIST ,line
+! LIST line,
+LIST:	cmp.b	#'O',d4
+	beq	LISTO
+	move.b	#1,d5
+	lea	BUFFER,a2
+	bsr	LEXAN2
+	move.b	d4,(a2)
+	lea	BUFFER,a4
+	bsr	DLPAIR			! a3 = first line, d5 = last number
+	bsr	NXT
+	clr.w	d6			! INIT IF-CLAUSE LENGTH
+	cmp.b	#TIF,d4			! IF CLAUSE ?
+	bne	LISTB
+	add.l	#1,a4			! SKIP IF
+	bsr	NXT			! SKIP SPACES (IF ANY)
+	move.l	a4,a0			! LOCATE CR
+1:	cmp.b	#CR,(a0)+
+	bne	1b
+	move.l	a0,d6
+	sub.l	a4,d6
+	sub.w	#1,d6			! SUBSTRING LENGTH
+LISTB:	tst.l	d5
+	bne	LISTA
+	move.l	#0xFFFF,d5
+LISTA:	clr.b	indent			! INDENTATION COUNT
+LISTC:	tst.b	(a3)
+	beq	WARM
+! CHECK IF PAST TERMINATING LINE NUMBER:
+	clr.l	d0
+	move.b	2(a3),d0
+	lsl.w	#8,d0
+	move.b	1(a3),d0		! d0 = LINE NUMBER
+	cmp.l	d5,d0
+	bhi	WARM
+! CHECK FOR IF CLAUSE:
+	movem.l	d5-d6/a3,-(sp)
+	clr.w	d1
+	move.b	(a3),d1
+	sub.w	#4,d1			! LINE LENGTH
+	add.l	#3,a3			! LINE TEXT
+	tst.w	d6
+	beq	1f			! no IF clause: list it
+	movem.l	d0/a3/a4,-(sp)
+	move.b	d1,d5			! main string length
+	move.l	a4,a2			! IF clause
+	move.b	d6,d3
+	clr.b	d4
+	bsr	SEARCH
+	movem.l	(sp)+,d0/a3/a4		! (flags kept)
+	bne	2f
+1:	move.l	a4,-(sp)
+	bsr	LISTIT			! LIST IF MATCH
+	move.l	(sp)+,a4
+2:	bsr	LTRAP
+	movem.l	(sp)+,d5-d6/a3
+	clr.l	d0
+	move.b	(a3),d0
+	add.l	d0,a3			! ADDRESS NEXT LINE
+	bra	LISTC
+
+! RENUMBER
+! RENUMBER start
+! RENUMBER start,increment
+! RENUMBER ,increment
+!
+! The table of (old, new) line numbers is built at LOMEM (word aligned),
+! big-endian words, ended by &FFFF.
+RENUM:	bsr	CLEAR			! USES DYNAMIC AREA
+	bsr	PAIR			! d0 = start, d5 = increment
+	move.l	PAGE,a3
+	move.l	LOMEM,d7
+	add.l	#1,d7
+	and.b	#0xFE,d7
+	move.l	d7,a2			! table
+RENUM1:	tst.b	(a3)			! BUILD TABLE
+	beq	RENUM2
+	move.b	2(a3),d7		! OLD LINE NUMBER
+	lsl.w	#8,d7
+	move.b	1(a3),d7
+	move.w	d7,(a2)+
+	move.w	d0,(a2)+		! new number
+	add.l	d5,d0			! ADD INCREMENT
+	cmp.l	#0xFFFF,d0
+	bhi	TOOBIG			! "Too big"
+	clr.l	d7
+	move.b	(a3),d7
+	add.l	d7,a3			! NEXT LINE
+	lea	256(a2),a0
+	cmp.l	sp,a0
+	bcs	RENUM1			! CONTINUE
+	clr.b	d4
+	bra	ERROR			! 'No room'
+
+RENUM2:	move.l	#-1,(a2)		! end of table
+	move.l	PAGE,a3
+RENUM3:	clr.w	d1
+	move.b	(a3),d1			! line length
+	beq	WARM
+	move.l	LOMEM,d7		! find the new number of this line
+	add.l	#1,d7
+	and.b	#0xFE,d7
+	move.l	d7,a2
+	move.b	2(a3),d7
+	lsl.w	#8,d7
+	move.b	1(a3),d7		! old number
+1:	cmp.w	(a2),d7
+	beq	2f
+	add.l	#4,a2
+	bra	1b
+2:	move.w	2(a2),d6		! d6 = new number of this line
+	move.b	d6,1(a3)		! NEW LINE NUMBER
+	move.w	d6,d7
+	lsr.w	#8,d7
+	move.b	d7,2(a3)
+	lea	0(a3,d1.w),a1		! next line
+	add.l	#3,a3
+RENUM7:	cmp.l	a1,a3			! SEARCH FOR LINE NUMBER
+	bcc	8f
+	cmp.b	#TLINO,(a3)+
+	bne	RENUM7
+	movem.l	d6/a1/a3,-(sp)
+	move.l	a3,a4
+	bsr	DECODE			! DECODE LINE NUMBER -> d0
+	move.l	LOMEM,d7		! CROSS-REFERENCE TABLE
+	add.l	#1,d7
+	and.b	#0xFE,d7
+	move.l	d7,a2
+RENUM4:	move.w	(a2)+,d7		! old
+	move.w	(a2)+,d2		! new
+	cmp.w	d0,d7
+	bcs	RENUM4
+	beq	RENUM5			! FOUND
+	bsr	TELL
+	.asciz	"Failed at "
+	.align	2
+	move.l	(sp),d0			! new number of this line
+	and.l	#0xFFFF,d0
+	bsr	PBCDL
+	bsr	CRLF
+	bra	RENUM6
+RENUM5:	move.l	8(sp),a2		! (the address after TLINO)
+	sub.l	#1,a2
+	move.l	d2,d0
+	and.l	#0xFFFF,d0
+	bsr	ENCODE			! RE-WRITE NUMBER
+RENUM6:	movem.l	(sp)+,d6/a1/a3
+	bra	RENUM7
+8:	move.l	a1,a3
+	bra	RENUM3
+
+! AUTO
+! AUTO start,increment
+! AUTO start
+! AUTO ,increment
+AUTO:	bsr	PAIR
+	move.l	d0,AUTONO
+	move.b	d5,INCREM
+	bra	CLOOP
+
+! BAD
+! NEW
+BAD:	bsr	TELL			! "Bad program'
+	.data1	0x13
+	.ascii	"program"
+	.data1	CR, LF, 0
+	.align	2
+NEW:	bsr	NEWIT
+	bra	CLOOP
+
+! LOAD filename
+LOAD:	bsr	EXPRS			! GET FILENAME
+	move.b	#CR,(a2)
+	bsr	LOAD0
+	bsr	CLEAR
+	bra	WARM
+
+! OLD
+OLD:	move.l	PAGE,a3
+	lea	3(a3),a0
+	move.w	#251,d7
+1:	cmp.b	#CR,(a0)+
+	beq	2f
+	dbra	d7,1b
+	bra	BAD
+2:	move.l	a0,d7
+	sub.l	a3,d7
+	move.b	d7,(a3)
+	bsr	CLEAN
+	bra	CLOOP
+
+! SAVE filename
+SAVE:	bsr	EXPRS			! FILENAME
+	move.b	#CR,(a2)
+	bsr	GETTOP
+	move.l	a3,d5
+	move.l	PAGE,a2
+	sub.l	a2,d5			! LENGTH OF PROGRAM
+	lea	ACCS,a3
+	bsr	OSSAVE
+	bra	WARM
+
+! ERROR
+!   Inputs: d4.b = error number
+! N.B. CARE NEEDED BECAUSE SP MAY NOT BE VALID (E.G. ABOVE HIMEM)
+ERROR:	lea	ERRWDS,a3
+	move.b	d4,d1
+	beq	ERROR1
+	move.b	d4,d3			! ERROR NUMBER
+1:	tst.b	(a3)+
+	bne	1b
+	sub.b	#1,d3
+	bne	1b
+	bra	ERROR1
+
+! EXTERR - d4.b = error number, (sp) = message (jsr EXTERR; .asciz ...)
+EXTERR:	move.l	(sp)+,a3
+	move.b	d4,d1
+ERROR1:	move.l	a3,ERRTXT
+	move.l	ONERSP,d7
+	move.l	HIMEM,sp		! MUST SET SP BEFORE 'CALL'
+	tst.l	d7
+	beq	ERROR4
+	move.l	d7,sp
+ERROR4:	move.b	d1,d4			! ERROR NUMBER
+	bsr	SETLIN			! SP IS SET NOW
+	move.b	d1,ERR
+	move.w	d0,ERL
+	tst.b	d1
+	beq	ERROR2			! 'FATAL' ERROR
+	move.l	ERRTRP,d7
+	move.l	d7,a4
+	bne	XEQ			! ERROR TRAPPED
+ERROR2:	move.l	HIMEM,sp
+	clr.l	AUTONO
+	clr.l	TRACEN			! CANCEL TRACE
+	bsr	RESET			! RESET OPSYS
+	bsr	CRLF
+	bsr	REPORT			! MESSAGE
+	clr.l	d0
+	move.w	ERL,d0
+	bsr	SAYLN
+	bcc	1f
+	clr.b	d6
+	bsr	OSSHUT			! CLOSE ALL FILES
+1:	bsr	CRLF
+	bra	CLOOP
+
+! SUBROUTINES:
+!
+! LEX - SEARCH FOR KEYWORDS
+!   Inputs:  a3 = start of keyword table (LEX0), a4 = start of match text
+!   Outputs: If found, Z set, d4.b = token, a4 at the last character
+!            If not found, Z clear, d4.b = (a4), a4 unchanged
+!   Destroys: d3, d7, a3
+LEX:	lea	KEYWDS,a3
+LEX0:	move.b	(a4),d4
+	move.b	(a3)+,d3		! token
+	cmp.b	(a3),d4
+	beq	LEX2
+	bcs	LEXF			! FAIL EXIT
+LEX1:	add.l	#1,a3			! skip to the next token byte
+	move.b	(a3),d7
+	cmp.b	#0x20,d7
+	bcs	LEX0
+	tst.b	d7
+	bmi	LEX0
+	bra	LEX1
+LEXF:	move.w	#CC_C,ccr		! NZ
+	rts
+
+LEX2:	move.l	a4,-(sp)		! SAVE POINTER
+LEX3:	add.l	#1,a3
+	move.b	(a3),d7
+	cmp.b	#0x20,d7		! next table byte a token?
+	bcs	LEX6			! FOUND
+	tst.b	d7
+	bmi	LEX6
+	add.l	#1,a4
+	move.b	(a4),d4
+	cmp.b	(a3),d4
+	bne	LEX7
+	cmp.b	#' ',d4
+	bne	LEX3
+LEX7:	move.b	(a4),d4
+	cmp.b	#'.',d4
+	beq	LEX6			! FOUND (ABBREV.)
+	bsr	RANGE1
+	bcs	LEX5
+LEX4:	move.l	(sp)+,a4		! RESTORE POINTER
+	bra	LEX1
+
+LEX5:	cmp.b	#' ',(a3)
+	bne	LEX4
+	sub.l	#1,a4
+LEX6:	add.l	#4,sp
+	move.b	d3,d4
+	move.w	#CC_Z,ccr
+	rts
+
+! DEL - DELETE A PROGRAM LINE.
+!   Inputs: a3 addresses program line.
+!   Destroys: d7, a0, a1 (a2, a3 preserved)
+DEL:	movem.l	a2-a3,-(sp)
+	clr.l	d7
+	move.b	(a3),d7
+	lea	0(a3,d7.l),a1		! next line
+	bsr	GETTOP			! a3 = top
+	move.l	a3,a0
+	move.l	4(sp),a3
+1:	cmp.l	a0,a1
+	bcc	2f
+	move.b	(a1)+,(a3)+		! DELETE LINE
+	bra	1b
+2:	movem.l	(sp)+,a2-a3
+	rts
+
+! LOAD0 - LOAD A DISK FILE THEN CLEAN.
+!   Inputs: Filename in ACCS (term CR)
+! CLEAN - CHECK FOR BAD PROGRAM, FIND END OF TEXT AND WRITE FF FF.
+LOAD0:	move.l	PAGE,a2
+	move.l	sp,d5
+	sub.l	#256,d5
+	sub.l	a2,d5			! FIND AVAILABLE SPACE
+	lea	ACCS,a3
+	bsr	OSLOAD			! LOAD
+	bcs	CLEAN
+	bsr	NEWIT
+	clr.b	d4
+	bra	ERROR			! "No room"
+CLEAN:	bsr	GETTOP
+	move.b	#-1,-1(a3)		! WRITE &FFFF
+	move.b	#-1,-2(a3)
+	bra	CLEAR
+
+! GETTOP - find the top of the program
+!   Outputs: a3 = address after the 00 FF FF at the end
+!   Destroys: d7
+GETTOP:	move.l	PAGE,a3
+	clr.l	d7
+1:	move.b	(a3),d7
+	beq	2f
+	add.l	d7,a3
+	cmp.b	#CR,-1(a3)
+	beq	1b
+	bra	BAD
+2:	add.l	#3,a3			! N.B. CALLED FROM NEWIT
+	rts
+
+! NEWIT - NEW PROGRAM THEN CLEAR
+! CLEAR - CLEAR ALL DYNAMIC VARIABLES INCLUDING FUNCTION AND PROCEDURE
+!         POINTERS.
+!   Destroys: nothing
+NEWIT:	move.l	a0,-(sp)
+	move.l	PAGE,a0
+	clr.b	(a0)
+	move.l	(sp)+,a0
+CLEAR:	movem.l	d7/a0/a3,-(sp)
+	bsr	GETTOP
+	move.l	a3,LOMEM
+	move.l	a3,FREE
+	lea	DYNVAR,a0
+	move.w	#54+2-1,d7
+1:	clr.l	(a0)+			! (DYNVAR, FNPTR, PROPTR: 4 bytes)
+	dbra	d7,1b
+	movem.l	(sp)+,d7/a0/a3
+	rts
+
+! LISTIT - LIST A PROGRAM LINE.
+!   Inputs:  a3 addresses line text, d0 = line number (binary)
+!            indent = indentation count
+!   Destroys: all but a5, sp
+LISTIT:	move.l	a3,-(sp)
+	bsr	PBCD
+	move.l	(sp)+,a3
+	move.b	(a3),d4
+	lea	TOKSUB,a0
+	move.w	#LENSUB,d1
+	bsr	INLIST
+	bne	1f
+	bsr	INDSUB
+1:	cmp.b	#TENDCASE,d4
+	bne	2f
+	bsr	INDSUB
+2:	btst	#0,LISTON
+	beq	3f
+	move.b	#' ',d4
+	bsr	OUTCHR
+3:	btst	#1,LISTON
+	beq	4f
+	move.b	indent,d4
+	add.b	d4,d4
+	bsr	SPACES
+4:	move.b	(a3),d4
+	clr.b	d6			! E: bit 0 in quotes, bit 7 after EXIT
+	move.w	#LENADD,d1
+LIST5:	lea	TOKADD,a0
+	bsr	INLIST
+	bne	1f
+	bsr	INDADD
+1:	cmp.b	#TCASE,d4
+	bne	LIST8
+	bsr	INDADD
+LIST8:	move.b	(a3)+,d4
+	cmp.b	#CR,d4
+	beq	LIST9
+	move.b	d4,d2			! D = last character
+	cmp.b	#TEXIT,d4
+	bne	LIST6
+	bset	#7,d6
+LIST6:	cmp.b	#'"',d4
+	bne	LIST7
+	add.b	#1,d6
+LIST7:	bsr	LOUT
+	move.b	d6,d7
+	and.b	#0x81,d7
+	bne	LIST8
+	move.b	(a3),d4
+	lea	TOKSUB,a0
+	move.w	#3,d1
+	bsr	INLIST
+	bne	1f
+	bsr	INDSUB
+1:	move.w	#4,d1
+	bra	LIST5
+
+LIST9:	cmp.b	#TTHEN,d2
+	bne	CRLF
+	bsr	INDADD
+	bra	CRLF
+
+! INLIST - Z if d4.b is one of the d1.w bytes at a0 (as CPIR)
+INLIST:	sub.w	#1,d1
+1:	cmp.b	(a0)+,d4
+	beq	2f
+	dbra	d1,1b
+	move.w	#0,ccr			! NZ
+2:	rts
+
+PRLINO:	move.l	a3,a4
+	move.l	d2,-(sp)
+	bsr	DECODE
+	bsr	PBCDL
+	move.l	(sp)+,d2
+	move.l	a4,a3
+	rts
+
+LOUT:	btst	#0,d6
+	bne	OUTCHR
+	cmp.b	#TLINO,d4
+	beq	PRLINO
+	bra	OUT
+
+INDSUB:	tst.b	indent
+	beq	INDRET
+	sub.b	#1,indent
+	rts
+INDADD:	add.b	#1,indent
+INDRET:	rts
+
+! CRLF - SEND CARRIAGE RETURN, LINE FEED.
+! OUTCHR - OUTPUT A CHARACTER TO CONSOLE.
+!   Inputs: d4.b = character
+!   Destroys: nothing (not the flags)
+CRLF:	move.w	d4,-(sp)
+	move.b	#CR,d4
+	bsr	OUTCHR
+	move.b	#LF,d4
+	bsr	OUTCHR
+	move.w	(sp)+,d4
+	rts
+
+OUTCHR:	bsr	OSWRCH
+	cmp.b	#CR,d4
+	beq	CARRET
+	bcs	1f			! NON-PRINTING
+	move.w	d4,-(sp)
+	move.b	COUNT,d4
+	add.b	#1,d4
+	move.b	d4,COUNT
+	beq	2f
+	cmp.b	WIDTH,d4
+	bne	2f
+	bsr	CRLF
+2:	move.w	(sp)+,d4
+1:	rts
+CARRET:	clr.b	COUNT
+	rts
+
+! OUT - SEND CHARACTER OR KEYWORD
+!   Inputs: d4.b = character (>=32, <128) or token (<32, >=128)
+!   Destroys: nothing (not the flags)
+OUT:	cmp.b	#0x20,d4
+	bcs	1f
+	tst.b	d4
+	bpl	OUTCHR
+1:	movem.l	d1/d4/a0,-(sp)
+	lea	KEYWDS,a0		! find the token
+	move.w	#KEYWDL-1,d1
+2:	cmp.b	(a0)+,d4
+	beq	3f
+	dbra	d1,2b
+	bsr	OUTCHR			! not a known token
+	bra	6f
+3:	move.b	#0x20,d1		! first printable: space for &11-&1F
+	cmp.b	#0x11,d4
+	bcs	4f
+	cmp.b	#0x20,d4
+	bcs	5f
+4:	move.b	#0x21,d1		! else from '!' (no trailing space)
+5:	move.b	(a0)+,d4
+	cmp.b	d1,d4
+	bcs	6f
+	tst.b	d4
+	bmi	6f
+	bsr	OUTCHR
+	bra	5b
+6:	movem.l	(sp)+,d1/d4/a0
+	rts
+
+! FINDL - FIND PROGRAM LINE.
+!   Inputs:  d0.w = line number (binary)
+!   Outputs: a3 addresses line (if found, or the next one)
+!            d2.l = line number
+!            Z set if found.
+!   Destroys: d7
+FINDL:	clr.l	d2
+	move.w	d0,d2
+	move.l	PAGE,a3
+	tst.b	(a3)
+	bne	FINDL1
+	move.w	#0,ccr			! NZ
+	rts
+FINDL1:	clr.l	d7
+	move.b	2(a3),d7
+	lsl.w	#8,d7
+	move.b	1(a3),d7
+	cmp.l	d2,d7
+	bcc	1f			! FOUND OR PAST
+	clr.l	d7
+	move.b	(a3),d7
+	add.l	d7,a3
+	bra	FINDL1
+1:	rts				! (Z if equal)
+
+! SETLIN - Search program for line containing address.
+!   Inputs:  Address in (CURLIN)
+!   Outputs: d0.l = line number (0 if none)
+!   Destroys: d7, a0, a1
+SETLIN:	move.l	CURLIN,a1
+	move.l	PAGE,a0
+	cmp.l	a1,a0
+	bhi	SET3
+	clr.l	d7
+SET1:	move.b	(a0),d7
+	beq	SET3
+	add.l	d7,a0
+	cmp.l	a1,a0
+	bcs	SET1			! (next line start < CURLIN)
+	sub.l	d7,a0
+	clr.l	d0
+	move.b	2(a0),d0		! LINE NUMBER
+	lsl.w	#8,d0
+	move.b	1(a0),d0
+	rts
+SET3:	clr.l	d0
+	rts
+
+! SAYLN - PRINT " at line nnnn" MESSAGE.
+!   Inputs:  d0.l = line number
+!   Outputs: Carry = 0 if line number is zero, 1 otherwise
+SAYLN:	tst.l	d0
+	bne	1f
+	move.w	#0,ccr
+	rts
+1:	bsr	TELL
+	.asciz	" at line "
+	.align	2
+PBCDL:	clr.b	d7
+	bra	PBCD0
+
+! PBCD - PRINT NUMBER AS DECIMAL INTEGER (5 columns, leading spaces).
+! PBCDL - the same without leading spaces.
+!   Inputs:  d0.w = number (unsigned)
+!   Outputs: Carry = 1
+!   Destroys: d7
+PBCD:	move.b	#' ',d7
+PBCD0:	movem.l	d0-d2/d4,-(sp)
+	and.l	#0xFFFF,d0
+	move.l	#10000,d1
+1:	divu	d1,d0			! d0.w = digit, high word = rest
+	move.b	d0,d4
+	beq	2f
+	or.b	#0x30,d7
+2:	or.b	d7,d4
+	beq	3f
+	bsr	OUTCHR
+3:	clr.w	d0
+	swap	d0			! rest
+	divu	#10,d1
+	tst.w	d1
+	bne	1b
+	movem.l	(sp)+,d0-d2/d4
+	move.w	#CC_C,ccr
+	rts
+
+! HANDLE WHOLE ARRAY:
+GETV1:	add.l	#2,a4			! SKIP ()
+	move.l	a3,a5			! SET EXIT CONDITIONS
+	move.b	d3,d4
+	or.b	#64,d4			! FLAG ARRAY
+	move.w	#CC_Z,ccr
+	rts
+
+! PUTVAR - CREATE VARIABLE AND INITIALISE TO ZERO.
+!   Inputs:  a3, a4 as returned from GETVAR (NZ).
+!   Outputs: As GETVAR.
+!   Destroys: everything
+PUTVAR:	bsr	CREATE
+	cmp.b	#'(',(a4)
+	bne	GETVZ			! SET EXIT CONDITIONS
+	cmp.b	#')',1(a4)		! WHOLE ARRAY?
+	beq	GETV1
+ARRAY:	move.b	#14,d4			! 'Bad use of array'
+ERROR3:	bra	ERROR
+
+! GETVAR - GET LOCATION OF VARIABLE, RETURN IN a3 & a5
+!   Inputs:  a4 addresses first character.
+!   Outputs: Carry set and NZ if illegal character.
+!            Z set if variable found, then:
+!             d4.b = variable type (0,1,4,5,128 or 129)
+!                    (65,68,69 or 193 for whole array)
+!             a3 = a5 = variable pointer.
+!             a4 updated
+!            If Z & carry clear, then:
+!             a3, a4 set for a subsequent PUTVAR call.
+!   Destroys: everything
+GETVAR:	move.b	(a4),d4
+	cmp.b	#'!',d4
+	beq	GETV5
+	cmp.b	#'?',d4
+	beq	GETV6
+	cmp.b	#'|',d4
+	beq	GETVF
+	cmp.b	#'$',d4
+	beq	GETV4
+	bsr	LOCATE
+	beq	1f
+	rts				! (not found / illegal)
+1:	move.b	(a4),d4
+	cmp.b	#'(',d4			! ARRAY?
+	bne	GETVX			! EXIT
+	cmp.b	#')',1(a4)		! WHOLE ARRAY?
+	beq	GETV1
+	move.w	d3,-(sp)		! SAVE TYPE
+	move.l	a3,a0
+	bsr	LDLE4A			! INDIRECT LINK -> d7
+	cmp.l	#1,d7
+	bls	ARRAY
+	move.l	d7,a3
+	clr.w	d1
+	move.b	(a3)+,d1		! NO. OF DIMENSIONS
+	beq	ARRAY
+	clr.l	d2			! ACCUMULATOR
+	add.l	#1,a4			! SKIP (
+GETV3:	movem.l	d1-d2/a3,-(sp)
+	bsr	EXPRI			! SUBSCRIPT -> d0
+	movem.l	(sp)+,d1-d2/a3
+	clr.w	d5
+	move.b	1(a3),d5		! dimension size (LE)
+	lsl.w	#8,d5
+	move.b	(a3),d5
+	add.l	#2,a3
+	move.l	d0,-(sp)		! subscript
+	move.w	d2,d0
+	bsr	MUL16			! d0.w = acc * size
+	move.l	(sp)+,d7
+	add.w	d7,d0
+	move.w	d0,d2			! new accumulator
+	cmp.w	d5,d7			! subscript >= size?
+	bcs	1f
+	move.b	#15,d4
+	bra	ERROR3			! "Subscript"
+1:	sub.w	#1,d1			! DIMENSION COUNTER
+	beq	2f
+	movem.l	d1-d2/a3,-(sp)
+	bsr	COMMA
+	movem.l	(sp)+,d1-d2/a3
+	bra	GETV3
+2:	movem.l	d2/a3,-(sp)
+	bsr	BRAKET			! CLOSING BRACKET
+	movem.l	(sp)+,d2/a3
+	move.w	(sp)+,d3		! RESTORE TYPE
+	and.l	#0xFFFF,d2
+	move.b	d3,d4
+	bsr	X14OR5			! d2 = d2 * element size
+	add.l	d2,a3			! element address
+	move.b	(a4),d4
+GETVX:	cmp.b	#'?',d4
+	beq	GETV9
+	cmp.b	#'!',d4
+	beq	GETV8
+GETVZ:	move.l	a3,a5			! SET EXIT CONDITIONS
+	move.b	d3,d4
+	move.w	#CC_Z,ccr
+	rts
+
+! PROCESS UNARY & BINARY INDIRECTION:
+GETV5:	move.b	#4,d4			! UNARY 32-BIT INDIRN.
+	bra	GETV7
+GETV6:	clr.b	d4			! UNARY 8-BIT INDIRECTION
+	bra	GETV7
+GETVF:	move.b	#5,d4			! VARIANT INDIRECTION
+	bra	GETV7
+GETV4:	move.b	#128,d4			! STATIC STRING
+GETV7:	clr.l	d0			! base 0
+	move.w	d4,-(sp)
+	bra	GETV0
+
+GETV8:	move.b	#4,d5			! 32-BIT BINARY INDIRN.
+	bra	GETVA
+GETV9:	clr.b	d5			! 8-BIT BINARY INDIRN.
+GETVA:	move.l	a3,a5
+	move.b	d3,d4			! TYPE
+	cmp.b	#129,d4
+	bne	1f
+	move.w	#CC_Z,ccr
+	rts				! STRING!
+1:	move.w	d5,-(sp)
+	bsr	LOADN			! LEFT OPERAND
+	bsr	SFIX
+GETV0:	move.l	d0,-(sp)		! base
+	add.l	#1,a4
+	bsr	ITEMI			! offset
+	add.l	(sp)+,d0
+	move.l	d0,a5
+	move.l	d0,a3
+	move.w	(sp)+,d4		! type
+	move.w	#CC_Z,ccr
+	rts
+
+! GETDEF - Find entry for FN or PROC in dynamic area.
+!   Inputs:  a4 addresses the FN/PROC token (after "DEF").
+!   Outputs: Z set if found
+!            Carry set if neither FN nor PROC first.
+!            If Z: a3 points to the entry's value (address of the DEF)
+!                  a4 addresses delimiter
+!            Else as LOCATE for CREATE.
+GETDEF:	move.b	1(a4),d4
+	bsr	RANGE1
+	bcs	3f
+	move.b	(a4),d4
+	lea	FNPTR,a3
+	cmp.b	#TFN,d4
+	beq	LOC2
+	lea	PROPTR,a3
+	cmp.b	#TPROC,d4
+	beq	LOC2
+	move.w	#CC_C,ccr
+3:	rts
+
+! LOCATE - Try to locate variable name in static or dynamic variables.
+! If illegal first character return carry, non-zero.  If found, return
+! no-carry, zero.  If not found, return no-carry, non-zero.
+!   Inputs:  a4 addresses first character of name.
+!   Outputs: Z set if found, then:
+!             a4 addresses terminator
+!             a3 addresses location of variable
+!             d3.b = type of variable:  1 = byte, 4 = integer,
+!                    5 = floating point, 129 = string
+!            NZ, NC: a3 = address of the link field to fill in (CREATE),
+!             a4 unchanged
+!   Destroys: d4, d7, a0
+LOCATE:	move.b	(a4),d4
+	sub.b	#'@',d4
+	bcs	LOCC
+	cmp.b	#'Z'-'@'+1,d4
+	bcc	LOC0			! NOT STATIC
+	cmp.b	#'%',1(a4)		! 2nd CHARACTER
+	bne	LOC1			! NOT STATIC
+	cmp.b	#'(',2(a4)
+	beq	LOC1			! NOT STATIC
+	and.w	#0xFF,d4
+	lsl.w	#2,d4
+	lea	STAVAR,a3		! STATIC VARIABLES
+	add.w	d4,a3
+	add.l	#2,a4
+	move.b	#4,d3			! INTEGER TYPE
+	move.w	#CC_Z,ccr
+	rts
+LOCC:	move.w	#CC_C,ccr		! illegal: C, NZ
+	rts
+
+LOC0:	cmp.b	#'_'-'@',d4
+	bcs	LOCC
+	cmp.b	#'z'-'@'+1,d4
+	bcc	LOCC
+	sub.b	#4,d4			! '_' -> 27 ... 'z' -> 54
+LOC1:	sub.b	#1,d4			! A-Z -> 0-25, '_' -> 26, ...
+	bmi	LOCC			! ('@' alone)
+	and.w	#0xFF,d4
+	lsl.w	#2,d4
+	lea	DYNVAR,a3		! DYNAMIC VARIABLES
+	add.w	d4,a3
+LOC2:	move.l	a3,a0
+	bsr	LDLE4A			! link -> d7
+	tst.l	d7
+	beq	LOC6			! UNDEFINED VARIABLE
+	move.l	d7,a3			! node
+	move.l	a4,-(sp)
+	lea	4(a3),a0		! SKIP LINK
+LOC3:	move.b	(a0)+,d4		! COMPARE
+	add.l	#1,a4
+	cmp.b	(a4),d4
+	beq	LOC3
+	tst.b	d4			! 0=TERMINATOR
+	beq	LOC5			! FOUND (MAYBE)
+LOC4:	move.l	(sp)+,a4
+	bra	LOC2			! TRY NEXT ENTRY (a3 = this node's link)
+
+LOC5:	sub.l	#1,a4			! the last matched character
+	cmp.b	#'(',(a4)
+	beq	LOCX			! FOUND (a4 at the '(')
+	add.l	#1,a4
+	move.l	a0,-(sp)
+	bsr	RANGE			! the next character
+	move.l	(sp)+,a0
+	bcs	LOCX			! FOUND
+	cmp.b	#'(',d4
+	beq	LOC4			! KEEP LOOKING
+	move.b	-1(a4),d4
+	bsr	RANGE1
+	bcc	LOC4			! KEEP LOOKING
+LOCX:	add.l	#4,sp
+	move.l	a0,a3			! value
+TYPE:	move.b	-1(a4),d4
+	move.b	#129,d3
+	cmp.b	#'$',d4
+	beq	1f			! STRING
+	move.b	#1,d3
+	cmp.b	#'&',d4
+	beq	1f			! BYTE
+	move.b	#4,d3
+	cmp.b	#'%',d4
+	beq	1f			! INTEGER
+	move.b	#5,d3
+1:	move.w	#CC_Z,ccr
+	rts
+
+LOC6:	move.w	#0,ccr			! NZ, NC: a3 = link field
+	rts
+
+! CREATE - CREATE NEW ENTRY, INITIALISE TO ZERO.
+!   Inputs:  a3, a4 as returned from LOCATE (NZ).
+!   Outputs: As LOCATE, GETDEF (Z set).
+!   Destroys: d4, d7, a0
+CREATE:	move.l	FREE,d7
+	move.l	a3,a0
+	bsr	STLE4A			! link -> new node
+	move.l	d7,a3
+	clr.b	(a3)+			! new node: link 0
+	clr.b	(a3)+
+	clr.b	(a3)+
+	clr.b	(a3)+
+LOC7:	add.l	#1,a4
+	bsr	RANGE			! END OF VARIABLE?
+	bcs	LOC8
+	move.b	d4,(a3)+
+	bsr	RANGE1
+	bcc	LOC7
+	cmp.b	#'(',d4
+	beq	LOC8
+	cmp.b	#'(',1(a4)
+	beq	LOC7
+	add.l	#1,a4
+LOC8:	clr.b	(a3)+			! TERMINATOR
+	move.l	a3,-(sp)
+	bsr	TYPE
+	move.b	#4,d4			! SIZE OF INDIRECT LINK
+	cmp.b	#'(',(a4)
+	beq	LOC9
+	move.b	d3,d4
+	bpl	LOC9			! numeric: 1, 4 or 5
+	move.b	#6,d4			! string descriptor
+LOC9:	clr.b	(a3)+			! INITIALISE TO ZERO
+	sub.b	#1,d4
+	bne	LOC9
+	move.l	a3,FREE
+	bsr	CHECK
+	move.l	(sp)+,a3
+	move.w	#CC_Z,ccr
+	rts
+
+! LDLE4A, STLE4A - 32-bit little-endian load/store at a0 (any alignment)
+!   LDLE4A: d7 = (a0);  STLE4A: (a0) = d7.  a0 preserved.
+LDLE4A:	move.b	3(a0),d7
+	lsl.l	#8,d7
+	move.b	2(a0),d7
+	lsl.l	#8,d7
+	move.b	1(a0),d7
+	lsl.l	#8,d7
+	move.b	(a0),d7
+	rts
+STLE4A:	move.b	d7,(a0)
+	ror.l	#8,d7
+	move.b	d7,1(a0)
+	ror.l	#8,d7
+	move.b	d7,2(a0)
+	ror.l	#8,d7
+	move.b	d7,3(a0)
+	ror.l	#8,d7
+	rts
+
+! LINNUM - GET LINE NUMBER FROM TEXT STRING
+!   Inputs:  a4 = Text Pointer
+!   Outputs: d0.l = Line number (zero if none), a4 updated
+!   Destroys: d4, d7
+LINNUM:	bsr	NXT
+	clr.l	d0
+LINNM1:	move.b	(a4),d4
+	sub.b	#'0',d4
+	bcs	1f
+	cmp.b	#10,d4
+	bcc	1f
+	add.l	#1,a4
+	mulu	#10,d0
+	and.l	#0xF,d4
+	add.l	d4,d0
+	cmp.l	#0xFFFF,d0
+	bls	LINNM1
+TOOBIG:	move.b	#20,d4
+	bra	ERROR			! "Too big"
+1:	rts
+
+! PAIR - GET PAIR OF LINE NUMBERS FOR RENUMBER/AUTO.
+!   Inputs:  a4 = text pointer
+!   Outputs: d0.l = first number (10 by default)
+!            d5.l = second number (10 by default)
+PAIR:	bsr	LINNUM			! FIRST
+	tst.l	d0
+	bne	PAIR1
+	move.l	#10,d0
+PAIR1:	move.l	d0,-(sp)
+	bsr	TERMQ
+	sne	d7
+	add.l	#1,a4
+	move.l	#10,d0
+	tst.b	d7
+	beq	1f
+	bsr	LINNUM			! SECOND
+1:	move.l	d0,d5
+	move.l	(sp)+,d0
+	tst.l	d5
+	bne	2f
+	clr.b	d4
+	jsr	EXTERR
+	.asciz	"Silly"
+	.align	2
+2:	rts
+
+! DLPAIR - GET PAIR OF LINE NUMBERS FOR DELETE/LIST.
+!   Inputs:  a4 = text pointer
+!   Outputs: a3 = points to program text
+!            d5.l = second number (0 by default)
+DLPAIR:	bsr	LINNUM
+	move.l	d0,-(sp)
+	bsr	TERMQ
+	beq	DLP1
+	cmp.b	#TIF,d4
+	beq	DLP1
+	add.l	#1,a4
+	bsr	LINNUM
+DLP1:	move.l	d0,d5			! (single number: the same)
+	move.l	(sp)+,d0
+	move.l	d5,-(sp)
+	bsr	FINDL
+	move.l	(sp)+,d5
+	rts
+
+! TEST FOR VALID CHARACTER IN VARIABLE NAME:
+!   RANGE:  d4.b = (a4); RANGE1/RANGE2: d4.b = the character
+!   Outputs: Carry set if out-of-range.  d4 unchanged.
+RANGE:	move.b	(a4),d4
+	cmp.b	#'$',d4
+	bcs	ROUT
+	cmp.b	#'&'+1,d4
+	bcs	RIN
+	cmp.b	#'(',d4
+	beq	RIN
+RANGE1:	cmp.b	#'0',d4
+	bcs	ROUT
+	cmp.b	#'9'+1,d4
+	bcs	RIN
+	cmp.b	#'@',d4			! V2.4
+	beq	RIN
+RANGE2:	cmp.b	#'A',d4
+	bcs	ROUT
+	cmp.b	#'Z'+1,d4
+	bcs	RIN
+	cmp.b	#'_',d4
+	bcs	ROUT
+	cmp.b	#'z'+1,d4
+	bcs	RIN
+ROUT:	move.w	#CC_C,ccr
+	rts
+RIN:	move.w	#0,ccr
+	rts
+
+! LEXAN - LEXICAL ANALYSIS.
+!   d5 bit 0: 1=left, 0=right
+!   d5 bit 3: 1=in HEX
+!   d5 bit 4: 1=accept line number
+!   d5 bit 5: 1=in variable, FN, PROC
+!   d5 bit 6: 1=in REM, DATA, *
+!   d5 bit 7: 1=in quotes
+!   Inputs:  a4 addresses source string
+!            a2 addresses destination string (in ACCS or BUFFER: the
+!            length limit is checked against the 256-byte block)
+!            d5.b sets initial mode
+!   Outputs: a2, a4 updated, d4.b = CR
+!   Destroys: d0, d3, d7, a0, a3
+LEXAN1:	move.b	d4,(a2)+		! TRANSFER TO BUFFER
+	add.l	#1,a4			! INCREMENT POINTERS
+LEXAN2:	move.l	a2,d7			! MAIN ENTRY
+	sub.l	#ACCS,d7
+	and.w	#0xFF,d7
+	cmp.w	#252,d7			! TEST LENGTH
+	bcs	1f
+	move.b	#19,d4
+	bra	ERROR			! 'String too long'
+1:	move.b	(a4),d4
+	cmp.b	#CR,d4
+	bne	2f
+	rts				! END OF LINE
+2:	bsr	RANGE1
+	bcc	LEXAN3
+	bclr	#5,d5			! NOT IN VARIABLE
+	bclr	#3,d5			! NOT IN HEX
+LEXAN3:	cmp.b	#' ',d4
+	beq	LEXAN1			! PASS SPACES
+	cmp.b	#',',d4
+	beq	LEXAN1			! PASS COMMAS
+	cmp.b	#'G',d4
+	bcs	LEXAN4
+	bclr	#3,d5			! NOT IN HEX
+LEXAN4:	cmp.b	#'"',d4
+	bne	LEXAN5
+	bchg	#7,d5			! TOGGLE QUOTES
+LEXAN5:	btst	#4,d5
+	beq	LEXAN6
+	bclr	#4,d5
+	movem.l	d5/a2,-(sp)
+	bsr	LINNUM			! GET LINE NUMBER
+	movem.l	(sp)+,d5/a2
+	tst.l	d0
+	beq	LEXAN2
+	bsr	ENCODE			! ENCODE LINE NUMBER
+	bra	LEXAN2			! CONTINUE
+
+LEXAN6:	cmp.b	#1,d5
+	bne	1f
+	clr.b	d5			! (DEC C: left mode ends here)
+	bra	LEXAN7			! LEFT
+1:	tst.b	d5
+	bne	LEXAN1
+	tst.b	d4
+	bmi	LEXAN8
+	bsr	LEX			! TOKENISE IF POSS.
+	bra	LEXAN8
+
+LEXAN7:	cmp.b	#'*',d4
+	beq	LEXAN9
+	tst.b	d4
+	bmi	1f
+	bsr	LEX			! TOKENISE IF POSS.
+1:	cmp.b	#TDATA,d4
+	beq	LEXAN9
+	cmp.b	#TOKLO,d4
+	bcs	LEXAN8
+	cmp.b	#TOKHI+1,d4
+	bcc	LEXAN8
+	add.b	#OFFSET,d4		! LEFT VERSION
+LEXAN8:	cmp.b	#TREM,d4
+	bne	LEXANA
+LEXAN9:	bset	#6,d5			! QUIT TOKENISING
+LEXANA:	cmp.b	#TFN,d4
+	beq	LEXANB
+	cmp.b	#TPROC,d4
+	beq	LEXANB
+	bsr	RANGE2
+	bcs	LEXANC
+LEXANB:	bset	#5,d5			! IN VARIABLE/FN/PROC
+LEXANC:	cmp.b	#'&',d4
+	bne	LEXAND
+	bset	#3,d5			! IN HEX
+LEXAND:	lea	LIST1,a0
+	move.w	#LIST1L,d1
+	bsr	INLIST
+	bne	LEXANE
+	bset	#4,d5			! ACCEPT LINE NUMBER
+LEXANE:	lea	LIST2,a0
+	move.w	#LIST2L,d1
+	bsr	INLIST
+	bne	LEXANF
+	bset	#0,d5			! ENTER LEFT MODE
+LEXANF:	bra	LEXAN1
+
+! ENCODE - ENCODE LINE NUMBER INTO PSEUDO-BINARY FORM.
+!   Inputs:  d0.w = line number, a2 = string pointer
+!   Outputs: a2 updated, bit 4 of d5 set.
+!   Destroys: d3, d7
+ENCODE:	bset	#4,d5
+	move.b	#TLINO,(a2)+
+	move.w	d0,d7
+	lsr.w	#8,d7			! D
+	and.b	#0xC0,d7
+	lsr.b	#2,d7
+	move.b	d0,d3			! E
+	and.b	#0xC0,d3
+	or.b	d3,d7
+	lsr.b	#2,d7
+	eor.b	#0x54,d7		! 01010100B
+	move.b	d7,(a2)+
+	move.b	d0,d7
+	and.b	#0x3F,d7
+	or.b	#'@',d7
+	move.b	d7,(a2)+
+	move.w	d0,d7
+	lsr.w	#8,d7
+	and.b	#0x3F,d7
+	or.b	#'@',d7
+	move.b	d7,(a2)+
+	rts
+
+! TEXT - OUTPUT MESSAGE.
+!   Inputs:  a3 addresses text (terminated by nul)
+!   Outputs: a3 addresses character following nul.
+!   Destroys: d4
+REPORT:	move.l	ERRTXT,a3
+TEXT:	move.b	(a3)+,d4
+	beq	1f
+	cmp.b	#LF,d4
+	beq	TEXTLF			! Token for TINT
+	bsr	OUT
+	bra	TEXT
+TEXTLF:	bsr	OUTCHR
+	bra	TEXT
+1:	rts
+
+! TELL - OUTPUT MESSAGE.
+!   Inputs: Text follows the bsr (terminated by nul, then .align 2)
+!   Destroys: d4
+TELL:	movem.l	d7/a3,-(sp)
+	move.l	8(sp),a3
+	bsr	TEXT
+	move.l	a3,d7
+	add.l	#1,d7
+	and.b	#0xFE,d7
+	move.l	d7,8(sp)
+	movem.l	(sp)+,d7/a3
+	rts
+
+! NLIST - Check for end of list: return past a comma, else continue with
+! the next statement.
+NLIST:	bsr	NXT
+	cmp.b	#',',d4			! ANOTHER VARIABLE?
+	beq	NXT1
+	add.l	#4,sp			! DITCH RETURN ADDRESS
+	bra	XEQ
+
+! NXT - skip spaces: d4.b = (a4)
+NXT:	move.b	(a4),d4
+	cmp.b	#' ',d4
+	beq	NXT1
+	rts
+NXT1:	add.l	#1,a4
+	bra	NXT
+
+	.sect	.bss
+indent:	.space	2			! LIST indentation count

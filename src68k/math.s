@@ -1078,7 +1078,8 @@ VAL:	bsr	SIGNQ
 ! the Z and S flags of those entries, which follow from A.
 !
 ! First normalise for decimal output:
-STR:	bsr	SFLOAT
+STR:	move.l	a2,strbas		! (for C = position of the 'E')
+	bsr	SFLOAT
 	clr.b	d3			! B = default pt. position
 	tst.l	d0
 	bpl	STR10
@@ -1270,8 +1271,13 @@ STR39:	move.b	d4,(a2)+
 	bra	STR36
 
 STR4:	add.l	#2,sp
-STR40:	add.b	#1,d1
-	bne	STR44
+STR40:	cmp.b	#0xFF,d1		! INC C: Z if the "E" flag (C = -1)
+	seq	d6
+	move.l	a2,d7			! LD C,L: C = position of the 'E'
+	sub.l	strbas,d7
+	move.b	d7,d1
+	tst.b	d6
+	beq	STR44
 	move.b	#'E',(a2)+		! exponent
 	move.b	d3,d4
 	sub.b	#1,d4
@@ -1848,3 +1854,7 @@ ABS2:	tst.l	d0
 2:	move.l	d0,d7
 	clr.l	d0
 	rts
+
+	.sect	.bss
+	.align	4
+strbas:	.space	4			! STR: start of the output string

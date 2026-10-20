@@ -1,0 +1,12 @@
+A$="Hello World"
+PRINT LEFT$(A$);RIGHT$(A$);MID$(A$,7);LEFT$(A$,0);"|"
+MID$(A$,1,1)="J":PRINT A$
+LEFT$(A$,3)="xyz":RIGHT$(A$,2)="QQ":PRINT A$
+A$+="!":PRINT A$;LEN A$
+B$=STRING$(255,"x"):PRINT LEN(B$)
+B$=B$+"y"
+PRINT CHR$(72)+CHR$(105);ASC("");STR$(-0.5);VAL("-.5e1");VAL("abc")
+PRINT INSTR("aaa","");INSTR("","a");INSTR("hello","lo",5)
+C$=" spaced ":PRINT "[";C$;"]"
+FOR I=1 TO 3:D$=D$+STR$(I):NEXT:PRINT D$
+SWAP A$,D$:PRINT A$;" ";D$

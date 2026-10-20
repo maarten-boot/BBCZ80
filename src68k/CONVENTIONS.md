@@ -224,3 +224,11 @@ table of interfaces at its top. In short:
   `data.s` (`_accs`, `_curlin`, `_autono`, `_himem`, `_free`). The
   interpreter must also provide `_vermsg` (CR LF terminated) next to
   VERMSG.
+
+## 9. ACK assembler pitfall: `bsr` to the next instruction
+
+The ACK assembler treats a branch whose target is the very next
+instruction as a zero-distance branch and emits a **`nop`**, also for
+`bsr`.  The Z80 idiom `CALL LABEL / LABEL:` (push a frame marker and fall
+through) must therefore be written `pea LABEL` (followed by `LABEL:`).
+`tools`-side check: no `bsr X` may be directly followed by the label `X`.

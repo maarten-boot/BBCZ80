@@ -1,0 +1,12 @@
+10 DIM A%(2,3),B$(4),C(5),D 10
+20 FOR I=0 TO 2:FOR J=0 TO 3:A%(I,J)=I*10+J:NEXT:NEXT
+30 PRINT A%(2,3);A%(1,2)
+40 FOR I=0 TO 4:B$(I)=STRING$(I,"*"):NEXT:FOR I=0 TO 4:PRINT B$(I);",";:NEXT:PRINT
+50 C()=1,2,3,4,5,6:PRINT SUM(C());" ";C(5)
+60 C()=C()*2:PRINT C(0);C(5)
+70 ?D=65:D?1=66:D!2=&12345678:PRINT ?D;D?1;~D!2;~D?2
+80 $D="str":PRINT $D
+90 PRINT DIM(A%(),1);DIM(A%(),2);DIM(A%())
+100 B$(2)="longer string here":B$(2)="x":PRINT B$(2);LEN(B$(2))
+110 DIM M(1,1),V(1),R(1):M()=1,2,3,4:V()=5,6:R()=M().V():PRINT R(0);R(1)
+RUN

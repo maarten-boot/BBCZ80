@@ -21,7 +21,7 @@
 	.define	PAGE, LOMEM, FREE, HIMEM, LIBASE
 	.define	TRACEN, AUTONO, ERRTRP, ONERSP, ERRTXT, DATPTR, ERL, CURLIN
 	.define	RANDOM, COUNT, WIDTH, ERR, LISTON, INCREM
-	.define	_accs, _curlin, _autono, _himem, _free
+	.define	_accs, _curlin, _autono, _himem, _free, DATEND
 
 	.sect	.bss
 ! ACCS, BUFFER & STAVAR: the Z80 put them on 256-byte boundaries; the
@@ -63,6 +63,8 @@ WIDTH:	.space	1		! print width
 ERR:	.space	1		! error number
 LISTON:	.space	1		! LISTO & OPT flag
 INCREM:	.space	1		! AUTO increment
+	.align	2
+DATEND:				! end of the variables (cleared at COLD start)
 
 ! There is no USER label: other modules' .bss (the C OS layer, libc) is
 ! linked after this one, so OSINIT (minix.s) puts PAGE at _end, the end of

@@ -295,3 +295,28 @@ Mid-turn side question:
    PORT_PLAN §10.
 
 ---
+
+## Entry 8 — 2026-10-20
+
+### User request
+> yes, start phase 4
+
+### Actions taken
+1. Translated MAIN (`main.s.in`, generated `main.s` with the Z80 keyword
+   and error tables), EVAL (`eval.s`) and EXEC (`exec.s` and `exec2.s`).
+   Wrote an `asmb.s` stub ("Not supported"). Added `make bbcbasic`.
+2. **First milestone:** under Minix in r68k, `bbcbasic` starts and the
+   following work:
+   * the banner;
+   * `PRINT 2+2`;
+   * entering, listing and running a program;
+   * `*BYE`.
+3. Wrote `tools/bascheck.py` (`make bascheck`), a differential test
+   against the original BBCBASIC.COM under RunCPM, with 9 test suites in
+   `src68k/test/bas/`.
+4. Fixed the bugs the tests found (PORT_PLAN §11). The most notable:
+   * **an ACK assembler bug:** `bsr` to the next instruction becomes a
+     `nop`, which broke every frame marker;
+   * **the lexer left mode:** a Z80 `DEC C` side effect.
+5. Result: **all 9 suites give the same output as the Z80**; MATH
+   STR/VAL are still bit-exact.

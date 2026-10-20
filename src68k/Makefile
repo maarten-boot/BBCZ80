@@ -15,7 +15,16 @@ LD	= $(ACK)/acc-minix
 TESTS	= test/hello test/utiltest test/mathtest test/osmon
 OSOBJ	= minix.o osl.o data.o hook.o
 
-all:	$(TESTS)
+BASOBJ	= main.o exec.o exec2.o eval.o asmb.o math.o $(OSOBJ)
+
+all:	$(TESTS) bbcbasic
+
+# the interpreter (main.s is generated from main.s.in by tools/mkmain.py)
+bbcbasic:	$(BASOBJ)
+	$(LD) -S 64k -o $@ $(BASOBJ)
+
+main.s:	main.s.in tools/mkmain.py ../src/MAIN.Z80
+	python3 tools/mkmain.py
 
 %.o:	%.s bbc.h
 	$(AS) -c -o $@ $<
@@ -46,7 +55,11 @@ oscheck:	test/osmon
 	python3 tools/runminix.py -m $(MINIX) -f /usr/bin/osmon=test/osmon \
 		-f /usr/osmon.in=test/osmon.in 'osmon < /usr/osmon.in'
 
-clean:
-	rm -f *.o test/*.o $(TESTS) test/cpu020
+# the interpreter against the Z80 original (RunCPM): test/bas/*.in
+bascheck:	bbcbasic
+	python3 tools/bascheck.py
 
-.PHONY:	all check oscheck clean
+clean:
+	rm -f *.o test/*.o $(TESTS) bbcbasic test/cpu020
+
+.PHONY:	all check oscheck bascheck clean
