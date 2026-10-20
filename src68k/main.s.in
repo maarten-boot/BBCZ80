@@ -197,6 +197,44 @@ NOTCMD:	tst.l	d0
 	bra	CLOOP
 
 	.sect	.rom
+
+! NAMTAB - name characters: bit 0 = RANGE (also $ % & and (), bit 1 = RANGE1
+NAMTAB:
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0
+	.data1	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0
+	.data1	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
+	.data1	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 3
+	.data1	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
+	.data1	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+! TYPTAB - variable type by the last character of a name
+TYPTAB:
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 129, 4, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+	.data1	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+
 	.align	2
 ! LIST OF TOKENS AND KEYWORDS.
 ! IF A KEYWORD IS FOLLOWED BY A SPACE THEN IT WILL ONLY MATCH WITH THE
@@ -875,15 +913,18 @@ ERROR3:	bra	ERROR
 !             a3, a4 set for a subsequent PUTVAR call.
 !   Destroys: everything
 GETVAR:	move.b	(a4),d4
-	cmp.b	#'!',d4
+	cmp.b	#'@',d4			! (names: '@' and above, but '|')
+	bcs	2f
+	cmp.b	#'|',d4
+	beq	GETVF
+	bra	3f
+2:	cmp.b	#'!',d4
 	beq	GETV5
 	cmp.b	#'?',d4
 	beq	GETV6
-	cmp.b	#'|',d4
-	beq	GETVF
 	cmp.b	#'$',d4
 	beq	GETV4
-	bsr	LOCATE
+3:	bsr	LOCATE
 	beq	1f
 	rts				! (not found / illegal)
 1:	move.b	(a4),d4
@@ -1041,65 +1082,64 @@ LOC1:	sub.b	#1,d4			! A-Z -> 0-25, '_' -> 26, ...
 	lsl.w	#2,d4
 	lea	DYNVAR,a3		! DYNAMIC VARIABLES
 	add.w	d4,a3
-LOC2:	move.l	a3,a0			! link -> d7 (LDLE4A inline)
-	move.b	3(a3),d7
-	lsl.w	#8,d7
-	move.b	2(a3),d7
-	swap	d7
-	move.b	1(a3),d7
-	lsl.w	#8,d7
-	move.b	(a3),d7
-	tst.l	d7
+! (The chain heads and the nodes are at even addresses, CREATE: the LE
+! link is read as a long and byte-reversed.)
+LOC2:	movem.l	a1/a4,-(sp)		! the name (for each node), a1
+LOC2A:	move.l	(a3),d7			! link -> d7
 	beq	LOC6			! UNDEFINED VARIABLE
+	ror.w	#8,d7
+	swap	d7
+	ror.w	#8,d7
 	move.l	d7,a3			! node
-	move.l	a4,-(sp)
 	lea	4(a3),a0		! SKIP LINK
-LOC3:	move.b	(a0)+,d4		! COMPARE
-	add.l	#1,a4
-	cmp.b	(a4),d4
+	lea	1(a4),a1
+LOC3:	cmp.b	(a0)+,(a1)+		! COMPARE (cmpm)
 	beq	LOC3
-	tst.b	d4			! 0=TERMINATOR
+	lea	-1(a1),a4		! (at the first difference)
+	tst.b	-1(a0)			! 0=TERMINATOR
 	beq	LOC5			! FOUND (MAYBE)
-LOC4:	move.l	(sp)+,a4
-	bra	LOC2			! TRY NEXT ENTRY (a3 = this node's link)
+LOC4:	move.l	4(sp),a4
+	bra	LOC2A			! TRY NEXT ENTRY (a3 = this node's link)
 
+! (RANGE and RANGE1 by table: NAMTAB bit 0 / bit 1)
 LOC5:	sub.l	#1,a4			! the last matched character
 	cmp.b	#'(',(a4)
 	beq	LOCX			! FOUND (a4 at the '(')
 	add.l	#1,a4
-	move.l	a0,-(sp)
-	bsr	RANGE			! the next character
-	move.l	(sp)+,a0
-	bcs	LOCX			! FOUND
+	move.l	a0,d7			! (the value)
+	lea	NAMTAB,a0
+	clr.w	d4
+	move.b	(a4),d4			! the next character
+	btst	#0,0(a0,d4.w)
+	beq	LOCX0			! FOUND (not a name character)
 	cmp.b	#'(',d4
 	beq	LOC4			! KEEP LOOKING
 	move.b	-1(a4),d4
-	bsr	RANGE1
-	bcc	LOC4			! KEEP LOOKING
-LOCX:	add.l	#4,sp
+	btst	#1,0(a0,d4.w)
+	bne	LOC4			! KEEP LOOKING
+LOCX0:	move.l	d7,a0
+LOCX:	move.l	(sp)+,a1
+	add.l	#4,sp
 	move.l	a0,a3			! value
-TYPE:	move.b	-1(a4),d4
-	move.b	#129,d3
-	cmp.b	#'$',d4
-	beq	1f			! STRING
-	move.b	#1,d3
-	cmp.b	#'&',d4
-	beq	1f			! BYTE
-	move.b	#4,d3
-	cmp.b	#'%',d4
-	beq	1f			! INTEGER
-	move.b	#5,d3
-1:	move.w	#CC_Z,ccr
+TYPE:	clr.w	d4			! (by table: $ 129, & 1, % 4, else 5)
+	move.b	-1(a4),d4
+	lea	TYPTAB,a0
+	move.b	0(a0,d4.w),d3
+	move.w	#CC_Z,ccr
 	rts
 
-LOC6:	move.w	#0,ccr			! NZ, NC: a3 = link field
+LOC6:	movem.l	(sp)+,a1/a4
+	move.w	#0,ccr			! NZ, NC: a3 = link field
 	rts
 
 ! CREATE - CREATE NEW ENTRY, INITIALISE TO ZERO.
 !   Inputs:  a3, a4 as returned from LOCATE (NZ).
 !   Outputs: As LOCATE, GETDEF (Z set).
 !   Destroys: d4, d7, a0
-CREATE:	move.l	FREE,d7
+CREATE:	move.l	FREE,d7			! (68k: nodes at even addresses, LOC2)
+	add.l	#1,d7
+	and.b	#0xFE,d7
+	move.l	d7,FREE
 	move.l	a3,a0
 	bsr	STLE4A			! link -> new node
 	move.l	d7,a3

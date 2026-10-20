@@ -506,3 +506,31 @@ Within b2float, the bit-by-bit shift loops (DIV2 in FIX, FLOAT) are about
 What remains is mostly the interpreter itself (item 3): NXT, ITEM,
 DISPAT, CHECK, CON (constants are parsed on every execution), GETVAR and
 LOCATE.
+
+## 15. Speed pass, item 4: variable lookup (2026-10-20)
+
+* **Tables instead of compare chains:** RANGE/RANGE1 at the end of a
+  name, and TYPE, use two 256-byte tables, NAMTAB and TYPTAB, generated
+  from the original compare rules.
+* **GETVAR** checks for the indirection characters `! ? | $` with one
+  test for the usual name case.
+* **The chain walk:**
+  * the name pointer is saved once per lookup instead of once per node;
+  * the names are compared with CMPM.
+* **Even nodes:** CREATE starts every node at an even address (at most
+  one byte per variable). The little-endian link is then read as one long
+  and byte-reversed, instead of four byte moves. The chain heads in
+  data.s are 4-byte aligned. The layout of a node is unchanged.
+
+**Result:**
+* b6vars 24.3 M → 22.9 M (-5.9%), b5proc 16.8 M → 15.8 M (-5.5%);
+* total 223.2 M → 218.9 M (-1.9%; `mboot/bench-step4.txt`);
+* the lookup itself is about 15% faster.
+
+What remains is the fixed cost per lookup (GETVAR → LOCATE → TYPE →
+GETVZ, about 20% of b6vars). Getting much more would need caching
+variable addresses (a change of the program format), so it is not done.
+
+All 22 suites and asmcheck pass.
+
+**Since the baseline:** 247.5 M → 218.9 M cycles (-11.6%).

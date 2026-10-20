@@ -426,3 +426,19 @@ Explained only; no work was done.
    * all 22 suites and asmcheck.
 4. **Total:** 247.5 M → 223.2 M cycles (-9.8%). The integer, float,
    variable and GOTO benchmarks are 12-18% faster. PORT_PLAN §14.
+
+## Entry 14 — 2026-10-20
+
+### User request
+> lets do 4 first
+
+### Actions taken
+1. Variable lookup:
+   * table-driven name-end check and TYPE;
+   * a quicker GETVAR start;
+   * one save per lookup instead of one per node;
+   * CMPM name compare;
+   * even-aligned nodes, so the little-endian link is read with one
+     `move.l` and a byte swap.
+2. b6vars -5.9%, b5proc -5.5%; total -1.9%, -11.6% since the baseline.
+3. All 22 suites and asmcheck pass. PORT_PLAN §15.
