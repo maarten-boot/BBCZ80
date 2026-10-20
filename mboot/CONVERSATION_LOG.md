@@ -526,3 +526,27 @@ command.
    * mathcheck: 14801 vectors bit-exact.
 
    All three run in about 2 minutes.
+
+## Entry 19 — 2026-10-20
+
+### User question
+> could the original z80 also benefit from the optimisations we just made?
+
+### Answer (summary)
+Partly. About half of the gains are 68000-specific:
+* hardware DIVU/MULU;
+* longword copies;
+* faster access to little-endian values;
+* undoing overheads that the translation itself added.
+
+On the Z80 these either don't exist or are already cheap there (LDIR, a
+short CHECK). The algorithmic ones would carry over:
+* byte-step shifts in FIX/FLOAT;
+* an integer fast path for + - and the comparisons;
+* a fast parse of short constants;
+* table scans for a false IF and for name characters;
+* a byte-wise divide by 10 for STR$.
+
+They cost bytes of the scarce 64 KB, and the gain is unmeasured. It
+could be measured with a cycle-counting Z80 emulator (RunCPM does not
+count T-states). Explained only; no work was done.
