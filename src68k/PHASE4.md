@@ -69,7 +69,27 @@ The "×n" element-size routine (Z80 `X14OR5`) gives 1, 4, 5 or 6
   longs.
 * Numbers on the stack: mantissa .l plus exponent/type .w (as PUSH5 in
   math.s).
-* (The per-frame layouts are filled in below as each one is written.)
+* The markers are pushed with `pea LABEL` where the Z80 had `CALL LABEL`
+  followed by `LABEL:`. ACK assembles a `bsr` to the next instruction as a
+  `nop` (CONVENTIONS §9).
+* **RESLOC and the loop terminators examine the top of the stack, so a
+  caller must not save registers on the stack around them.** Use statics
+  instead, as EXIT and RESDEL do.
+
+Byte offsets from sp; the total frame size is in brackets:
+
+| Frame | Layout |
+|---|---|
+| FOR | 0 FORCHK, 4 variable, 8 text, 12 step mantissa .l, 16 step exponent, 17 compare op, 18 limit mantissa .l, 22 limit exponent, 23 type (24) |
+| REPEAT | 0 REPCHK, 4 text after REPEAT (8) |
+| WHILE | 0 WHICHK, 4 text at the condition (8) |
+| GOSUB | 0 GOSCHK, 4 text after GOSUB (8) |
+| PROC/FN | 0 PROCHK/FNCHK, 4 slot: the return text pointer; on entry its low byte is TON for ON PROC (8) |
+| LOCAL | 0 LOCCHK, 4 VARPTR, 8 type, 9 exponent or string length, 10 payload: number .l, array pointer .l, string (padded to even), type 2: a long, type 3: two longs. Type bit 4 set: do not restore. |
+| RETURN | 0 RETCHK, 4 count .w, 6 one 12-byte entry per RETURN parameter: formal VARPTR .l, formal type .w, actual VARPTR .l, actual type .w |
+| ARRCHK (DIM LOCAL) | 0 ARRCHK, 4 flags .w (bit 7 = string array), 6 descriptor size .l, 10 data size .l, 14 total reserved .l (rounded to even), 18 the block |
+| ON ERROR LOCAL | a type-3 LOCAL frame holding ONERSP and ERRTRP |
+| ARGUE items | formal VARPTR .l, value, then the word type << 8 \| exponent (strings: the PUSHS frame), above a 0xFF00 marker word |
 
 ## 5. Buffers
 
