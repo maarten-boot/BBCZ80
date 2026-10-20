@@ -557,3 +557,18 @@ count T-states). Explained only; no work was done.
 > no need just curiosity.
 
 No work was done (the Z80 cycle measurement was not wanted).
+
+## Entry 21 — 2026-10-20
+
+### User request
+> make a patch bundle so i can push from my host
+
+### Actions taken
+Made `/home/mboot/vibe/push-bundle-2026-10-20/` and a `.tar.gz` of it:
+* full git bundles of BBCZ80 `mboot/conversation-log` (25 commits on
+  origin/master) and r68k `rosco-minix-duart` (1 commit);
+* format-patch series of both;
+* a README with the push commands.
+
+Checked: the bundles clone, and the patch series reproduce the same
+trees.
