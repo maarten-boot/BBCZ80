@@ -617,3 +617,17 @@ git worktree); bbcbasic = now. Both give the same results.
 * The speed pass gains 20-35% in real time.
 * With the root on the SD card, Minix reports 732 KB available, against
   285 KB with the 1 MB RAM-disk root of the r68k runs.
+
+**Shell commands from BASIC (`src68k/test/mame`):** on the SD-card
+system (732 KB free) the `*` commands that reach the shell work. Tested:
+* `*ls`, `*pwd`, `*cd` then `*pwd` (cd is done by BASIC);
+* pipes (`*echo ... | wc -c`);
+* `OSCLI` with a string;
+* `*date`;
+* error messages from unknown and failing commands (`*ERA` of a missing
+  file still gives the BASIC error "File not found");
+* an interactive `*sh` subshell;
+* piped stdin (`printf ... | bbcbasic`).
+
+After each command BASIC's raw-mode line input (and INPUT) works
+normally. The "No room" seen under r68k was only the 1 MB RAM-disk root.

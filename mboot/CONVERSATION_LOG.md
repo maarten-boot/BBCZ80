@@ -493,3 +493,20 @@ Explained only; no work was done.
      faster).
 
    PORT_PLAN §17.
+
+## Entry 17 — 2026-10-20
+
+### User requests
+> how far is the build now?
+
+(It had finished; the benchmarks had already run.)
+
+> try the shell commands from BASIC on the SD card
+
+### Actions taken
+Ran two console sessions in MAME, kept as `src68k/test/mame`:
+* `*` shell commands, pipes, OSCLI, error cases and piped stdin;
+* an interactive `*sh` subshell, then INPUT.
+
+All work on the SD-card system. The terminal mode is restored after each
+command.
