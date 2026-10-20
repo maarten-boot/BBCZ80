@@ -442,3 +442,23 @@ Explained only; no work was done.
      `move.l` and a byte swap.
 2. b6vars -5.9%, b5proc -5.5%; total -1.9%, -11.6% since the baseline.
 3. All 22 suites and asmcheck pass. PORT_PLAN §15.
+
+## Entry 15 — 2026-10-20
+
+### User request
+> ok now do 3
+
+### Actions taken
+1. Interpreter core:
+   * FPP entry;
+   * inline integer + - and comparisons in DOIT;
+   * a cheaper CHECK, and CHECK/NXT inline in ITEM;
+   * NXT inline in EXPR5A/XEQ1;
+   * a fast CON for short integers;
+   * the false-IF scan by table;
+   * the STR digit step by DIVU (Python model against the bit loop);
+   * MOVBLK block copy for the string stack and LOADS.
+2. New Z80-comparison suites: t14core and t15copy. All 24 suites,
+   mathcheck and asmcheck pass.
+3. Item 3: -18.5%. Speed pass so far: 247.5 M → 178.4 M cycles (-27.9%).
+   PORT_PLAN §16.

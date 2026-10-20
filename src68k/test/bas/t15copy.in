@@ -1,0 +1,13 @@
+10 A$="":S%=0:E%=0
+20 FOR L%=0 TO 255
+30 B$=A$:C$=MID$(A$,2):D$=LEFT$(A$,L% DIV 2)+RIGHT$(A$,L%-L% DIV 2)
+40 IF B$<>A$ OR D$<>A$ E%+=1
+50 FOR K%=1 TO LEN C$ STEP 7:S%=S%+ASC(MID$(C$,K%,1))*K%:NEXT
+60 IF L%<255 A$=A$+CHR$(33+(L%*7) MOD 90)
+70 NEXT
+80 PRINT S%;E%;LEN A$
+90 DIM Z$(3):Z$(1)=A$:Z$(2)=MID$(A$,3,250):Z$(3)=Z$(2)+"":PRINT LEN Z$(1);LEN Z$(3);Z$(2)=Z$(3);INSTR(A$,MID$(A$,100,20))
+100 PROCp(A$,MID$(A$,5)):PRINT
+110 END
+120 DEF PROCp(a$,b$):LOCAL c$:c$=a$:PRINT LEN c$;LEN b$;c$=A$;RIGHT$(b$,10);:ENDPROC
+RUN

@@ -534,3 +534,45 @@ variable addresses (a change of the program format), so it is not done.
 All 22 suites and asmcheck pass.
 
 **Since the baseline:** 247.5 M → 218.9 M cycles (-11.6%).
+
+## 16. Speed pass, item 3: the interpreter core (2026-10-20)
+
+**Changes:**
+* **FPP entry:** tests VAL (op 36) in a register, without the extra stack
+  word.
+* **DOIT:** integer `+ -` and the six comparisons are done inline. Their
+  results equal IADD, ISUB and ICP1 (a signed compare); overflow goes to
+  FPP.
+* **CHECK** uses `lea`, and restores with a `movea`, which keeps the
+  flags.
+* **ITEM** has the room check (FREE + 268 against its own sp, the same
+  test as CHECK's) and NXT's fast path inline. NXT is also inline in
+  EXPR5A and XEQ1.
+* **CON:** up to 9 digits not followed by `.` or `E` are an integer
+  without FPP. That is the same result as VAL.
+* **IF:** the false-IF scan (IFNOT) skips bytes by a 256-byte table
+  (stopping at `"`, CR, REM, ELSE and THEN).
+* **STR:** the digit step (STR22) is two DIVUs by 10 for 1-32 steps.
+  A Python model of the 68000 code matched the Z80 bit loop for every
+  step count, both values of the carry and 1.28 M inputs.
+* **MOVBLK:** a block copy for LOADS, PUSHS and POPS. It copies
+  longwords when source and destination have the same alignment,
+  otherwise 4 bytes per loop.
+
+**Checks:**
+* new suites t14core (constants, integer overflow, comparisons, IF
+  scanning) and t15copy (string copies of every length 0-255 and
+  alignment), both against the Z80;
+* all 24 suites pass;
+* mathcheck bit-exact (11101 vectors, plus 1000 for STR);
+* asmcheck passes.
+
+**Result:**
+* 218.9 M → 178.4 M cycles (-18.5%; `mboot/bench-step3.txt`);
+* by benchmark: b1int -18.8%, b3str -30.7%, b4sieve -18.4%, b5proc
+  -15.1%, b6vars -16.3%, b7goto -16.1%.
+
+**Speed pass total:** 247.5 M → 178.4 M cycles (-27.9%).
+
+The profile is now flat: ITEM's dispatch is 7.3% and the LE variable
+load 4.8%. Further gains would be small.

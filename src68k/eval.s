@@ -309,8 +309,11 @@ EXPR45:	cmp.b	#'+',d5
 	beq	EXPR4
 EXPR5:	bsr	ITEM
 	move.b	d4,d6			! TYPE
-EXPR5A:	bsr	NXT
-	cmp.b	#'^',d4
+EXPR5A:	move.b	(a4),d4			! (NXT inline)
+	cmp.b	#' ',d4
+	bne	2f
+	bsr	NXT
+2:	cmp.b	#'^',d4
 	beq	1f
 	rts
 1:	bsr	SAVE
@@ -407,14 +410,25 @@ ADDROF:	bsr	VAR
 ! Numeric item returned in d0/d1.
 ! String item returned in string accumulator, a2 addresses the byte
 ! after the last.
-ITEM:	bsr	CHECK
+! (68k: CHECK and NXT inline; FREE + 256 + 12 against sp here is the
+! same test as CHECK's)
+ITEM:	move.l	FREE,d7
+	add.l	#256+12,d7
+	cmp.l	sp,d7
+	bcc	ITEMNR
+	move.b	(a4),d4
+	cmp.b	#' ',d4
+	bne	1f
 	bsr	NXT
-	add.l	#1,a4
+1:	add.l	#1,a4
 	cmp.b	#FUNTOK,d4
 	bcs	ITEM0
 	cmp.b	#TCMD,d4
 	bcs	DISPAT			! FUNCTIONS
 	bra	EXTRAS			! DIM, END, MODE, REPORT$, WIDTH
+
+ITEMNR:	clr.b	d4
+	bra	ERROR			! "No room"
 
 ITEM0:	cmp.b	#':',d4
 	bcc	ITEM2			! VARIABLES
@@ -487,8 +501,37 @@ NOS1:	add.l	#1,a4
 ! CON - Get unsigned numeric constant from ASCII string.
 !   Inputs:  ASCII string at (a4-1)
 !   Outputs: Variable-type result in d0/d1, a4 updated, d4 = 0
+! (68k: up to 9 digits not followed by '.' or 'E' are an integer, as
+! FPP's VAL makes them; others go to FPP)
 CON:	sub.l	#1,a4
-	move.l	a4,a5
+	move.l	a4,a0
+	clr.l	d0
+	clr.l	d4
+	move.w	#9,d7			! digits allowed
+1:	move.b	(a0)+,d4
+	sub.b	#'0',d4
+	cmp.b	#9,d4
+	bhi	2f			! not a digit
+	sub.w	#1,d7
+	bmi	CON1			! too many
+	move.l	d0,d1
+	lsl.l	#2,d0
+	add.l	d1,d0
+	add.l	d0,d0			! * 10
+	add.l	d4,d0
+	bra	1b
+2:	cmp.w	#9,d7
+	beq	CON1			! (no digit: '.')
+	cmp.b	#'.'-'0',d4
+	beq	CON1
+	cmp.b	#'E'-'0',d4
+	beq	CON1
+	sub.l	#1,a0
+	move.l	a0,a4
+	clr.b	d1
+	clr.b	d4
+	rts
+CON1:	move.l	a4,a5
 	move.b	#36,d4
 	bsr	FPP
 	bcs	ERROR0
@@ -597,9 +640,8 @@ LOADS:	lea	ACCS,a2
 	rts
 1:	clr.w	d7
 	move.b	d5,d7
-	sub.w	#1,d7
-2:	move.b	(a0)+,(a2)+
-	dbra	d7,2b
+	bsr	MOVBLK
+	tst.b	d5			! (the flags as before: NZ)
 	rts
 
 LOADS2:	move.l	a5,a0
@@ -1565,6 +1607,43 @@ SCP2:	sub.b	#1,d3
 SCP3:	move.w	#0,ccr			! (a3) shorter
 	rts
 
+! MOVBLK - copy d7.w bytes from a0 to a2 (both advanced).
+!   Longwords when both have the same alignment, else 4 bytes per loop.
+!   Destroys: d7
+MOVBLK:	cmp.w	#8,d7
+	bcs	MOVB3
+	move.l	d6,-(sp)
+	move.w	a0,d6
+	sub.w	a2,d6
+	btst	#0,d6
+	bne	MOVB2			! different alignment
+	move.w	a0,d6
+	btst	#0,d6
+	beq	1f
+	move.b	(a0)+,(a2)+		! align both
+	sub.w	#1,d7
+1:	move.w	d7,d6
+	lsr.w	#2,d6
+	sub.w	#1,d6
+2:	move.l	(a0)+,(a2)+
+	dbra	d6,2b
+	bra	3f
+MOVB2:	move.w	d7,d6
+	lsr.w	#2,d6
+	sub.w	#1,d6
+4:	move.b	(a0)+,(a2)+
+	move.b	(a0)+,(a2)+
+	move.b	(a0)+,(a2)+
+	move.b	(a0)+,(a2)+
+	dbra	d6,4b
+3:	and.w	#3,d7
+	move.l	(sp)+,d6
+MOVB3:	sub.w	#1,d7
+	bmi	9f
+5:	move.b	(a0)+,(a2)+
+	dbra	d7,5b
+9:	rts
+
 ! PUSHS - SAVE STRING ON STACK.
 !   Inputs:  String in string accumulator, a2 = end.
 !            d4.b - saved on stack (in the frame word).
@@ -1584,9 +1663,7 @@ PUSHS:	bsr	CHECK
 	tst.w	d5
 	beq	1f
 	move.w	d5,d7
-	sub.w	#1,d7
-2:	move.b	(a0)+,(a2)+		! COPY TO STACK
-	dbra	d7,2b
+	bsr	MOVBLK			! COPY TO STACK
 1:	move.b	d4,-(sp)		! frame word: d4.b, length
 	move.b	d5,1(sp)
 	move.l	a0,a2
@@ -1603,9 +1680,7 @@ POPS:	move.l	(sp)+,a1		! RETURN ADDRESS
 	clr.w	d7
 	move.b	d5,d7
 	beq	POPS1			! ZERO LENGTH
-	sub.w	#1,d7
-1:	move.b	(a0)+,(a2)+		! COPY FROM STACK
-	dbra	d7,1b
+	bsr	MOVBLK			! COPY FROM STACK
 POPS1:	clr.w	d7
 	move.b	d5,d7
 	add.w	#1,d7
@@ -1669,9 +1744,55 @@ DOIT:	tst.b	d6
 	move.w	(sp)+,d4		! OPERATOR
 	move.l	(sp)+,d0
 	move.l	a0,-(sp)
-	bsr	FPP
+! (68k: integer + - and the comparisons here; the same results as FPP's
+! IADD, ISUB and ICP1, which is a signed compare; overflow goes to FPP)
+	move.b	d1,d7
+	or.b	d3,d7
+	bne	DOIT1			! not both integer
+	cmp.b	#13,d4
+	bhi	DOIT1
+	clr.w	d7
+	move.b	d4,d7
+	add.w	d7,d7
+	move.w	DOITT(pc,d7.w),d7
+	jmp	DOITT(pc,d7.w)
+DOITT:	.data2	DOIT1-DOITT, DOIT1-DOITT, DOIT1-DOITT, DOIT1-DOITT
+	.data2	DOIT1-DOITT, DOLE-DOITT, DONE-DOITT, DOGE-DOITT
+	.data2	DOLT-DOITT, DOEQ-DOITT, DOIT1-DOITT, DOADD-DOITT
+	.data2	DOGT-DOITT, DOSUB-DOITT
+DOADD:	move.l	d0,d7
+	add.l	d2,d7
+	bvs	DOIT1
+	move.l	d7,d0
+	bra	DOITX
+DOSUB:	move.l	d0,d7
+	sub.l	d2,d7
+	bvs	DOIT1
+	move.l	d7,d0
+	bra	DOITX
+DOLE:	cmp.l	d2,d0
+	sle	d0
+	bra	DOCMP
+DONE:	cmp.l	d2,d0
+	sne	d0
+	bra	DOCMP
+DOGE:	cmp.l	d2,d0
+	sge	d0
+	bra	DOCMP
+DOLT:	cmp.l	d2,d0
+	slt	d0
+	bra	DOCMP
+DOEQ:	cmp.l	d2,d0
+	seq	d0
+	bra	DOCMP
+DOGT:	cmp.l	d2,d0
+	sgt	d0
+DOCMP:	ext.w	d0			! TRUE (-1) or FALSE (0)
+	ext.l	d0
+	bra	DOITX
+DOIT1:	bsr	FPP
 	bcs	ERROR1
-	clr.b	d6			! TYPE
+DOITX:	clr.b	d6			! TYPE
 	move.b	(a4),d4
 	rts
 

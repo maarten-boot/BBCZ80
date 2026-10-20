@@ -480,12 +480,12 @@ STORS3:	move.l	a5,a0			! FIXED STRING
 	rts
 
 ! CHECK - error "No room" if FREE + 256 >= sp; preserves everything
-CHECK:	move.l	d7,-(sp)
-	move.l	FREE,d7
-	add.l	#256+4,d7
-	cmp.l	sp,d7
-	movem.l	(sp)+,d7		! (movem: flags kept)
-	bcc	1f
+CHECK:	move.l	a0,-(sp)
+	move.l	FREE,a0
+	lea	256+4(a0),a0
+	cmp.l	a0,sp
+	move.l	(sp)+,a0		! (movea: flags kept)
+	bls	1f
 	rts
 1:	clr.b	d4
 	bra	ERROR			! "No room"

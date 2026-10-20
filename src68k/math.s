@@ -62,12 +62,13 @@ FPP:
 	move.l	a5,-(sp)
 	move.l	a4,-(sp)
 	move.l	sp,a4			! for ERROR
-	move.w	d4,-(sp)
+	cmp.b	#36,d4			! VAL returns IX updated
+	beq	1f
 	bsr	OP
-	cmp.b	#36,1(sp)		! VAL returns IX updated
-	bne	1f
+	SETGOOD
+	bra	EXIT
+1:	bsr	OP
 	move.l	a5,4(a4)
-1:	add.l	#2,sp
 	SETGOOD
 EXIT:
 	move.l	(sp)+,a4		! movea: flags unchanged
@@ -1172,16 +1173,61 @@ STR21:	clr.w	d7
 	lsl.w	#8,d7
 	move.w	d7,-(sp)		! (A, carry 0)
 	move.b	d2,d4			! restore A
-STR22:	add.l	d0,d0			! RL A:HLH'L'
+! STR22 - one decimal digit: A:HLH'L' / 10, d1.b = n steps (normally 32).
+!   (68k: for n = 1-32 by two DIVUs, with the result of the Z80's bit loop:
+!   the top n bits of A:d0 divided by 10, the quotient in the low bits of
+!   d0 << n, d1 = d4 = remainder; other n by the loop.)
+STR22:	tst.b	d1
+	beq	STRDL
+	cmp.b	#32,d1
+	bhi	STRDL
+	movem.l	d2/d5,-(sp)
+	clr.w	d5
+	move.b	d1,d5			! n
+	move.l	d0,d2
+	cmp.w	#32,d5
+	bne	1f
+	clr.l	d0			! (d0 << 32)
+	move.l	d2,d5			! T = A:d0
+	clr.w	d5
+	swap	d5
+	tst.b	d4
+	beq	4f
+	bset	#16,d5
+	bra	4f
+1:	move.w	#32,d1
+	sub.w	d5,d1
+	lsr.l	d1,d2			! T = A << n | d0 >> (32 - n)
+	tst.b	d4
+	beq	3f
+	bset	d5,d2
+3:	lsl.l	d5,d0			! d0 << n
+	move.l	d2,d5
+	clr.w	d5
+	swap	d5			! T >> 16
+4:	divu	#10,d5			! r1 : q1
+	swap	d5
+	move.w	d5,d1
+	swap	d1
+	move.w	d2,d1			! r1 : T & &FFFF
+	divu	#10,d1			! r : q0
+	move.w	d1,d5			! q1 : q0
+	or.l	d5,d0
+	clr.w	d1
+	swap	d1			! remainder
+	move.b	d1,d4
+	movem.l	(sp)+,d2/d5
+	bra	STR23
+STRDL:	add.l	d0,d0			! RL A:HLH'L'
 	addx.b	d4,d4
 	cmp.b	#10,d4
-	bcs	STR23
+	bcs	1f
 	sub.b	#10,d4
 	bset	#0,d0			! set result bit
-STR23:	sub.b	#1,d1
-	bne	STR22			! 32 times
+1:	sub.b	#1,d1
+	bne	STRDL			! 32 times
 	move.b	d4,d1			! remainder
-	and.l	#0x3FFFFFFF,d0		! clear out junk
+STR23:	and.l	#0x3FFFFFFF,d0		! clear out junk
 	move.w	(sp)+,d7		! POP AF
 	move.w	d7,d4
 	lsr.w	#8,d4

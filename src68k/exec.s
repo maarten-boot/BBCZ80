@@ -160,8 +160,11 @@ XEQ0:	bsr	NEWLIN
 	beq	WHEN
 XEQ:	move.l	a4,CURLIN		! ERROR POINTER
 	bsr	TRAP			! CHECK KEYBOARD
-XEQ1:	bsr	NXT
-	add.l	#1,a4
+XEQ1:	move.b	(a4),d4			! (NXT inline)
+	cmp.b	#' ',d4
+	bne	1f
+	bsr	NXT
+1:	add.l	#1,a4
 	cmp.b	#':',d4			! SEPARATOR
 	beq	XEQ1
 	cmp.b	#CR,d4
@@ -878,7 +881,11 @@ IFELSE:	move.b	(a4)+,d4
 	bra	IFTHEN
 
 IF2:	bsr	QUOTE			! SKIP STRING
-IFNOT:	move.b	(a4)+,d4
+IFNOT:	lea	IFTAB,a0		! (68k: skip uninteresting bytes by table)
+	clr.w	d4
+1:	move.b	(a4)+,d4
+	tst.b	0(a0,d4.w)
+	beq	1b
 IFNEXT:	cmp.b	#'"',d4
 	beq	IF2			! QUOTED STRING
 	cmp.b	#TREM,d4
@@ -1500,3 +1507,23 @@ SPANX:	bra	SPAN
 	.sect	.bss
 exitrg:	.space	12			! EXIT: d1, d2, a1 around RESLOC
 rescod:	.space	2			! RESDEL: the error code
+
+	.sect	.rom
+! IFTAB - the bytes IFNOT stops at: " CR REM ELSE THEN
+IFTAB:
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.data1	0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
