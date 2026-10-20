@@ -1041,8 +1041,14 @@ LOC1:	sub.b	#1,d4			! A-Z -> 0-25, '_' -> 26, ...
 	lsl.w	#2,d4
 	lea	DYNVAR,a3		! DYNAMIC VARIABLES
 	add.w	d4,a3
-LOC2:	move.l	a3,a0
-	bsr	LDLE4A			! link -> d7
+LOC2:	move.l	a3,a0			! link -> d7 (LDLE4A inline)
+	move.b	3(a3),d7
+	lsl.w	#8,d7
+	move.b	2(a3),d7
+	swap	d7
+	move.b	1(a3),d7
+	lsl.w	#8,d7
+	move.b	(a3),d7
 	tst.l	d7
 	beq	LOC6			! UNDEFINED VARIABLE
 	move.l	d7,a3			! node
@@ -1133,21 +1139,19 @@ LOC9:	clr.b	(a3)+			! INITIALISE TO ZERO
 ! LDLE4A, STLE4A - 32-bit little-endian load/store at a0 (any alignment)
 !   LDLE4A: d7 = (a0);  STLE4A: (a0) = d7.  a0 preserved.
 LDLE4A:	move.b	3(a0),d7
-	lsl.l	#8,d7
+	lsl.w	#8,d7
 	move.b	2(a0),d7
-	lsl.l	#8,d7
+	swap	d7
 	move.b	1(a0),d7
-	lsl.l	#8,d7
+	lsl.w	#8,d7
 	move.b	(a0),d7
 	rts
-STLE4A:	move.b	d7,(a0)
-	ror.l	#8,d7
-	move.b	d7,1(a0)
-	ror.l	#8,d7
-	move.b	d7,2(a0)
-	ror.l	#8,d7
-	move.b	d7,3(a0)
-	ror.l	#8,d7
+STLE4A:	move.l	d7,-(sp)		! (the bytes from the stacked copy)
+	move.b	3(sp),(a0)
+	move.b	2(sp),1(a0)
+	move.b	1(sp),2(a0)
+	move.b	(sp),3(a0)
+	add.l	#4,sp
 	rts
 
 ! LINNUM - GET LINE NUMBER FROM TEXT STRING

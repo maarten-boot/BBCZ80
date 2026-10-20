@@ -457,8 +457,15 @@ LOADN:	clr.b	d1
 	btst	#0,d4
 	beq	LOAD4			! INTEGER VARIABLE
 LOAD5:	move.b	4(a5),d1
-LOAD4:	move.l	a5,a0
-	bra	LDLE4			! (d0 = LE32 at a5)
+LOAD4:	move.l	a5,a0			! (d0 = LE32 at a5: LDLE4 inline)
+	move.b	3(a5),d0
+	lsl.w	#8,d0
+	move.b	2(a5),d0
+	swap	d0
+	move.b	1(a5),d0
+	lsl.w	#8,d0
+	move.b	(a5),d0
+	rts
 
 LOAD1:	clr.l	d0
 	move.b	(a5),d0
@@ -631,23 +638,21 @@ STDESC:	move.b	d5,(a5)
 	rts
 
 ! LDLE4 - d0 = 32-bit little-endian at a0;  STLE4 - (a0) = d0 LE
-!   (a0, the other registers preserved)
+!   (a0, the other registers preserved; any alignment)
 LDLE4:	move.b	3(a0),d0
-	lsl.l	#8,d0
+	lsl.w	#8,d0
 	move.b	2(a0),d0
-	lsl.l	#8,d0
+	swap	d0
 	move.b	1(a0),d0
-	lsl.l	#8,d0
+	lsl.w	#8,d0
 	move.b	(a0),d0
 	rts
-STLE4:	move.b	d0,(a0)
-	ror.l	#8,d0
-	move.b	d0,1(a0)
-	ror.l	#8,d0
-	move.b	d0,2(a0)
-	ror.l	#8,d0
-	move.b	d0,3(a0)
-	ror.l	#8,d0
+STLE4:	move.l	d0,-(sp)		! (the bytes from the stacked copy)
+	move.b	3(sp),(a0)
+	move.b	2(sp),1(a0)
+	move.b	1(sp),2(a0)
+	move.b	(sp),3(a0)
+	add.l	#4,sp
 	rts
 
 ! Version 5 extensions:

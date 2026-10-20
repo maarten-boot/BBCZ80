@@ -363,8 +363,14 @@ STOREN:	cmp.b	#5,d4
 	rts
 
 STORE5:	move.b	d1,4(a5)
-STORE4:	move.l	a5,a0
-	bra	STLE4
+STORE4:	move.l	a5,a0			! (STLE4 inline)
+	move.l	d0,-(sp)
+	move.b	3(sp),(a5)
+	move.b	2(sp),1(a5)
+	move.b	1(sp),2(a5)
+	move.b	(sp),3(a5)
+	add.l	#4,sp
+	rts
 
 ! MODIFS - Update string variable according to operator:
 !   Inputs: d5.w = type << 8 | operator (= or +),

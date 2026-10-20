@@ -192,14 +192,38 @@ IMOD:	move.l	d0,d6
 	eor.l	d2,d6			! DIV result sign
 	move.l	d0,-(sp)		! dividend sign
 	bsr	ABS2			! d0 = 0, d2 = |dividend|, d7 = |divisor|
-	move.w	#32,d3			! 33 steps, as A = -33
-	bsr	DIVA			! d2 = quotient, d0 = remainder
+	bsr	UDIV			! d2 = quotient, d0 = remainder
 	clr.b	d1			! integer marker
 	move.b	#0,d4
 	tst.l	(sp)+
 	bpl	1f
 	bra	NEGATE
 1:	rts
+
+! UDIV - unsigned 32-bit division: d2 / d7 -> d2 = quotient, d0 =
+!   remainder (d0 = 0 on entry); d3.w = -1 afterwards, as after DIVA.
+!   A divisor of 1-65535 takes two DIVUs (exact, as the 33-step loop);
+!   others (0 and >= 65536) use the loop.
+UDIV:	move.l	d7,d3
+	sub.l	#1,d3
+	cmp.l	#0xFFFF,d3
+	bcc	2f			! 0 or >= 65536
+	move.l	d2,d0
+	clr.w	d0
+	swap	d0			! high word of the dividend
+	divu	d7,d0			! d0 = r1 : q1
+	move.w	d0,d3
+	swap	d3			! d3 = q1 : -
+	move.w	d2,d0			! d0 = r1 : low word
+	divu	d7,d0			! d0 = r : q0
+	move.w	d0,d3
+	move.l	d3,d2			! quotient
+	clr.w	d0
+	swap	d0			! remainder
+	move.w	#-1,d3
+	rts
+2:	move.w	#32,d3			! 33 steps, as A = -33
+	bra	DIVA
 
 ! BDIV - Integer division.
 FBDIV:	bsr	FIX2
@@ -1491,14 +1515,54 @@ SIGNQ:	move.b	(a5)+,d4
 !   Inputs:  d0/d1 = +ve non-zero number (floated), d4.b = desired exponent
 !   Outputs: d0 = fixed number (unsigned), fraction shifted into d5.w,
 !            d6.b bit 7 set if any fraction bit was shifted out
+!   (The Z80 shifts one bit at a time; here the n = d4 - d1 bits go at
+!   once.  The results are the same: d0, d5 and d7.w (= d5 >> 8, as the
+!   last DIV2 leaves it); of d6 only bit 7 is set as the Z80 does, which
+!   is the only bit the callers use.)
 FIX:	clr.b	d6
 	bset	#31,d0			! implied 1
-FIX1:	bsr	DIV2
-	cmp.b	d1,d4
+	move.b	d4,d7
+	sub.b	d1,d7			! n
+	bls	FIXOV			! (d4 <= d1)
+	move.b	d4,d1
+	and.w	#0xFF,d7
+	movem.l	d2-d3,-(sp)
+	move.l	d5,d2
+	swap	d2
+	clr.w	d2			! d0:d2 = the 64-bit d0:d5:0
+	cmp.w	#32,d7
+	bcc	3f
+	move.l	d0,d3
+	lsr.l	d7,d3			! the new d0
+	lsr.l	d7,d2
+	move.l	d3,-(sp)
+	lsl.l	d7,d3
+	cmp.l	d0,d3
 	beq	1f
-	bcc	FIX1
+	bset	#7,d6			! a bit of d0 shifted out
+1:	move.w	#32,d3
+	sub.w	d7,d3
+	lsl.l	d3,d0
+	or.l	d0,d2
+	move.l	(sp)+,d0
+	bra	4f
+3:	bset	#7,d6			! (d0 bit 31 shifted out)
+	move.w	d7,d3
+	sub.w	#32,d3
+	clr.l	d2
+	cmp.w	#32,d3
+	bcc	2f
+	move.l	d0,d2
+	lsr.l	d3,d2
+2:	clr.l	d0
+4:	swap	d2
+	move.w	d2,d5
+	move.w	d5,d7
+	lsr.w	#8,d7
+	movem.l	(sp)+,d2-d3
+	rts
+FIXOV:	bsr	DIV2			! (as the Z80: one step, then the error)
 	bra	OFLOW
-1:	rts
 
 ! SFIX - Convert to integer if necessary.
 ! FIX2 - the same for both arguments.
@@ -1576,20 +1640,53 @@ MOD485:	swap	d2
 	move.b	d4,d1			! remainder exponent
 	move.w	d6,d5
 ! FLO48 - Float unsigned number (48 bits) in d0:d5/d1
-FLO48:	tst.l	d0
+!   (16 and 8 bit steps first while the exponent stays > 0: the same
+!   result as the bit loop.)
+FLO48:	cmp.l	#0xFFFF,d0
+	bhi	2f
+	cmp.b	#16,d1
+	bls	2f
+	swap	d0
+	move.w	d5,d0
+	clr.w	d5
+	sub.b	#16,d1
+2:	cmp.l	#0xFFFFFF,d0
+	bhi	FLO481
+	cmp.b	#8,d1
+	bls	FLO481
+	lsl.l	#8,d0
+	move.w	d5,-(sp)
+	move.b	(sp)+,d0		! (the high byte of d5)
+	lsl.w	#8,d5
+	sub.b	#8,d1
+FLO481:	tst.l	d0
 	bmi	1f
 	add.w	d5,d5
 	addx.l	d0,d0
 	sub.b	#1,d1
-	bne	FLO48
+	bne	FLO481
 1:	rts
 
 ! FLOAT - Float unsigned number in d0/d1
-FLOAT:	tst.l	d0
+!   (16 and 8 bit steps first, as FLO48.)
+FLOAT:	cmp.l	#0xFFFF,d0
+	bhi	2f
+	cmp.b	#16,d1
+	bls	2f
+	swap	d0
+	clr.w	d0
+	sub.b	#16,d1
+2:	cmp.l	#0xFFFFFF,d0
+	bhi	FLOAT1
+	cmp.b	#8,d1
+	bls	FLOAT1
+	lsl.l	#8,d0
+	sub.b	#8,d1
+FLOAT1:	tst.l	d0
 	bmi	1f
 	add.l	d0,d0
 	sub.b	#1,d1
-	bne	FLOAT
+	bne	FLOAT1
 1:	rts
 
 ! SFLOAT - Convert to floating-point if necessary.
