@@ -330,3 +330,19 @@ Mid-turn side question:
    **All 20 match the Z80.** The tests that assume 4-byte string
    descriptors are adapted, because descriptors are 6 bytes here
    (decision D1).
+
+## Entry 9 — 2026-10-20
+
+### User message
+> i will check the licence with the owner, it will probabely need to be
+> hosted on his site; the rest i will do later
+
+### Notes
+- **Licence and name:** the user will ask the owner (R.T. Russell). The
+  68k port will probably be hosted on his site. Until then the banner
+  stays "BBC BASIC (Z80) Version 5.00".
+- **Deferred by the user:**
+  * the lone-ESC choice;
+  * the memory size (`-S`);
+  * the next step (68000 assembler or larger programs);
+  * pushing the commits and the r68k fix.
