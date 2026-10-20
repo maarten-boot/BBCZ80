@@ -56,4 +56,5 @@ src68k/test/hello
 src68k/test/utiltest
 src68k/test/cpu020
 src68k/test/mathtest
+src68k/test/osmon
 __pycache__/

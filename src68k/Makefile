@@ -12,12 +12,19 @@ ACK	= $(MINIX)/src/rosco/ack
 AS	= $(ACK)/acc
 LD	= $(ACK)/acc-minix
 
-TESTS	= test/hello test/utiltest test/mathtest
+TESTS	= test/hello test/utiltest test/mathtest test/osmon
+OSOBJ	= minix.o osl.o data.o hook.o
 
 all:	$(TESTS)
 
 %.o:	%.s bbc.h
 	$(AS) -c -o $@ $<
+
+osl.o:	osl.c
+	$(LD) -c -o $@ osl.c
+
+test/osmon:	test/osmon.o $(OSOBJ)
+	$(LD) -S 64k -o $@ test/osmon.o $(OSOBJ)
 
 test/hello:	test/hello.o
 	$(LD) -o $@ test/hello.o
@@ -33,7 +40,13 @@ check:	$(TESTS)
 		-f /usr/bin/hello=test/hello -f /usr/bin/utiltest=test/utiltest \
 		'hello' 'utiltest; echo utiltest=$$?'
 
+# the OS layer: test/osmon on scripted input (1MB: *commands give No room;
+# R68K_RAM=2M make oscheck to run them)
+oscheck:	test/osmon
+	python3 tools/runminix.py -m $(MINIX) -f /usr/bin/osmon=test/osmon \
+		-f /usr/osmon.in=test/osmon.in 'osmon < /usr/osmon.in'
+
 clean:
 	rm -f *.o test/*.o $(TESTS) test/cpu020
 
-.PHONY:	all check clean
+.PHONY:	all check oscheck clean

@@ -10,7 +10,10 @@ make in src/rosco and emu/build-r68k.sh); default ../minix-st-2.0.4 next to
 this repository, or $MINIX.  Each -f puts HOSTFILE into the root file
 system as MINIXPATH (mode 755, parent directories are created).  The
 commands run one after another at the shell prompt; -t is the time limit
-for each of them (default 30 s).  The work files (root.img, ROSCODE1.BIN)
+for each of them (default 30 s).  A command "@PATTERN@TEXT" sends TEXT and
+waits for PATTERN (a regular expression) instead of the shell prompt, for
+interactive programs; TEXT takes Python escapes (\x1b, \r ...) and is
+sent with a CR unless it ends in \c.  The work files (root.img, ROSCODE1.BIN)
 go to build/minix in this repository.  The Minix tree is not changed.
 R68K is the emulator: $R68K, else ../r68k/r68k next to this repository
 (maarten-boot/r68k, branch rosco-minix-duart, with illegal instructions
@@ -18,7 +21,9 @@ trapping), else the one built in the Minix tree.
 """
 
 import argparse
+import codecs
 import os
+import re
 import pty
 import select
 import subprocess
@@ -72,9 +77,11 @@ class Console:
         os.close(slave)
         self.out = b''
 
-    def expect(self, text, timeout):
+    def expect(self, text, timeout, regex=False):
         end = time.time() + timeout
-        while text not in self.out:
+        find = (lambda: re.search(text, self.out)) if regex else \
+            (lambda: text in self.out)
+        while not find():
             left = end - time.time()
             if left <= 0:
                 return False
@@ -87,7 +94,10 @@ class Console:
                 sys.stdout.buffer.write(data)
                 sys.stdout.flush()
                 self.out += data
-        self.out = self.out[self.out.index(text) + len(text):]
+        if regex:
+            self.out = self.out[re.search(text, self.out).end():]
+        else:
+            self.out = self.out[self.out.index(text) + len(text):]
         return True
 
     def send(self, text):
@@ -130,8 +140,21 @@ def main():
             print('\nrunminix: no shell prompt', file=sys.stderr)
             return 1
         for c in a.cmd:
-            con.send(c + '\r')
-            if not con.expect(PROMPT, a.t):
+            m = re.match(r'@(.*?)@(.*)$', c, re.S)
+            if m:
+                text = m.group(2)
+                nocr = text.endswith('\\c')
+                if nocr:
+                    text = text[:-2]
+                text = codecs.decode(text.encode('latin-1'), 'unicode_escape')
+                if not nocr:
+                    text += '\r'
+                con.send(text)
+                ok = con.expect(m.group(1).encode('latin-1'), a.t, True)
+            else:
+                con.send(c + '\r')
+                ok = con.expect(PROMPT, a.t)
+            if not ok:
                 print('\nrunminix: timeout on: %s' % c, file=sys.stderr)
                 return 1
         ok = True

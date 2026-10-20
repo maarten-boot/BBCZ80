@@ -186,3 +186,41 @@ text | data | bss (ACCS, BUFFER, STAVAR, …) | PAGE … LOMEM … FREE → ... 
 Each `.s` keeps the Z80 routine names and order, so that the two sources can be
 read side by side. Keep the original Z80 line as a trailing comment where the
 translation is not obvious.
+
+## 8. OS layer interface (phase 3)
+
+The OS layer is `minix.s` (register glue, the TRAP/LTRAP hot path and the
+`_main` entry), `osl.c` (the implementation, in C via ACK) and `hook.s`
+(graphics and sound hooks: all give "Sorry"). `minix.s` has the full
+table of interfaces at its top. In short:
+
+* **Register mapping:**
+  * character or type in d4.b;
+  * channel in d6.b, except PUTPTR, which takes it in d4.b;
+  * file and command names CR-terminated in a3;
+  * memory address in a2, length in d5.l;
+  * 32-bit values (TIME, PTR#, EXT#) in d0.l;
+  * the OSKEY time limit in d7.l.
+* **Status:** returned in CCR:
+  * OSKEY: C set means a character was read;
+  * OSLOAD: C clear means no room;
+  * OSBGET: C set means the last byte was read;
+  * OSSTAT: Z set means end of file.
+* **Preserved:** every routine preserves all registers it doesn't name as
+  outputs, but **not CCR**. A 68010 cannot save CCR cheaply, so callers
+  must not carry flags across an OS call; the Z80 OSWRCH preserved F.
+* **EXTERR contract** (used by the OS layer, and by the interpreter
+  translation): d4.b = error number, (sp) = address of the NUL-terminated
+  message, as after `jsr EXTERR` followed by `.asciz "..."` and
+  `.align 2`.
+* **Memory map:**
+  * `OSINIT` returns PAGE = `_end` rounded up to 256 and HIMEM = the stack
+    pointer at `_main`;
+  * the gap between them comes from `acc-minix -S` (chmem);
+  * DATA (`data.s`) is ordinary `.bss`;
+  * `.align 256` is **not** honoured in `.bss`, so nothing may rely on a
+    page-aligned ACCS.
+* **C side:** the interpreter variables it needs have `_` aliases in
+  `data.s` (`_accs`, `_curlin`, `_autono`, `_himem`, `_free`). The
+  interpreter must also provide `_vermsg` (CR LF terminated) next to
+  VERMSG.

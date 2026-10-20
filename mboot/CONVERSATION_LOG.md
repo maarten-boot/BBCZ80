@@ -257,3 +257,41 @@ Mid-turn side question:
    `utiltest=0`).
 
 ---
+
+## Entry 7 — 2026-10-20
+
+### User request
+> yes, continue with phase 3
+
+### Decisions (asked; user answers)
+- OS layer: **C + asm glue** (the interpreter stays assembly).
+- Unknown `*` commands: **passed to the shell**.
+- Extension: **.BBC like CP/M, but also allow lowercase .bbc**. Implemented
+  as: an existing `name.bbc` is used, otherwise `name.BBC`.
+
+### Actions taken
+1. Read CMOS.Z80, DIST.Z80 and HOOK.Z80: the routine contracts, error
+   numbers, the `*` command table and the console editor. Mapped which OS
+   symbols MAIN/EXEC/EVAL import.
+2. Wrote `src68k/data.s`, `osl.c`, `minix.s` and `hook.s`, plus the test
+   monitor `test/osmon.s` with `make oscheck`.
+3. Debugging along the way:
+   * a cpp line continuation (`\` in a comment) hid ONERSP;
+   * a byte mask of `~0x80` was "too big";
+   * monitor print bugs;
+   * `*REN` names;
+   * double CRs: OPOST was still on in raw mode, and `*TYPE` added CRs
+     to CR LF files.
+4. **Shell commands printed nothing:** `system()` returned 127. Probes
+   showed fork works but `execve("/bin/sh")` in the child fails with
+   **ENOMEM** on 1 MB (about 330 KB available); with `R68K_RAM=2M` all
+   works. Replaced `system()` with my own fork/exec so this gives "No room".
+5. **Lone ESC delayed:** found in `kernel/roscons.c`, which holds a lone
+   ESC back to recognise the ESC O P/Q/R/S debug keys. Reported to the
+   user; not changed (it is the user's kernel).
+6. Added `runminix.py` `@PATTERN@TEXT` steps for interactive tests. An
+   unanchored prompt pattern caused a race; use `\n>$`.
+7. Documented the OS interface in CONVENTIONS §8 and the plan in
+   PORT_PLAN §10.
+
+---

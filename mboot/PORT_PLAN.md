@@ -253,3 +253,48 @@ little-endian; D3 = stub first, 68000 assembler in a later phase.
   * In ATN and in IPOW, a 68k `move` between the flag-setting instruction
     and the branch destroyed the flags, where a Z80 `LD` keeps them.
     CONVENTIONS §3.3 warns about exactly this.
+
+## 10. Phase 3 (OS layer), 2026-10-20
+
+**Decisions (user):**
+* The OS layer is written in **C behind an assembly glue**. The
+  interpreter itself stays assembly.
+* Unknown `*` commands go to `/bin/sh`.
+* A name without `.` gets `.BBC`; an existing `.bbc` file is used instead.
+
+**Files:** `data.s` (DATA, 32-bit pointers), `osl.c`, `minix.s`,
+`hook.s`, and the test monitor `test/osmon.s` (`make oscheck`).
+
+**Implemented:**
+* **Console:** raw termios with OPOST off, buffered output, and the CP/M
+  line editor (control keys plus vt100 cursor keys, insert/overwrite,
+  EDIT n → LIST capture).
+* **ESCape:** `*ESC ON/OFF`; TRAP samples the keyboard every 20th call;
+  piped (non-tty) input is read as plain lines.
+* **Files:** channels 1–7 with a 512-byte buffer each, exact
+  PTR#/EXT#/EOF#, and the last-byte carry on BGET#. LOAD and SAVE.
+* **Commands:**
+  * `*SPOOL` and `*EXEC`;
+  * `*BYE`, `*QUIT`, `*CD`, `*DIR`/`*.`, `*ERA`/`*ERASE`,
+    `*REN`/`*RENAME` (new=old), `*TYPE`, `*ESC`, `*OPT`, `*HELP`,
+    `*LOAD`, `*SAVE`, `*RESET`, with `.` abbreviations;
+  * anything else runs in the shell.
+* **Time and cursor:** TIME from `times()`; CLS and TAB(x,y) as vt100;
+  POS is tracked.
+
+**Tested on r68k** (scripted and through a real tty): files, LOAD/SAVE,
+errors, `*` commands, SPOOL/EXEC, the editor keys, ESCape (in OSLINE and
+in a TRAP loop, and `*ESC OFF`), OSKEY timeout and keys, TIME and cursor.
+
+**Findings:**
+* **Memory:** with 1 MB, Minix leaves about 330 KB. A forked BASIC needs a
+  second full copy, and then there is no hole for `/bin/sh`: `*` shell
+  commands give "No room" unless BASIC is small. With 2 MB
+  (`R68K_RAM=2M`) they work. The fork/exec is done in `osl.c` (not
+  `system()`) so that ENOMEM is reported.
+* **Lone ESC:** the rosco console driver (`kernel/roscons.c`, debug keys
+  ESC O P/Q/R/S) holds back a lone ESC until the next key arrives, so
+  BASIC's ESCape only takes effect at the next keypress on the console.
+  To be decided: a kernel change (release the ESC after a short timeout),
+  or an extra escape key in BASIC.
+* **Alignment:** `.align 256` is not honoured in `.bss`.
