@@ -384,3 +384,24 @@ Mid-turn side question:
 The optional phase 6 item: measure first, then speed up hot paths without
 changing behaviour, rechecked with bascheck and the bit-exact mathcheck.
 Explained only; no work was done.
+
+## Entry 12 — 2026-10-20
+
+### User request
+> yes, start with the benchmarks
+
+### Actions taken
+1. Found that r68k's clock follows the host's wall clock, so BASIC TIME
+   would measure the host. Built a cycle-profiling r68k out of tree
+   (`build/r68kprof`; patch in `mboot/patches/r68k-0002-cycle-profiler.patch`).
+   The user's r68k is unchanged.
+2. Wrote 7 benchmark programs (`src68k/test/bench/`) and
+   `src68k/tools/bench.py`. It reports the cycles per benchmark and the
+   hot routines, mapped through the ACK symbols.
+3. Baseline (`mboot/bench-baseline.txt`, PORT_PLAN §13): 247 M cycles in
+   total. The results match the Z80. The hot spots:
+   * interpreter dispatch, 22%;
+   * variable lookup, 9%;
+   * little-endian byte access, 8%;
+   * bit-serial division in the FPP, 8%.
+   No code was changed yet; the candidate list goes to the user.

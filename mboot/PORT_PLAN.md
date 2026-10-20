@@ -410,3 +410,53 @@ other 2 stop where expected:
   * bascheck now runs with 2 MB (R68K_RAM), because the larger binary
     left no room in the 1 MB root image for the test files.
 * **Result: all 21 suites pass**; ERRORTST now only deletes line 1020.
+
+## 13. Speed pass, step 1: benchmarks (2026-10-20)
+
+**Tools:**
+* **Profiling emulator:** `build/r68kprof` is r68k with
+  `mboot/patches/r68k-0002-cycle-profiler.patch`, built out of tree; your
+  r68k is unchanged. It counts the 68000 cycles (Musashi's figures for
+  the 68010) per instruction address. A BASIC program writes `?&FFFFF0=1`
+  to start the measurement and `=2` to stop it.
+* **`tools/bench.py`** runs `src68k/test/bench/*.bas` in one boot. It maps
+  the addresses to routines using the symbols of the unconverted link
+  (anm), with the load address `^@%` minus STAVAR.
+* **Baseline:** `mboot/bench-baseline.txt`. All benchmark results equal
+  the Z80's.
+
+| Benchmark | Cycles | At 10 MHz |
+|---|---|---|
+| b1int: 5000 × `A%=A%+I%*3-(I% DIV 7)` | 81.4 M | 8.1 s |
+| b2float: 300 × SIN, SQR, EXP | 20.1 M | 2.0 s |
+| b3str: 300 × concatenation, MID$, INSTR, STR$ | 27.3 M | 2.7 s |
+| b4sieve: 2000-entry byte sieve | 67.5 M | 6.7 s |
+| b5proc: FNfib(13) + 100 PROC calls | 17.6 M | 1.8 s |
+| b6vars: 500 × named-variable expression | 28.0 M | 2.8 s |
+| b7goto: 300 × GOSUB/GOTO | 5.5 M | 0.55 s |
+
+On average 10 cycles per instruction; under 0.5% is spent outside
+bbcbasic (clock interrupts).
+
+**Where the time goes (all benchmarks):**
+
+| Share | Routines |
+|---|---|
+| 22% | Statement/expression dispatch: NXT, ITEM, DISPAT, XEQ1, EXPRn |
+| 9% | Variable lookup: GETVAR, LOCATE, LOCn, TYPE (walking name chains) |
+| 8% | Little-endian byte access: LDLE4/STLE4/LDLE4A |
+| 8% | Bit-serial division in the FPP: DIVA, DIVB, DIV2 (an integer `DIV 7` costs about 10% of b1) |
+| 3% | CHECK |
+| 2% each | Number to string (STR22/23), string stack, decimal constant parsing (CON/NUMBER) |
+
+Within b2float, the bit-by-bit shift loops (DIV2 in FIX, FLOAT) are about
+15%.
+
+**Candidate changes, by expected gain and risk:**
+1. **LE access:** LDLE4/STLE4 inline or with `movep`-free byte tricks;
+   aligned fast paths.
+2. **FPP integer division and shift loops:** DIVU-based division, and
+   multi-bit shifts instead of one bit per loop. These must stay
+   bit-exact (mathcheck).
+3. **NXT/ITEM/XEQ dispatch tightening;** CHECK only where needed.
+4. **Variable lookup:** compare names as words; a faster TYPE.
