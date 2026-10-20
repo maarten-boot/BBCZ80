@@ -1322,7 +1322,11 @@ DIM8:	move.w	d7,-(sp)
 	move.l	(sp)+,a5
 	move.l	d0,d2
 	add.l	#1,d2
-	move.l	FREE,a3
+	move.l	FREE,d0			! (68k: the block starts at an even
+	add.l	#1,d0			!  address, so that it can hold code)
+	and.b	#0xFE,d0
+	move.l	d0,FREE
+	move.l	d0,a3
 	move.w	(sp)+,d4		! LOCAL FLAG
 	bra	DIM3
 

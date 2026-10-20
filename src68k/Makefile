@@ -73,7 +73,11 @@ install:	bbcbasic
 		printf '\n# BBC BASIC (src68k in BBCZ80, make install)\n%s\n' \
 		'$(PROTOLINE)' >> $(ROSCO)/rootfs/sdproto
 
+# the 68000 inline assembler against the ACK assembler
+asmcheck:	bbcbasic
+	python3 tools/asmcheck.py
+
 clean:
 	rm -f *.o test/*.o $(TESTS) bbcbasic test/cpu020
 
-.PHONY:	all check oscheck bascheck install clean
+.PHONY:	all check oscheck bascheck asmcheck install clean

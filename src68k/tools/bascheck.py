@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 """Differential test of the 68k BBC BASIC against the Z80 original.
 
-	bascheck.py [-k] [-t SECS] [TEST ...]
+	bascheck.py [-k] [-n] [-t SECS] [TEST ...]
 
 Each TEST is a file of lines typed at the BASIC prompt (default: all of
 test/bas/*.in).  The Z80 reference output comes from bin/cpm/BBCBASIC.COM
 under RunCPM (tools/runcpm.py) and is cached as test/bas/NAME.ref (delete it
-to regenerate).  The 68k output comes from bbcbasic under Minix in r68k
+to regenerate), or is NAME.exp if there is one (written by hand, for
+68k-only features such as the 68000 assembler).  The 68k output comes from bbcbasic under Minix in r68k
 (tools/runminix.py), all tests in one boot, as "bbcbasic < test".  The
 68k transcript has the prompt and echoed input ('>' lines), which are
 dropped before comparing.  -t is the time limit per test (default 60 s).
 A test line "#file PATH" (PATH relative to the test file) is not typed:
 the file is copied, under its own name, to the CP/M drive and to the
-directory in which the 68k test runs (/usr/bas).  The root image must fit
-in 1 MB, so the tests are split over several boots, each with at most
-BUDGET bytes of #file files.
--k keeps the 68k outputs as build/bas/NAME.out.
+directory in which the 68k test runs (/usr/bas).  The machine has 2 MB
+(R68K_RAM, unless set): with 1 MB the root image has little room.  The
+tests are split over several boots, each with at most BUDGET bytes of
+#file files.
+-k keeps the 68k outputs as build/bas/NAME.out; -n only prints them (no
+Z80 reference, for 68k-only things such as the assembler).
 Exit status 1 if any test differs.
 """
 
@@ -34,7 +37,7 @@ TOP = os.path.dirname(SRC)
 
 
 WORK = os.path.join(TOP, 'build', 'bas')
-BUDGET = 6144
+BUDGET = 65536
 
 
 def parse(test):
@@ -53,7 +56,11 @@ def parse(test):
 
 
 def reference(test):
-    ref = test[:-3] + '.ref'
+    exp = test[:-3] + '.exp'
+    if os.path.exists(exp):
+        ref = exp
+    else:
+        ref = test[:-3] + '.ref'
     if not os.path.exists(ref):
         lines, files = parse(test)
         drive = os.path.join(TOP, 'build', 'cpm', 'A', '0')
@@ -90,7 +97,9 @@ def run68k(tests, secs):
                 have.add(name)
                 args += ['-f', '/usr/bas/%s=%s' % (name, p)]
         cmds.append('echo ==T%d==; bbcbasic < /usr/t%d.in' % (i, i))
-    out = subprocess.run(args + cmds, capture_output=True).stdout
+    env = dict(os.environ)
+    env.setdefault('R68K_RAM', '2M')
+    out = subprocess.run(args + cmds, capture_output=True, env=env).stdout
     text = out.decode('latin-1').replace('\r', '')
     res = {}
     for i, t in enumerate(tests):
@@ -131,18 +140,22 @@ def clean68k(text):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('-k', action='store_true')
+    ap.add_argument('-n', action='store_true')
     ap.add_argument('-t', type=int, default=60)
     ap.add_argument('tests', nargs='*')
     a = ap.parse_args()
     tests = a.tests or sorted(glob.glob(os.path.join(SRC, 'test', 'bas',
                                                      '*.in')))
-    refs = {t: reference(t) for t in tests}
+    refs = {} if a.n else {t: reference(t) for t in tests}
     got = {}
     for g in groups(tests):
         got.update(run68k(g, a.t))
     bad = 0
     for t in tests:
         g = clean68k(got[t])
+        if a.n:
+            print('\n'.join(g))
+            continue
         if a.k:
             with open(os.path.join(TOP, 'build', 'bas',
                                    os.path.basename(t)[:-3] + '.out'),

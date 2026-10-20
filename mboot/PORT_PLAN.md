@@ -371,3 +371,42 @@ change for 32-bit pointers.
 * INPUT and other interactive tests through a tty;
 * interactive tests through a tty;
 * larger real programs.
+
+## 12. Phases 5 and 6, 2026-10-20
+
+**Phase 5 (files and the tests) is done.** The unmodified
+`CHAIN "ALLTESTS"` runs all 8 programs through `*EXEC`. 6 complete; the
+other 2 stop where expected:
+* ARRAYTST assumes 4-byte string descriptors;
+* ERRORTST line 1020 tests a Z80 `JR` range error.
+
+**Phase 6:**
+* **`make install`** (decision: a target only, not run). It copies
+  `bbcbasic` to `rootfs/local/` in the Minix tree and adds it to
+  `rootfs/sdproto` as `/usr/bin/bbcbasic`; then run `make sdcard` there.
+  The 1 MB RAM root image has no room for it.
+* **The 68000 inline assembler** (decision: Motorola syntax). `asmb.s`
+  replaces the stub; the user documentation is `src68k/ASSEMBLER.md`.
+  * The control section follows the Z80 one (P%, O%, OPT bits,
+    `.labels`, the listing).
+  * The encoder is new: the full 68000 set plus RTD and
+    `MOVE CCR,<ea>`; all addressing modes in the classic and the
+    `(d,An,Xn)` forms; DC/DS/EQUx/ALIGN.
+  * Expressions are copied to a buffer before evaluation, so that
+    `label(a6)` is not read as an array. The copy also turns `$hex` into
+    `&hex`.
+  * Upper-case mnemonics that the tokeniser turned into keywords or
+    abbreviations (`MOVEM.` → `MID$(`, `ORI.` → `ORIGIN`) are expanded
+    and retried.
+  * `make asmcheck`: 162 instructions, all byte-identical to the ACK
+    assembler, or checked by hand where ACK can't be used (68010
+    instructions, memory shifts, directives).
+  * `test/bas/a01asm.in`: two passes, O%, the listing, the errors and
+    running code with USR/CALL. It has a hand-checked `.exp` (bascheck
+    uses NAME.exp instead of the RunCPM reference when there is one).
+* **Port changes:**
+  * `DIM name size` blocks start at an even address, so they can hold
+    68000 code; the Z80 version does not align them.
+  * bascheck now runs with 2 MB (R68K_RAM), because the larger binary
+    left no room in the 1 MB root image for the test files.
+* **Result: all 21 suites pass**; ERRORTST now only deletes line 1020.

@@ -346,3 +346,31 @@ Mid-turn side question:
   * the memory size (`-S`);
   * the next step (68000 assembler or larger programs);
   * pushing the commits and the r68k fix.
+
+## Entry 10 — 2026-10-20
+
+### User request
+> ok continue
+
+### Decisions (asked; user answers)
+- Assembler syntax: **Motorola**.
+- Install into the Minix tree: **a make target only** (not run).
+
+### Actions taken
+1. Ran the unmodified ALLTESTS with 2 MB: 6 of 8 complete, the other 2
+   stop where expected. Phase 5 is done.
+2. Added `make install`, which targets the SD card root; I did not run it.
+3. Wrote the 68000 inline assembler (`asmb.s`, with
+   `src68k/ASSEMBLER.md`) and `tools/asmcheck.py`, which uses the ACK
+   assembler as the reference.
+   * All 162 test instructions match.
+   * Bugs found and fixed along the way:
+     * the register list range;
+     * the AND/OR stack word;
+     * REGAT clobbering a1;
+     * the tokeniser turning upper-case mnemonics into keywords or
+       abbreviations.
+4. Made DIM blocks word-aligned for code.
+5. bascheck: `.exp` files for 68k-only tests, `-n` for probing, and 2 MB
+   by default.
+6. All 21 differential suites pass. Details in PORT_PLAN §12.
