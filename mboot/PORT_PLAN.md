@@ -453,8 +453,8 @@ Within b2float, the bit-by-bit shift loops (DIV2 in FIX, FLOAT) are about
 15%.
 
 **Candidate changes, by expected gain and risk:**
-1. **LE access:** LDLE4/STLE4 inline or with `movep`-free byte tricks;
-   aligned fast paths.
+1. **LE access:** inline LDLE4/STLE4 at the hot uses, with faster code
+   for even addresses.
 2. **FPP integer division and shift loops:** DIVU-based division, and
    multi-bit shifts instead of one bit per loop. These must stay
    bit-exact (mathcheck).
