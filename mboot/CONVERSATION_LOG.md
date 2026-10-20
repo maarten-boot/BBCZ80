@@ -216,3 +216,22 @@ Mid-turn side question:
    writing `mboot/BBCBASIC.ebnf`, with a source reference per rule.
 
 ---
+
+### Follow-up (same entry)
+- `mboot/BBCBASIC.ebnf` (1072 lines, about 190 rules) was written by the
+  background agent. Contents:
+  * the token table with byte values (138 spellings);
+  * 9 immediate commands and 82 statements;
+  * the expression precedence;
+  * about 66 functions and pseudo-variables;
+  * the inline assembler;
+  * `src: FILE:LABEL` references throughout.
+- Spot-checked against the real Z80 BASIC under RunCPM; all four confirmed:
+  * `-2^2` gives 4;
+  * `5<<<2` gives 20 (`<<<` = `<<`);
+  * `=>`, `=<` and `><` are accepted;
+  * `CLS PRINT "X"` runs without a colon.
+- Open or ambiguous items are listed in the file: SYS and TINT are not
+  implemented in this source, LOCAL ERROR is a no-op, the READ `:` edge case,
+  and the assembler's LD (nn) forms.
+- Phase 2 committed as `557a113`.
