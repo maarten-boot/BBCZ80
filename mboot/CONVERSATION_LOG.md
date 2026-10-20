@@ -462,3 +462,34 @@ Explained only; no work was done.
    mathcheck and asmcheck pass.
 3. Item 3: -18.5%. Speed pass so far: 247.5 M → 178.4 M cycles (-27.9%).
    PORT_PLAN §16.
+
+## Entry 16 — 2026-10-20
+
+### User requests
+> run it in the MAME rosco emulator to check real speed
+> how long will the MAME build take? ... a special stripped down version
+> for the future
+> ok, wait for the build and run the benchmarks
+
+### Actions taken
+1. **Built the rosco-emulator with podman** from its Dockerfile, in about
+   16 minutes and without sudo. Explained where the build time goes (the
+   MAME core, bundled libraries, the optional terminal and ATA devices)
+   and the options for a lighter build:
+   * cache the exported binary;
+   * trim the slot devices in rosco.lua;
+   * switch off MIDI and audio;
+   * a headless variant.
+2. **SD card:**
+   * built the 115200-baud boot image in the Minix tree with the
+     documented make variable;
+   * saved it and restored the tree to the default;
+   * made the SD card in `build/mame` with the tree's tools.
+3. **Wrote `tools/mamebench.py`** and ran the benchmarks on the emulated
+   68010 at 10 MHz, both before the speed pass and now.
+4. **Results:**
+   * the speed pass gains 20-35% in real time;
+   * r68k's cycle figures agree with MAME within 3-7% (MAME is a little
+     faster).
+
+   PORT_PLAN §17.

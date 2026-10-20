@@ -576,3 +576,44 @@ All 22 suites and asmcheck pass.
 
 The profile is now flat: ITEM's dispatch is 7.3% and the LE variable
 load 4.8%. Further gains would be small.
+
+## 17. Real-speed check on the MAME rosco-emulator (2026-10-20)
+
+**Emulator:** the rosco-emulator (MAME 0.289, rosco_m68k_010: MC68010 at
+10 MHz, the real firmware, SD card over SPI). Built from its Dockerfile
+with podman as `localhost/rosco-emulator` in about 16 minutes, without
+sudo.
+
+**Runner:** `tools/mamebench.py`.
+* It builds an SD card in `build/mame` with the Minix tree's tools:
+  * FAT with ROSCODE1.BIN;
+  * a Minix root from proto + sdproto, minus the unbuilt test-suite
+    files, plus the interpreters and the benchmarks.
+* The kernel has the 115200 baud console that the emulator needs. It was
+  built in the Minix tree with `make CONSBAUD=115200 boot/image.bin`,
+  saved as `build/mame/image-115200.bin`, and the tree was then put back
+  to the default 38400.
+* The benchmarks time themselves with TIME. The Minix clock runs off the
+  emulated DUART timer, so this is emulated real time.
+* The session runs with mamesession.py inside the container
+  (`SDL_VIDEODRIVER=dummy`).
+
+**Results:** bbcold = the build before the speed pass (`a014d3a`, from a
+git worktree); bbcbasic = now. Both give the same results.
+
+| Benchmark | Before (s) | Now (s) | r68k cycles at 10 MHz (s) | Gain |
+|---|---|---|---|---|
+| b1int | 7.76 | 5.44 | 5.60 | -29.9% |
+| b2float | 1.85 | 1.44 | 1.54 | -22.2% |
+| b3str | 2.60 | 1.70 | 1.79 | -34.6% |
+| b4sieve | 6.33 | 5.03 | 5.26 | -20.5% |
+| b5proc | 1.64 | 1.28 | 1.34 | -22.0% |
+| b6vars | 2.62 | 1.80 | 1.92 | -31.3% |
+| b7goto | 0.53 | 0.38 | 0.40 | -28.3% |
+
+* MAME's cycle-accurate 68000/68010 core runs 3-7% faster than the
+  r68k/Musashi cycle counts predict. So the profiler's figures are a
+  little pessimistic but consistent, and fine for comparisons.
+* The speed pass gains 20-35% in real time.
+* With the root on the SD card, Minix reports 732 KB available, against
+  285 KB with the 1 MB RAM-disk root of the r68k runs.
