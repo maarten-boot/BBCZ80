@@ -345,9 +345,29 @@ change for 32-bit pointers.
   * UNSTK1/RETXFR popped one return address too many;
   * the ENDWHILE frame offset was wrong.
 
+**Later the same day: 20 suites, all matching.**
+* New suites: t10 (files, SAVE/LOAD/CHAIN), t11 (CASE, EXIT, DIM LOCAL,
+  string heap, TRACE, deep recursion, shifts), t12 (errors inside
+  PROC/FN, RETURN strings, LOCAL string arrays, DIM space).
+* The 8 upstream test programs in `tests/` run unchanged (`#file`
+  directive in bascheck), with two adaptations:
+  * ERRORTST: the two inline-assembler lines are deleted;
+  * ARRAYTST: the string descriptor size comes from `DESC%`, since it is
+    6 bytes here (decision D1).
+* Fixes:
+  * EXIT and RESTORE DATA/ERROR saved registers on the stack around
+    RESLOC, which works on the top of the stack;
+  * `NEXT ,`;
+  * the LOCAL array frame now keeps the size reserved (rounded to even);
+  * osl.c: EXT after reading past the end, "Bad name" for wildcards,
+    "Bad string" for a missing quote.
+* Known platform differences (not bugs):
+  * EXT and EOF are exact on Minix, rounded to 128-byte records on CP/M;
+  * channel numbers differ.
+* The root image only has about 8 KB spare on 1 MB, so bascheck splits
+  the `#file` tests over several boots.
+
 **Next:**
-* more suites: files (OPENIN/OUT, BGET/BPUT, PTR/EXT), SAVE/LOAD/CHAIN,
-  INPUT, CASE, EXIT, DIM LOCAL, string arrays and the heap, TRACE, deep
-  recursion;
+* INPUT and other interactive tests through a tty;
 * interactive tests through a tty;
 * larger real programs.

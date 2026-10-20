@@ -10,6 +10,11 @@ to regenerate).  The 68k output comes from bbcbasic under Minix in r68k
 (tools/runminix.py), all tests in one boot, as "bbcbasic < test".  The
 68k transcript has the prompt and echoed input ('>' lines), which are
 dropped before comparing.  -t is the time limit per test (default 60 s).
+A test line "#file PATH" (PATH relative to the test file) is not typed:
+the file is copied, under its own name, to the CP/M drive and to the
+directory in which the 68k test runs (/usr/bas).  The root image must fit
+in 1 MB, so the tests are split over several boots, each with at most
+BUDGET bytes of #file files.
 -k keeps the 68k outputs as build/bas/NAME.out.
 Exit status 1 if any test differs.
 """
@@ -19,6 +24,7 @@ import difflib
 import glob
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -27,11 +33,39 @@ SRC = os.path.dirname(HERE)
 TOP = os.path.dirname(SRC)
 
 
+WORK = os.path.join(TOP, 'build', 'bas')
+BUDGET = 6144
+
+
+def parse(test):
+    """(typed lines, [host paths of #file files])"""
+    lines, files = [], []
+    with open(test, 'rb') as f:
+        for l in f.read().decode('latin-1').split('\n'):
+            if l.startswith('#file '):
+                files.append(os.path.normpath(os.path.join(
+                    os.path.dirname(test), l[6:].strip())))
+            else:
+                lines.append(l)
+    while lines and lines[-1] == '':
+        lines.pop()
+    return lines, files
+
+
 def reference(test):
     ref = test[:-3] + '.ref'
     if not os.path.exists(ref):
+        lines, files = parse(test)
+        drive = os.path.join(TOP, 'build', 'cpm', 'A', '0')
+        os.makedirs(drive, exist_ok=True)
+        for p in files:
+            shutil.copy(p, os.path.join(drive, os.path.basename(p)))
+        os.makedirs(WORK, exist_ok=True)
+        inp = os.path.join(WORK, os.path.basename(test) + '.cpm')
+        with open(inp, 'w', encoding='latin-1') as f:
+            f.write('\n'.join(lines) + '\n')
         out = subprocess.run([sys.executable, os.path.join(HERE, 'runcpm.py'),
-                              test], capture_output=True, check=True).stdout
+                              inp], capture_output=True, check=True).stdout
         with open(ref, 'wb') as f:
             f.write(out)
     with open(ref, 'rb') as f:
@@ -39,24 +73,46 @@ def reference(test):
 
 
 def run68k(tests, secs):
-    work = os.path.join(TOP, 'build', 'bas')
-    os.makedirs(work, exist_ok=True)
+    os.makedirs(WORK, exist_ok=True)
     args = [sys.executable, os.path.join(HERE, 'runminix.py'), '-t', str(secs),
             '-f', '/usr/bin/bbcbasic=' + os.path.join(SRC, 'bbcbasic')]
-    cmds = []
+    cmds = ['mkdir -p /usr/bas; cd /usr/bas']
+    have = set()
     for i, t in enumerate(tests):
-        inp = os.path.join(work, os.path.basename(t))
-        with open(t, 'rb') as f, open(inp, 'wb') as g:
-            g.write(f.read().rstrip(b'\n') + b'\n*BYE\n')
+        lines, files = parse(t)
+        inp = os.path.join(WORK, os.path.basename(t))
+        with open(inp, 'w', encoding='latin-1') as g:
+            g.write('\n'.join(lines) + '\n*BYE\n')
         args += ['-f', '/usr/t%d.in=%s' % (i, inp)]
+        for p in files:
+            name = os.path.basename(p)
+            if name not in have:
+                have.add(name)
+                args += ['-f', '/usr/bas/%s=%s' % (name, p)]
         cmds.append('echo ==T%d==; bbcbasic < /usr/t%d.in' % (i, i))
     out = subprocess.run(args + cmds, capture_output=True).stdout
     text = out.decode('latin-1').replace('\r', '')
     res = {}
     for i, t in enumerate(tests):
         m = re.search(r'\n==T%d==\n(.*?)(?=\n# |\Z)' % i, text, re.S)
-        res[t] = m.group(1) if m else '(no output)\n' + text[-2000:]
+        res[t] = m.group(1) if m else ('(no output)\n' +
+                                       '\n'.join(text.split('\n')[-12:]))
     return res
+
+
+def groups(tests):
+    """Split the tests into boots by the size of their #file files."""
+    out, cur, size = [], [], 0
+    for t in tests:
+        n = sum(os.path.getsize(p) for p in parse(t)[1])
+        if cur and size + n > BUDGET:
+            out.append(cur)
+            cur, size = [], 0
+        cur.append(t)
+        size += n
+    if cur:
+        out.append(cur)
+    return out
 
 
 def clean68k(text):
@@ -81,7 +137,9 @@ def main():
     tests = a.tests or sorted(glob.glob(os.path.join(SRC, 'test', 'bas',
                                                      '*.in')))
     refs = {t: reference(t) for t in tests}
-    got = run68k(tests, a.t)
+    got = {}
+    for g in groups(tests):
+        got.update(run68k(g, a.t))
     bad = 0
     for t in tests:
         g = clean68k(got[t])

@@ -320,3 +320,13 @@ Mid-turn side question:
    * **the lexer left mode:** a Z80 `DEC C` side effect.
 5. Result: **all 9 suites give the same output as the Z80**; MATH
    STR/VAL are still bit-exact.
+6. Extended the suites to 20, including the 8 upstream test programs in
+   `tests/` (ARRAYTST, BYREFTST, ERRORTST, EXITTEST, FILETEST, FORTEST,
+   INT32TST, SLICETST). Fixed:
+   * EXIT and RESTORE around RESLOC;
+   * `NEXT ,`;
+   * the LOCAL array frame size;
+   * three osl.c file details.
+   **All 20 match the Z80.** The tests that assume 4-byte string
+   descriptors are adapted, because descriptors are 6 bytes here
+   (decision D1).

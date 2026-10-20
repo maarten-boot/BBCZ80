@@ -451,8 +451,10 @@ int os_line(char *buf)
 
 /*==================================================== files ========*/
 
-/* filename - copy a CR (or NUL) terminated name, skipping spaces and
- * an optional pair of quotes; returns the end of the name in s.
+/* getname - copy a CR (or NUL) terminated name, skipping spaces and
+ * an optional pair of quotes; returns the end of the name in s.  An
+ * empty name, or one with the wildcards ? or *, is a "Bad name" (as on
+ * CP/M); a missing closing quote is a "Bad string".
  */
 static char *getname(char *s, char *name)
 {
@@ -466,15 +468,20 @@ static char *getname(char *s, char *name)
 	}
 	while (*s != CR && *s != 0 &&
 	    (q ? *s != '"' : *s != ' ' && *s != '=')) {
-		if (n < 127)
+		if (*s == '?' || *s == '*')
+			n = -1;
+		if (n >= 0 && n < 127)
 			name[n++] = *s;
 		s++;
 	}
-	if (q && *s == '"')
+	if (q) {
+		if (*s != '"')
+			oserror(253, "Bad string");
 		s++;
-	name[n] = 0;
-	if (n == 0)
+	}
+	if (n <= 0)
 		oserror(204, "Bad name");
+	name[n] = 0;
 	return s;
 }
 
@@ -556,7 +563,8 @@ static long cext(struct chan *c)
 {
 	long e = c->size;
 
-	if (c->bstart + c->blen > e)
+	if (c->blen > 0 && c->bstart + c->blen > e)	/* (an empty buffer
+						 * past the end adds nothing) */
 		e = c->bstart + c->blen;
 	return e;
 }

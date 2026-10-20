@@ -1,0 +1,8 @@
+#file ../../../tests/ARRAYTST.BBC
+LOAD "ARRAYTST"
+160 IF ^OneD$(99) - ^OneD$(0) <> 99*DESC% STOP
+1360 IF ^MulD$(3,4) - ^MulD$(0,0) <> 19*DESC% STOP
+3170 IF ^OneD$(N%) - ^OneD$(0) <> N%*DESC% STOP
+3800 IF ^MulD$(4,3) - ^MulD$(0,0) <> 19*DESC% STOP
+DIM T$(1):DESC%=^T$(1)-^T$(0)
+RUN

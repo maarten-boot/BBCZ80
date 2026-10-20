@@ -22,7 +22,8 @@
 !            bytes: formal VARPTR .l, formal type .w, actual VARPTR .l,
 !            actual type .w
 !   ARRCHK:  0 ARRCHK, 4 flags .w (bit 7 string array), 6 descriptor
-!            size .l, 10 data size .l, 14 the array block (DIM LOCAL)
+!            size .l, 10 data size .l, 14 total size reserved .l (the
+!            block rounded to even), 18 the array block (DIM LOCAL)
 !   ARGUE stack items: formal VARPTR .l, value, then the word
 !            type << 8 | exponent (or the PUSHS frame word for strings);
 !            the bottom marker word is &FF00.
@@ -686,15 +687,17 @@ RESRET:	move.w	(sp)+,d6		! RETURN COUNT
 RESARR:	move.w	(sp)+,d5		! flags
 	move.l	(sp)+,d6		! descriptor size
 	move.l	(sp)+,d7		! data size
-	move.l	sp,a1
-	add.l	d6,a1
-	add.l	d7,a1			! the end of the block
+	move.l	(sp)+,d2		! total reserved
 	btst	#7,d5			! String array?
 	beq	1f
-	move.l	a1,a0
-	sub.l	d7,a0			! the descriptors
+	move.l	sp,a0
+	add.l	d6,a0			! the descriptors
+	move.l	a0,a1
+	add.l	d7,a1			! the end of the array
+	move.l	d2,-(sp)
 	bsr	FREESA			! Free string array
-1:	move.l	a1,sp
+	move.l	(sp)+,d2
+1:	add.l	d2,sp
 	move.b	#1,resflg		! Flag something restored
 	bra	RESLO1
 
@@ -1259,7 +1262,10 @@ DIM3:	move.l	a3,d7
 	move.l	d7,a3
 	cmp.l	sp,d7
 	beq	ARRCHK0			! RESERVE NOTHING (the pointer = sp)
+	move.l	sp,d5
+	sub.l	a3,d5			! total reserved (with the rounding)
 	move.l	a3,sp
+	move.l	d5,-(sp)		! total reserved
 	move.l	d2,-(sp)		! data size
 	move.l	d6,-(sp)		! descriptor size
 	move.w	d4,-(sp)		! flags

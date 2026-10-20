@@ -634,7 +634,9 @@ NEXT2:	bsr	TERMQ
 	move.l	4(sp),a3		! the FOR variable
 	beq	NEXT0			! (no name: this one)
 	bsr	GETVAR			! VARIABLE
-	bne	NEXT1			! (not found: can't match)
+	beq	NEXT0
+	bcc	NEXT1			! (not found: can't match)
+	move.l	4(sp),a3		! (illegal, e.g. NEXT ,: as no name)
 NEXT0:	cmp.l	4(sp),a3
 	bne	NEXT1
 	move.l	a3,a5
@@ -1063,12 +1065,14 @@ CLR:	bsr	CLEAR
 
 ! RESTORE DATA / ERROR / LOCAL:  d3.b = B (1 DATA, 2 ERROR, 0 LOCAL),
 ! d5.b = C = error code if nothing restored
+! (RESLOC works on the frames at the top of the stack, so nothing may
+! be saved on the stack around it: the registers go to statics.)
 RESDEL:	add.l	#1,a4			! Skip DATA / ERROR / LOCAL
-	move.w	d5,-(sp)
+	move.b	d5,rescod
 	move.b	d3,d4
 	bsr	RESLOC
-	movem.w	(sp)+,d5		! (movem: flags kept)
 	bne	XEQ
+	move.b	rescod,d5
 	move.b	d5,d4
 	bra	ERROR5
 NOLINE:	move.b	#41,d4			! 'No such line'
@@ -1448,10 +1452,10 @@ EXIT1:	move.l	(sp)+,d7		! Marker
 	cmp.l	#WHICHK,d7
 	beq	EXIT7
 	move.l	d7,-(sp)		! Put back marker
-	movem.l	d1-d2/a1,-(sp)
+	movem.l	d1-d2/a1,exitrg		! (not on the stack: see RESDEL)
 	move.b	#3,d4
 	bsr	RESLOC
-	movem.l	(sp)+,d1-d2/a1		! (flags kept)
+	movem.l	exitrg,d1-d2/a1		! (flags kept)
 	bne	EXIT1
 	move.b	#44,d4
 	bra	ERROR			! 'Bad EXIT'
@@ -1493,3 +1497,6 @@ PUT:	clr.b	d4
 ! SPANX - (for exec2.s) skip to the end of the statement
 SPANX:	bra	SPAN
 
+	.sect	.bss
+exitrg:	.space	12			! EXIT: d1, d2, a1 around RESLOC
+rescod:	.space	2			! RESDEL: the error code
