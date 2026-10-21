@@ -596,3 +596,30 @@ Options, lightest first:
 * **Real rosco_m68k board:** write `rosco_sd.bin` to an SD card.
 * **Browser (future):** r68k compiled to WASM with xterm.js; the most
   convenient for an audience, but the most work.
+
+## Entry 23 — 2026-10-21
+
+### User question
+> how feasable is the browser option, just explain first)
+
+### Answer (explanation only, no work done)
+Feasible: about 1–2 days of work. r68k's host dependencies are small and
+in a few places:
+* the DUART transmit (`std::cout.put`) and receive (`read(STDIN)`) in
+  `machine/Duart.cpp`;
+* the termios setup and the endless `while (1)` loop in `main.cpp`;
+* loading the ROM and ROSCODE1.BIN from files.
+
+The plan:
+* Compile Musashi and r68k with Emscripten.
+* Replace the loop with `emscripten_set_main_loop`, giving each frame a
+  slice of CPU time.
+* Wire the DUART to xterm.js: output through an EM_JS call, input
+  through an exported C function.
+* Embed the ROM and the boot image (`--preload-file`, or `SINGLE_FILE`
+  for one HTML file).
+* Pace paste input in JS.
+* Throttling to 10 MHz is optional.
+
+The result is static files of a few MB that can be hosted anywhere,
+e.g. on R.T. Russell's site.
