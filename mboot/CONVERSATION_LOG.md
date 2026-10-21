@@ -677,3 +677,30 @@ Answered:
 
   The kernel was rebuilt (`boot/image.bin`). The Minix change is not
   committed, and `build/mame/image-115200.bin` was not rebuilt.
+
+## Entry 25 — 2026-10-21
+
+### User request
+> yes, make the docker image
+
+Mid-turn question:
+> the bbc basic has a tests directory did you try runneng those ?
+
+Answered: yes. All 8 upstream programs in `tests/` are in bascheck as
+`u_*.in`. They pass on r68k and MAME, again with the new kernel.
+
+### Actions taken
+* **`src68k/demo/Dockerfile`:**
+  * an Alpine stage builds r68k from its sources (-O2, static), so the
+    image builds natively per platform;
+  * a busybox stage holds the demo;
+  * the entrypoint is `demo.sh`.
+* **`mkdemo.py --docker`** (`$DOCKER`, default podman):
+  * assembles `build/demo/docker`;
+  * builds `docker.io/library/bbc68k-demo:latest`, 7 MB;
+  * saves it as `build/demo/bbc68k-demo-image.tar.gz`, 3 MB;
+  * with `--test`, starts the container in a pty, runs the asm demo
+    and quits with Ctrl-]. Passed.
+* **`demo.sh`** now refuses to start without a terminal (`docker run -it`
+  is needed). The README has the Docker commands.
+* **arm64:** not tested; this host has no qemu binfmt.

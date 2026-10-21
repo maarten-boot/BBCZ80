@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Make the stand-alone demo: build/demo/bbc68k-demo and its .tar.gz.
 
-	mkdemo.py [-m MINIX] [-r R68K_DIR] [--test]
+	mkdemo.py [-m MINIX] [-r R68K_DIR] [--docker] [--test]
 
 The demo (demo/README.txt) is r68k, linked statically, its firmware and a
 ROSCODE1.BIN whose RAM disk root is the Minix tree's rootfs/proto with
@@ -12,6 +12,11 @@ stored as /usr/demo/NAME.bbc, with the text as NAME.bas.  R68K_DIR is the
 r68k checkout (default ../r68k next to this repository); its tracked sources
 are built with -O2 in build/demo/r68k-src, the firmware is taken as built.
 --test boots the demo and runs each program from the menu.
+
+--docker also builds the container image bbc68k-demo (demo/Dockerfile;
+$DOCKER, default podman) from build/demo/docker and saves it as
+build/demo/bbc68k-demo-image.tar.gz (docker load -i ...); with --test the
+container is started once, runs the asm demo and is quit with Ctrl-].
 """
 
 import argparse
@@ -31,6 +36,7 @@ TOP = os.path.dirname(SRC)
 DEMO = os.path.join(SRC, 'demo')
 WORK = os.path.join(TOP, 'build', 'demo')
 NAME = 'bbc68k-demo'
+IMAGE = 'docker.io/library/bbc68k-demo:latest'	# (docker load: bbc68k-demo)
 
 
 def tokenise(progs, out):
@@ -157,11 +163,64 @@ def test(out):
     return ok
 
 
+def docker(r68k, out, test):
+    """Build and save the image; with test, run it once.  Returns ok."""
+    tool = os.environ.get('DOCKER', 'podman')
+    ctx = os.path.join(WORK, 'docker')
+    if os.path.exists(ctx):
+        shutil.rmtree(ctx)
+    for f in subprocess.run(['git', 'ls-files'], cwd=r68k, check=True,
+                            capture_output=True, text=True).stdout.split():
+        os.makedirs(os.path.dirname(os.path.join(ctx, 'r68k', f)),
+                    exist_ok=True)
+        shutil.copy(os.path.join(r68k, f), os.path.join(ctx, 'r68k', f))
+    shutil.copytree(out, os.path.join(ctx, 'demo'),
+                    ignore=shutil.ignore_patterns('r68k'))
+    shutil.copy(os.path.join(DEMO, 'Dockerfile'), ctx)
+    subprocess.run([tool, 'build', '-t', IMAGE, ctx], check=True)
+    tgz = os.path.join(WORK, NAME + '-image.tar.gz')
+    with open(tgz, 'wb') as f:
+        save = subprocess.Popen([tool, 'save', IMAGE], stdout=subprocess.PIPE)
+        subprocess.run(['gzip', '-9'], stdin=save.stdout, stdout=f, check=True)
+        if save.wait():
+            sys.exit('mkdemo: %s save failed' % tool)
+    print('%s: %d bytes' % (tgz, os.path.getsize(tgz)))
+    if not test:
+        return True
+    pid, fd = pty.fork()
+    if pid == 0:
+        os.execvp(tool, [tool, 'run', '-it', '--rm', IMAGE])
+    buf = b''
+    end = time.time() + 120
+    steps = [(rb'Return: BASIC prompt\) \?', '5\r'),
+             (rb'for the menu[^\n]*\n>', '\x1d')]
+    try:
+        while time.time() < end:
+            r, _, _ = select.select([fd], [], [], 1)
+            if r:
+                try:
+                    buf += os.read(fd, 4096)
+                except OSError:
+                    break			# (the container has ended)
+            if steps and re.search(steps[0][0], buf):
+                for c in steps.pop(0)[1].encode():
+                    os.write(fd, bytes([c]))
+                    time.sleep(0.005)
+    finally:
+        _, status = os.waitpid(pid, 0) if not steps else (0, -1)
+    text = buf.decode('latin-1')
+    print(text[-600:])
+    ok = not steps and status == 0 and 'HELLO FROM THE 68000!' in text
+    print('mkdemo --test (%s image): %s' % (tool, 'ok' if ok else 'FAILED'))
+    return ok
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('-m', default=os.environ.get(
         'MINIX', os.path.join(os.path.dirname(TOP), 'minix-st-2.0.4')))
     ap.add_argument('-r', default=os.path.join(os.path.dirname(TOP), 'r68k'))
+    ap.add_argument('--docker', action='store_true')
     ap.add_argument('--test', action='store_true')
     a = ap.parse_args()
     rosco = os.path.join(os.path.abspath(a.m), 'src', 'rosco')
@@ -227,6 +286,8 @@ def main():
         t.add(out, NAME)
     print('%s: %d bytes' % (tgz, os.path.getsize(tgz)))
     if a.test and not test(out):
+        return 1
+    if a.docker and not docker(r68k, out, a.test):
         return 1
     return 0
 

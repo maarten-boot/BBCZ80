@@ -11,6 +11,13 @@ Start it with
 in a terminal (Linux x86-64; nothing else is needed, no internet).  Minix
 boots in a few seconds and BBC BASIC starts with a menu of demo programs.
 
+With Docker (Linux, Mac, Windows), from the image file:
+
+    docker load -i bbc68k-demo-image.tar.gz
+    docker run -it --rm bbc68k-demo
+
+(-it is needed: the demo is a terminal program.)
+
 Keys
 ----
     Escape      BBC BASIC's Escape: stops a running program
