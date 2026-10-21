@@ -63,6 +63,11 @@ the emulated SD card (`loader.js` `upload`):
 Several files are only copied, for CHAIN or LOAD. A file takes 0.1–0.4 s
 whatever its size; typing a program in took 3–12 s.
 
+Uploads and downloads type `*` commands at BASIC's `>` prompt. If the
+screen does not end in that prompt (the demo menu's INPUT, a running
+program, a half typed line), the page presses Escape first and waits for
+it; at the Minix shell (`#`) it asks for `bbcbasic` instead.
+
 The lines are typed one at a time, each after the `>` prompt is back.
 Keys typed while a `*` command runs reach the terminal in cooked mode,
 where Return becomes LF, which BASIC's editor takes as cursor left.

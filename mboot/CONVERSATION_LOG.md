@@ -862,3 +862,32 @@ browsers, speed, what is not there yet).
   * All ok.
 * **Send tarball rebuilt:** `/home/mboot/vibe/bbc68k-web-2026-10-21.tar.gz`
   (sha256 2bb60591…ed4c), its README describes Download.
+
+## Entry 31 — 2026-10-21
+
+### User report
+> uploading files fives me: [the *dd line typed into the demo menu's
+> INPUT, then LOAD: File not found]
+
+### Actions taken
+* **Cause:** the upload began while the demo menu waited at its INPUT,
+  so the `*dd` line went to INPUT rather than BASIC's > prompt.
+* **Fix:** `app.js` `toPrompt`: before an upload or download the page
+  looks at the end of the output. At the > prompt it goes on; elsewhere
+  it presses Escape and waits for the prompt (5 s); at the Minix shell
+  (#) it asks for `bbcbasic`. Help texts and the tarball README updated.
+* **Browser test:** a new first step loads at the menu's INPUT. Two
+  waits matched stale text (the status "loaded", the screen's "Escape at
+  line") and made the test flaky; the status is now cleared before each
+  action and the screen before life. 6 of 6 runs ok. Escape during life
+  in Node: 10 of 10.
+* **Send tarball rebuilt:** `/home/mboot/vibe/bbc68k-web-2026-10-21.tar.gz`
+  (sha256 8de81ff1…2a09).
+
+### User question (mid-turn)
+> regarding the demo, if we leave out minix and only demo the bbc-basic
+> would that be possible? can we fake a system it is running on ? a bare
+> bones 68k system?
+
+Answered: yes. A bare-metal OS layer in place of osl.c/minix.s on the
+rosco_m68k firmware, keeping BASIC unchanged; see the reply. Not started.

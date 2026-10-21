@@ -6,6 +6,9 @@ the Python websockets module are there), through the DevTools protocol:
 
 Opens PAGE (bbc68k.html) as a file in headless Chromium and, with key
 events as a user types them:
+* loads TESTS_DIR/FORTEST.BBC while the demo menu waits for its INPUT
+  (the page presses Escape to get to the > prompt), runs it, and goes
+  back to the menu;
 * runs the asm demo from the menu;
 * stops life with Escape;
 * loads TESTS_DIR/FORTEST.BBC with the Load program button (its file
@@ -104,12 +107,29 @@ async def run(page_file, tests):
             print('ok    boot to the menu (%.1f s)' % (time.time() - t0))
             await p.js("document.querySelector('.xterm-helper-textarea').focus()")
 
+            await p.call('DOM.enable')
+            doc = await p.call('DOM.getDocument')
+            node = await p.call('DOM.querySelector', nodeId=doc['root']['nodeId'],
+                                selector='#file')
+            await p.js("document.getElementById('status').textContent=''")
+            await p.call('DOM.setFileInputFiles', nodeId=node['nodeId'],
+                         files=[os.path.join(os.path.abspath(tests), 'FORTEST.BBC')])
+            st = await p.wait('loaded', 60, where='status')
+            await p.js("document.querySelector('.xterm-helper-textarea').focus()")
+            await p.type('RUN\r')
+            await p.wait('FOR...NEXT tests completed.', 120)
+            print('ok    Load program at the menu\'s INPUT (Escape first; status "%s"), RUN' % st)
+            await p.type('CHAIN "menu"\r')
+            await p.wait('Return: BASIC prompt) ?', 30)
+
             await p.type('5\r')
             s = await p.wait('for the menu', 60)
             ok = 'CALL upper: HELLO FROM THE 68000!' in s
             print('%s  asm demo, typed with key events' % ('ok  ' if ok else 'FAIL'))
             failed += not ok
 
+            await p.type('CLS\r')		# (no old "Escape at line" on the screen)
+            await asyncio.sleep(0.5)
             await p.type('CHAIN "life"\r')
             await p.wait('generation 2', 30)
             await p.key('Escape', 'Escape', 27)
@@ -122,6 +142,7 @@ async def run(page_file, tests):
             node = await p.call('DOM.querySelector', nodeId=doc['root']['nodeId'],
                                 selector='#file')
             t1 = time.time()
+            await p.js("document.getElementById('status').textContent=''")
             await p.call('DOM.setFileInputFiles', nodeId=node['nodeId'],
                          files=[os.path.join(os.path.abspath(tests), 'FORTEST.BBC')])
             st = await p.wait('loaded', 60, where='status')
@@ -131,6 +152,7 @@ async def run(page_file, tests):
             print('ok    Load program: FORTEST.BBC in %.1f s (status "%s"), RUN completes' % (t1, st))
 
             await p.type('CLS\r')
+            await p.js("document.getElementById('status').textContent=''")
             await p.call('DOM.setFileInputFiles', nodeId=node['nodeId'],
                          files=[os.path.join(os.path.abspath(tests), f)
                                 for f in ('EXITTEST.BBC', 'BYREFTST.BBC')])
@@ -144,6 +166,7 @@ async def run(page_file, tests):
             await p.call('Page.setDownloadBehavior', behavior='allow', downloadPath=dl)
             await p.type('SAVE "mine"\r')
             await asyncio.sleep(1)
+            await p.js("document.getElementById('status').textContent=''")
             await p.js("document.getElementById('dlname').value='mine';"
                        "document.getElementById('download').click()")
             st = await p.wait('downloaded', 60, where='status')

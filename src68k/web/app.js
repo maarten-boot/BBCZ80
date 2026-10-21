@@ -10,6 +10,7 @@
   var M = null;			// the emulator module, once it runs
   var typing = null;		// timer while keys are typed in
   var lineOut = null;		// output while typeLines waits for a prompt
+  var tail = '';		// the last of the output: where is BASIC?
   var sdNext = 1 << 20;		// free space on the SD card (loader.js)
 
   var term = new Terminal({
@@ -48,6 +49,7 @@
       var text = BBCLoad.latin1(bytes);
       term.write(text);
       if (lineOut !== null) lineOut += text;
+      tail = (tail + text).slice(-200);
     },
     printErr: function (s) { console.warn(s); }
   }).then(function (mod) {
@@ -87,13 +89,40 @@
     term.focus();
   }
 
+  // Uploads and downloads type *commands at BASIC's > prompt.  then() runs
+  // there: at once if BASIC is at the prompt; else (a program's INPUT,
+  // such as the demo menu, a running program, a half typed line) after
+  // Escape has brought it there.  Not at the Minix shell.
+  function toPrompt(what, then) {
+    var atPrompt = /(^|\n)>$/;
+    if (atPrompt.test(tail)) return then();
+    if (/# $/.test(tail)) {
+      status(what + ': BBC BASIC is not running (type bbcbasic at the # prompt)');
+      return;
+    }
+    status(what + ': Escape, to get to the > prompt', true);
+    send('\x1b');
+    var t0 = Date.now();
+    typing = setInterval(function () {		// (busy meanwhile)
+      if (atPrompt.test(tail) && !M._r68k_pending()) {
+        clearInterval(typing);
+        typing = null;
+        then();
+      } else if (Date.now() - t0 > 5000) {
+        clearInterval(typing);
+        typing = null;
+        status(what + ': BBC BASIC is not at its > prompt; get there and try again');
+      }
+    }, 50);
+  }
+
   // Load program: the files go to the SD card, dd copies them into BASIC's
   // directory (loader.js); one program is loaded too (LOAD, or NEW and
   // *EXEC for a listing); several files, or one that is not a program,
   // are copied as they are, for CHAIN, LOAD or OPENIN.
   function loadFiles(list) {
     var files = Array.prototype.slice.call(list);	// (the input is cleared)
-    if (!M || !files.length) return;
+    if (!M || !files.length || typing) return;
     var done = 0, ups = [];
     files.forEach(function (file, i) {
       var r = new FileReader();
@@ -117,11 +146,14 @@
     });
     var one = ups.length === 1 ? ups[0].up : null;
     if (one) lines = lines.concat(one.load);
-    typeLines(lines, 'Copying ' + names.join(', '), function () {
+    function copied() {
       if (!one) status(names.length + ' files copied: ' + names.join(', ') + '; CHAIN or LOAD them');
       else if (one.tokenised) status(one.name + ' loaded (' + one.size + ' bytes); type RUN');
       else if (one.listing) status(one.name + ' (a listing) being read in by *EXEC; then type RUN');
       else status(one.name + ' copied (' + one.size + ' bytes; not a program)');
+    }
+    toPrompt('Load program', function () {
+      typeLines(lines, 'Copying ' + names.join(', '), copied);
     });
   }
 
@@ -131,7 +163,18 @@
   function download() {
     var name = dlName.value;
     if (!M || !name.trim() || typing) return;
-    typeLines([BBCLoad.sizeLine(name)], 'Finding ' + name, function (outs) {
+    function save(f, c) {
+      var bytes = M.r68kSdRead(c.offset, f.size);
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+      a.download = f.name.replace(/^.*\//, '');
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
+      status(f.name + ': ' + bytes.length + ' bytes downloaded');
+    }
+    function found(outs) {
       var f = BBCLoad.fileSize(outs[0], name);
       if (!f) {
         status(name + ': no such file in BASIC\'s directory');
@@ -139,17 +182,10 @@
       }
       var c = BBCLoad.copyOut(f.name, f.size, sdNext);
       sdNext = c.next;
-      typeLines([c.line], 'Copying ' + f.name, function () {
-        var bytes = M.r68kSdRead(c.offset, f.size);
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
-        a.download = f.name.replace(/^.*\//, '');
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
-        status(f.name + ': ' + bytes.length + ' bytes downloaded');
-      });
+      typeLines([c.line], 'Copying ' + f.name, function () { save(f, c); });
+    }
+    toPrompt('Download', function () {
+      typeLines([BBCLoad.sizeLine(name)], 'Finding ' + name, found);
     });
   }
   document.getElementById('download').addEventListener('click', download);
