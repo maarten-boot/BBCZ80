@@ -17,6 +17,11 @@ directory in which the 68k test runs (/usr/bas).  The machine has 2 MB
 (R68K_RAM, unless set): with 1 MB the root image has little room.  The
 tests are split over several boots, each with at most BUDGET bytes of
 #file files.
+BBC_EMU=bare tests BBC BASIC on a bare rosco_m68k (tools/mkbare.py): an
+image per group with the #file files in its RAM store, in r68k on a pty
+(the demo's -O2 r68k if there is one); the lines are typed at the >
+prompt, each after the prompt is back, and *BYE ends a test (BASIC starts
+again with the files kept).
 -k keeps the 68k outputs as build/bas/NAME.out; -n only prints them (no
 Z80 reference, for 68k-only things such as the assembler).
 Exit status 1 if any test differs.
@@ -26,14 +31,18 @@ import argparse
 import difflib
 import glob
 import os
+import pty
 import re
+import select
 import shutil
 import subprocess
 import sys
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 # BBC_EMU=mame: the MAME rosco-emulator (runmame.py) instead of r68k
 MAME = os.environ.get('BBC_EMU') == 'mame'
+BARE = os.environ.get('BBC_EMU') == 'bare'
 RUNNER = 'runmame.py' if MAME else 'runminix.py'
 SRC = os.path.dirname(HERE)
 TOP = os.path.dirname(SRC)
@@ -112,6 +121,74 @@ def run68k(tests, secs):
     return res
 
 
+def run_bare(tests, secs):
+    """The tests on bare BBC BASIC (see the module text)."""
+    os.makedirs(WORK, exist_ok=True)
+    files = {}
+    for t in tests:
+        for p in parse(t)[1]:
+            files[os.path.basename(p)] = p
+    img = os.path.join(WORK, 'bare.bin')
+    args = [sys.executable, os.path.join(HERE, 'mkbare.py'),
+            '-w', os.path.join(WORK, 'bareobj'), '-o', img]
+    for p in files.values():
+        args += ['-f', p]
+    os.makedirs(os.path.join(WORK, 'bareobj'), exist_ok=True)
+    subprocess.run(args, check=True)
+    r68k = os.path.join(TOP, 'build', 'demo', 'bbc68k-demo', 'r68k')
+    if not os.path.exists(r68k):
+        r68k = os.path.join(os.path.dirname(TOP), 'r68k', 'r68k')
+    fd, slave = pty.openpty()
+    sin = os.open(os.ttyname(slave), os.O_RDWR)
+    p = subprocess.Popen([r68k, '-d', img], stdin=sin, stdout=slave,
+                         stderr=subprocess.DEVNULL,
+                         env=dict(os.environ, R68K_RAM=os.environ.get('R68K_RAM', '2M')))
+    os.close(slave)
+    os.close(sin)
+    buf = [b'']
+
+    def until(pattern, limit):
+        end = time.time() + limit
+        rx = re.compile(pattern)
+        while True:
+            m = rx.search(buf[0])
+            if m:
+                out, buf[0] = buf[0][:m.end()], buf[0][m.end():]
+                return out
+            left = end - time.time()
+            if left <= 0:
+                raise TimeoutError
+            r, _, _ = select.select([fd], [], [], left)
+            if r:
+                buf[0] += os.read(fd, 65536)
+
+    res = {}
+    try:
+        until(rb'\n>', 30)
+        for t in tests:
+            out = b''
+            try:
+                for line in parse(t)[0]:
+                    for c in (line + '\r').encode('latin-1'):
+                        os.write(fd, bytes([c]))
+                    out += until(rb'(^|\n)>', secs)
+                res[t] = out.decode('latin-1').replace('\r', '')
+            except TimeoutError:
+                res[t] = (out + buf[0]).decode('latin-1').replace('\r', '') + '\n(timeout)'
+                buf[0] = b''
+            os.write(fd, b'*BYE\r')
+            until(rb'BBC BASIC[^\n]*\n[^\n]*\n>', 30)
+    except TimeoutError:
+        for t in tests:
+            res.setdefault(t, '(no output: BASIC did not come back)')
+    finally:
+        p.kill()
+        p.wait()
+    # (the first prompt was taken: as the Minix transcript, each line of
+    # the test after a '>')
+    return {t: '>' + r for t, r in res.items()}
+
+
 def groups(tests):
     """Split the tests into boots by the size of their #file files."""
     out, cur, size = [], [], 0
@@ -152,7 +229,7 @@ def main():
     refs = {} if a.n else {t: reference(t) for t in tests}
     got = {}
     for g in groups(tests):
-        got.update(run68k(g, a.t))
+        got.update(run_bare(g, a.t) if BARE else run68k(g, a.t))
     bad = 0
     for t in tests:
         g = clean68k(got[t])

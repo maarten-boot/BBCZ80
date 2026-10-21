@@ -7,6 +7,10 @@
  * (minix68k: int is 16 bits, long 32).
  *
  * No stdio and no malloc: the memory above the end of .bss is BASIC's.
+ *
+ * With -DBARE the same layer runs on a bare rosco_m68k: bare/bare.c makes
+ * the POSIX calls (console, RAM files); there is no shell, so *commands
+ * that are not BASIC's are "Bad command", and *DIR lists the RAM files.
  */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -897,6 +901,12 @@ static void endarg(char *s)
 #define NOMEM	125		/* exit status of the child: exec ENOMEM */
 extern char **environ;
 
+#ifdef BARE
+static void shell(char *s)
+{
+	badcmd();
+}
+#else
 static void shell(char *s)
 {
 	char cmd[256];
@@ -928,6 +938,7 @@ static void shell(char *s)
 	if (((st >> 8) & 0xff) == NOMEM)
 		oserror(0, "No room");
 }
+#endif
 
 static void cmd_bye(char *s)	{ os_bye(); }
 
@@ -941,6 +952,16 @@ static void cmd_cd(char *s)
 		oserror(214, "File not found");
 }
 
+#ifdef BARE
+void bare_dir(void);
+
+static void cmd_dir(char *s)
+{
+	flush();
+	bare_dir();
+	column = 0;
+}
+#else
 static void cmd_dir(char *s)
 {
 	char cmd[140];
@@ -949,6 +970,7 @@ static void cmd_dir(char *s)
 	strcat(cmd, skipsp(s));
 	shell(cmd);
 }
+#endif
 
 static void cmd_era(char *s)
 {

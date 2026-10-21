@@ -891,3 +891,28 @@ browsers, speed, what is not there yet).
 
 Answered: yes. A bare-metal OS layer in place of osl.c/minix.s on the
 rosco_m68k firmware, keeping BASIC unchanged; see the reply. Not started.
+
+## Entry 32 — 2026-10-21
+
+### User request
+> yes , we should also thing about a step after that for people who would
+> like to run it like that: if we can read and write files to the sd
+> filesystem using the built in firmware.
+
+Mid-turn: the user's upload of ARRAYTST.BBC stopped at line 160. That is
+expected: 6-byte string descriptors (D1). The test suite patches those
+lines with DESC%. Explained; a "Known differences" section was added to
+the tarball README (sha256 335b3ab8…).
+
+### Actions taken
+Step 1, BBC BASIC on a bare rosco_m68k (PORT_PLAN §19): `bare/start.s`,
+`bare/bare.c`, `osl.c -DBARE`, `tools/mkbare.py`, `make bare`,
+`make barecheck` (bascheck's `BBC_EMU=bare` mode).
+* 24 of 24 tests ok on bare BASIC in r68k.
+* Boots on MAME's real firmware from the SD card; TIME, ESCape and
+  `*DIR` checked.
+* Found: the ACK drops `(void)` reads of volatile registers.
+
+Planned next:
+* the web page on bare BASIC;
+* step 2: FAT files on the SD card through the firmware's SD routines.

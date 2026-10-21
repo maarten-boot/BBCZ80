@@ -693,3 +693,42 @@ card):
   * after a `*` command;
   * `*BYE` to the shell;
   * an interactive shell.
+
+## 19. BBC BASIC on a bare rosco_m68k (2026-10-21)
+
+No Minix: `make bare` (`tools/mkbare.py`) builds `build/bare/ROSCODE1.BIN`,
+46 KB. The firmware loads it at 0x40000 from the SD card's FAT partition
+(or r68k from the command line) and starts it.
+
+* **Build:**
+  * the same interpreter objects and `minix.s` glue;
+  * `osl.c` with `-DBARE`: no shell (`*` commands that are not BASIC's are
+    "Bad command"), and `*DIR` lists the RAM store;
+  * `bare/bare.c` and `bare/start.s`;
+  * linked by the ACK's `em_led -b0:0x40000`, then `aslod` (flat binary).
+* **`bare/bare.c`:** the POSIX calls osl.c makes, done on the bare machine.
+  * Console: DUART channel A as the firmware left it. Received
+    characters come in by interrupt (vector 0x45 at the VBR) into a
+    1 KB buffer.
+  * The termios modes osl.c uses: VMIN/VTIME, ISIG with VINTR=ESC
+    calling the SIGINT handler from the interrupt, IXON.
+  * TIME: the DUART timer at 60 Hz.
+  * Files: a RAM store in 512-byte blocks, a quarter of the memory above
+    the program, one directory, up to 128 files. It survives `*BYE`
+    (BASIC starts again), not a reset.
+  * Idle waits use STOP.
+* **`--demo`:** the demo programs come in the store and `menu` runs at
+  the start (57 KB).
+* **ACK pitfall:** `(void) DU(n)` (a read of a volatile register for its
+  side effect) is dropped by the ACK. The counter was never started;
+  such reads now go to a volatile variable.
+* **Tests:**
+  * `make barecheck` (`BBC_EMU=bare bascheck`: the `#file` files in the
+    store, lines typed at the prompt, `*BYE` between tests): 24 of 24 ok;
+  * MAME with the real firmware: boot from the SD card, TIME (20000
+    empty loops 3.65 s, as Minix with input from a file: 3.67), ESCape,
+    `*DIR`.
+* **Next:**
+  * the web page on it, with uploads/downloads;
+  * step 2: files on the SD card's FAT file system through the
+    firmware's SD routines, behind the same calls in `bare.c`.
