@@ -15,8 +15,8 @@ page, about 1.9 MB.
 | r68k | the rosco_m68k emulator, compiled to WebAssembly by Emscripten (`emcc`), from r68k's tracked sources (`../r68k`) |
 | `r68k-web.patch` | `machine/Duart.cpp` for the page; native builds are unchanged (`#ifdef __EMSCRIPTEN__`). Channel A's output is collected for `Module.r68kOutput`, keys come in through `r68k_key()` |
 | `webmain.cpp` | `main()` for the page. It sets up the machine as `main.cpp` does (`main.cpp` is still compiled, with its `main` renamed, for its trap handlers), then runs the CPU in frames (`emscripten_set_main_loop`) instead of an endless loop |
-| `pre.js` | the SD card: `rosco_sd.bin` in memory, which r68k's firmware traps read and write, and `r68kSdWrite()` for the page |
-| `loader.js` | uploads through the SD card; also turns a program file into keystrokes |
+| `pre.js` | the SD card: `rosco_sd.bin` in memory, which r68k's firmware traps read and write, and `r68kSdWrite()`/`r68kSdRead()` for the page |
+| `loader.js` | uploads and downloads through the SD card; also turns a program file into keystrokes |
 | `app.js`, `page.html` | the terminal (xterm.js 5.5.0, inlined), the toolbar and the help |
 | `tools/mkweb.py` | builds it all. The ROM and the demo's `ROSCODE1.BIN` are embedded, and everything is inlined (`-sSINGLE_FILE`). It takes BASIC's keyword table from `main.s` and downloads xterm.js once to `build/web/vendor` (checked by SHA-256) |
 
@@ -68,10 +68,29 @@ Keys typed while a `*` command runs reach the terminal in cooked mode,
 where Return becomes LF, which BASIC's editor takes as cursor left.
 
 * **Tokenised `.bbc`:** BBC BASIC for Z80, CP/M, 68000, Windows or SDL.
+* **What gets converted:** only a single program. Several files, or one
+  that is not a program (not tokenised, `.bas`, `.txt` or without an
+  extension), are copied byte for byte (data files for OPENIN).
 * **Not supported:** BBC Micro (Acorn) files.
 * **`detokenise` / `keys`:** `loader.js` can also list a `.bbc` back as
   text (with the interpreter's keyword table; line numbers after GOTO
   etc. decoded) and make keystrokes of it.
+
+### Downloading files
+
+**Download** (a file name and the button, or Return) copies a file from
+BASIC's directory to the computer:
+1. `*wc -c NAME` finds it and its size. A name without an extension is
+   also tried as `NAME.bbc` and `NAME.BBC`: SAVE adds `.bbc` if that
+   file exists, else `.BBC`.
+2. `*dd if=NAME of=/dev/c0d0 bs=16384 seek=K; sync` copies it to a fresh
+   place on the card. `sync` takes it out of Minix's cache; the frame
+   loop flushes r68k's stream of the card (`ifs`) to the image.
+3. The page reads the bytes (`r68kSdRead`) and saves them with a download
+   link.
+
+For a program's output, use `*SPOOL out.txt` … `*SPOOL` and download
+`out.txt`.
 
 ## Tests
 
@@ -81,10 +100,14 @@ where Return becomes LF, which BASIC's editor takes as cursor left.
   * five of the upstream test programs (`tests/*.BBC`), uploaded, run
     and compared with their bascheck references (`test/bas/u_*.ref`);
   * a listing read in by `*EXEC`;
-  * two files uploaded together and CHAINed.
+  * two files uploaded together and CHAINed;
+  * downloads: a SAVEd program (the loaded file up to its end), a
+    40,000-byte binary file uploaded and downloaded unchanged, `*SPOOL`
+    output, and a missing file.
 * **`browsertest.py` (headless Chromium, through the DevTools protocol):**
   * key events and Escape stopping `life`;
   * Load program with one file and with two;
+  * Download of a SAVEd program: the file Chromium saves;
   * the speed setting: at 10 MHz, 20000 empty FOR loops take 3.9 s, as on
     the MAME rosco_m68k (3.7 s).
 

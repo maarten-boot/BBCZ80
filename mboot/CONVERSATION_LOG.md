@@ -834,3 +834,31 @@ Made `/home/mboot/vibe/bbc68k-web-2026-10-21.tar.gz` (606 KB, sha256
 8c315831…a9f5): `bbc68k-web/bbc68k.html` (the tested page, fd97f14) and a
 README.txt for the recipient (how to open it, Load program, keys,
 browsers, speed, what is not there yet).
+
+## Entry 30 — 2026-10-21
+
+### User request
+> add downloading of files from the page
+
+### Actions taken
+* **Download** (a name field and a button) copies a file from BASIC's
+  directory through the SD card:
+  * `*wc -c` finds the file and its size (a name without an extension
+    also as `.bbc`/`.BBC`; SAVE writes `.BBC` for a new file);
+  * `*dd … of=/dev/c0d0 seek=K; sync` copies it to a fresh place;
+  * the page reads it (`pre.js` `r68kSdRead`) and saves it as a browser
+    download.
+* **webmain.cpp:** flushes r68k's card stream (main.cpp `ifs`) every
+  frame, before the output.
+* **Uploads:** only a single program is converted (`.bas`/`.txt`/no
+  extension listings, or tokenised). Other files, and several at once,
+  are copied byte for byte (data files for OPENIN).
+* **Tests:**
+  * Node: SAVE + download (equal to the loaded file up to its end); a
+    40000-byte binary up and down (identical); `*SPOOL` output; a
+    missing file;
+  * Chromium: SAVE "mine" + the Download button; the file saved by the
+    browser checked.
+  * All ok.
+* **Send tarball rebuilt:** `/home/mboot/vibe/bbc68k-web-2026-10-21.tar.gz`
+  (sha256 2bb60591…ed4c), its README describes Download.

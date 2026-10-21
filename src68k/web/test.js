@@ -6,6 +6,10 @@
 //   compared with its bascheck reference (REF_DIR/u_*.ref);
 // * a text listing (the demo's sieve.bas), read in with *EXEC and run;
 // * two files at once, the second CHAINed.
+// And downloads (loader.js sizeLine, copyOut; pre.js r68kSdRead):
+// * a program SAVEd and downloaded: the loaded file up to its end;
+// * a 40000-byte binary file uploaded as data and downloaded: identical;
+// * *SPOOL output downloaded.
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -44,19 +48,32 @@ function secs() { return ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }
 
 // upload as the page does: the lines that copy (and with load, load) it
 function upload(name, bytes, load) {
-  const up = BBCLoad.upload(name, bytes, tokens, sdNext);
+  const up = BBCLoad.upload(name, bytes, tokens, sdNext, load);
   for (const w of up.writes) M.r68kSdWrite(w.offset, w.bytes);
   sdNext = up.next;
   return up.copy.concat(load ? up.load : []);
 }
 
-// type lines as the page does, each after the prompt is back
+// type lines as the page does, each after the prompt is back; the output
+// of the last
 async function typeLines(lines) {
+  let o = '';
   for (const l of lines) {
     send(l);
     await until(l.replace(/\r$/, ''), 60);
-    await until('\n>', 120);
+    o = await until('\n>', 120);
   }
+  return o;
+}
+
+// download as the page does: the bytes, or null
+async function download(name) {
+  const f = BBCLoad.fileSize(await typeLines([BBCLoad.sizeLine(name)]), name);
+  if (!f) return null;
+  const c = BBCLoad.copyOut(f.name, f.size, sdNext);
+  sdNext = c.next;
+  await typeLines([c.line]);
+  return M.r68kSdRead(c.offset, f.size);
 }
 
 async function main() {
@@ -110,6 +127,35 @@ async function main() {
   ok2 = (await until('\n>', 300)).includes('FOR...NEXT tests completed.');
   console.log(`${ok2 ? 'ok  ' : 'FAIL'}  two files uploaded together, CHAIN "FORTEST" (${((Date.now() - t1) / 1000).toFixed(1)} s)`);
   if (!ok2) failed++;
+  // downloads: a program SAVEd (FORTEST, CHAINed just now)
+  await typeLines(['SAVE "copy"\r']);
+  let got = await download('copy');
+  const orig = fs.readFileSync(path.join(testsDir, 'FORTEST.BBC'));
+  ok2 = got !== null && got.length > 3 && got.length <= orig.length &&
+    Buffer.from(got).equals(orig.subarray(0, got.length)) &&
+    got[got.length - 3] === 0 && got[got.length - 1] === 0xFF;
+  console.log(`${ok2 ? 'ok  ' : 'FAIL'}  SAVE "copy", download copy(.bbc): ${got ? got.length : 'no'} bytes, the program as loaded`);
+  if (!ok2) failed++;
+
+  // a binary file both ways
+  const bin = Buffer.alloc(40000);
+  for (let i = 0; i < bin.length; i++) bin[i] = (i * 7 + (i >> 8)) & 0xFF;
+  await typeLines(upload('data.bin', bin, false));
+  got = await download('data.bin');
+  ok2 = got !== null && Buffer.from(got).equals(bin);
+  console.log(`${ok2 ? 'ok  ' : 'FAIL'}  40000-byte binary file uploaded and downloaded: ${ok2 ? 'identical' : 'different'}`);
+  if (!ok2) failed++;
+
+  // *SPOOL output
+  await typeLines(['*SPOOL out.txt\r', 'PRINT "hello from the spool"\r', '*SPOOL\r']);
+  got = await download('out.txt');
+  ok2 = got !== null && Buffer.from(got).toString('latin1').includes('hello from the spool');
+  console.log(`${ok2 ? 'ok  ' : 'FAIL'}  *SPOOL out.txt downloaded (${got ? got.length : 'no'} bytes)`);
+  if (!ok2) failed++;
+  ok2 = (await download('nosuchfile')) === null;
+  console.log(`${ok2 ? 'ok  ' : 'FAIL'}  a missing file is reported`);
+  if (!ok2) failed++;
+
   console.log(failed ? `${failed} failed` : 'all ok');
   process.exit(failed ? 1 : 0);
 }

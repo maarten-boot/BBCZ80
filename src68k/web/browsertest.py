@@ -11,6 +11,8 @@ events as a user types them:
 * loads TESTS_DIR/FORTEST.BBC with the Load program button (its file
   input), types RUN and checks the result; then two files at once
   (EXITTEST.BBC, BYREFTST.BBC) and CHAINs one;
+* SAVEs it and downloads it with the Download button: the file the
+  browser saves is BYREFTST.BBC up to the program's end;
 * runs a timing loop at full speed and at 10 MHz; at 10 MHz it must take
   about as long as on the MAME rosco_m68k (3.67 s).
 The screen is read from xterm.js's rows in the page.
@@ -137,6 +139,28 @@ async def run(page_file, tests):
             await p.type('CHAIN "BYREFTST"\r')
             await p.wait('Byref tests completed.', 120)
             print('ok    Load program with two files (status "%s"), CHAIN "BYREFTST"' % st)
+
+            dl = tempfile.mkdtemp()
+            await p.call('Page.setDownloadBehavior', behavior='allow', downloadPath=dl)
+            await p.type('SAVE "mine"\r')
+            await asyncio.sleep(1)
+            await p.js("document.getElementById('dlname').value='mine';"
+                       "document.getElementById('download').click()")
+            st = await p.wait('downloaded', 60, where='status')
+            f = os.path.join(dl, 'mine.BBC')
+            for _ in range(50):
+                if os.path.exists(f):
+                    break
+                await asyncio.sleep(0.1)
+            got = open(f, 'rb').read() if os.path.exists(f) else b''
+            orig = open(os.path.join(tests, 'BYREFTST.BBC'), 'rb').read()
+            ok = len(got) > 3 and orig.startswith(got) and got.endswith(b'\xff')
+            print('%s  SAVE "mine", Download: %s (status "%s")'
+                  % ('ok  ' if ok else 'FAIL', 'mine.BBC, %d bytes, as loaded' % len(got)
+                     if got else 'no file', st))
+            failed += not ok
+            shutil.rmtree(dl, ignore_errors=True)
+            await p.js("document.querySelector('.xterm-helper-textarea').focus()")
 
             loop = 'T%=TIME:FOR I%=1 TO 20000:NEXT:PRINT "loop ";TIME-T%\r'
 

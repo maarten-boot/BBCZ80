@@ -11,10 +11,13 @@
 // branch to itself, 60FE, and the DUART has nothing pending); the next
 // frame then comes with the timer interrupt (EM_TIMING_SETTIMEOUT).
 // r68k_speed(mhz) holds the speed down to mhz (0: as fast as possible),
-// with frames every LIMIT_MS.
+// with frames every LIMIT_MS.  Each frame also flushes the SD card's
+// stream (main.cpp's ifs), so that the page sees what Minix wrote to the
+// card (pre.js r68kSdRead) by the time it sees the output that follows.
 //
 
 #include <emscripten.h>
+#include <fstream>
 #include "musashi/m68k.h"
 #include "AddressDecoder.h"
 
@@ -34,6 +37,7 @@ extern "C" {
     extern bool r68k_duart_idle;
     extern double r68k_duart_wait;
     void r68k_flush();
+    extern std::fstream ifs;		// the SD card (main.cpp)
 }
 
 static double mhz;		// 0: as fast as possible
@@ -70,6 +74,7 @@ static void frame() {
         }
         if ((n & 7) == 7 && emscripten_get_now() - start > SLICE_MS) break;
     }
+    ifs.flush();
     r68k_flush();
     if (wait)
         emscripten_set_main_loop_timing(EM_TIMING_SETTIMEOUT, wait);

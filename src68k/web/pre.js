@@ -19,3 +19,10 @@ Module.r68kSdWrite = function (offset, bytes) {
   FS.write(s, bytes, 0, bytes.length, offset);
   FS.close(s);
 };
+// read len bytes at offset (a Uint8Array): what Minix wrote to the card
+Module.r68kSdRead = function (offset, len) {
+  var s = FS.open('/rosco_sd.bin', 'r'), b = new Uint8Array(len);
+  var n = FS.read(s, b, 0, len, offset);
+  FS.close(s);
+  return n === len ? b : b.subarray(0, n);
+};

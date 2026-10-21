@@ -60,9 +60,9 @@
   });
 
   // type lines at the > prompt, each when the prompt is back (loader.js
-  // says why); then done()
+  // says why); then done(the output of each line)
   function typeLines(lines, what, done) {
-    var i = 0, total = lines.length;
+    var i = 0, total = lines.length, outs = [];
     stopBtn.hidden = false;
     clearInterval(typing);
     lineOut = '';
@@ -72,6 +72,7 @@
         status(what + ' (' + (i + 1) + '/' + total + ')', true);
         return;
       }
+      outs.push(lineOut);
       if (++i < total) {
         lineOut = '';
         send(lines[i]);
@@ -81,14 +82,15 @@
       typing = null;
       lineOut = null;
       stopBtn.hidden = true;
-      done();
+      done(outs);
     }, 50);
     term.focus();
   }
 
   // Load program: the files go to the SD card, dd copies them into BASIC's
-  // directory (loader.js); one file is loaded too (LOAD, or NEW and *EXEC
-  // for a listing), several are left for CHAIN or LOAD.
+  // directory (loader.js); one program is loaded too (LOAD, or NEW and
+  // *EXEC for a listing); several files, or one that is not a program,
+  // are copied as they are, for CHAIN, LOAD or OPENIN.
   function loadFiles(list) {
     var files = Array.prototype.slice.call(list);	// (the input is cleared)
     if (!M || !files.length) return;
@@ -106,7 +108,7 @@
   function copyFiles(ups) {
     var lines = [], names = [];
     ups.forEach(function (u) {
-      var up = BBCLoad.upload(u.file.name, u.bytes, BBC_TOKENS, sdNext);
+      var up = BBCLoad.upload(u.file.name, u.bytes, BBC_TOKENS, sdNext, ups.length === 1);
       up.writes.forEach(function (w) { M.r68kSdWrite(w.offset, w.bytes); });
       sdNext = up.next;
       lines = lines.concat(up.copy);
@@ -118,9 +120,42 @@
     typeLines(lines, 'Copying ' + names.join(', '), function () {
       if (!one) status(names.length + ' files copied: ' + names.join(', ') + '; CHAIN or LOAD them');
       else if (one.tokenised) status(one.name + ' loaded (' + one.size + ' bytes); type RUN');
-      else status(one.name + ' (a listing) being read in by *EXEC; then type RUN');
+      else if (one.listing) status(one.name + ' (a listing) being read in by *EXEC; then type RUN');
+      else status(one.name + ' copied (' + one.size + ' bytes; not a program)');
     });
   }
+
+  // Download: wc -c finds the file and its size, dd copies it to the SD
+  // card (and sync), the page reads it from there and saves it
+  var dlName = document.getElementById('dlname');
+  function download() {
+    var name = dlName.value;
+    if (!M || !name.trim() || typing) return;
+    typeLines([BBCLoad.sizeLine(name)], 'Finding ' + name, function (outs) {
+      var f = BBCLoad.fileSize(outs[0], name);
+      if (!f) {
+        status(name + ': no such file in BASIC\'s directory');
+        return;
+      }
+      var c = BBCLoad.copyOut(f.name, f.size, sdNext);
+      sdNext = c.next;
+      typeLines([c.line], 'Copying ' + f.name, function () {
+        var bytes = M.r68kSdRead(c.offset, f.size);
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+        a.download = f.name.replace(/^.*\//, '');
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
+        status(f.name + ': ' + bytes.length + ' bytes downloaded');
+      });
+    });
+  }
+  document.getElementById('download').addEventListener('click', download);
+  dlName.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') download();
+  });
 
   document.getElementById('file').addEventListener('change', function (e) {
     loadFiles(e.target.files);

@@ -7,8 +7,10 @@
 //
 // upload() puts a file into Minix by way of the emulated SD card: the page
 // writes the bytes to the card image, and the lines it returns copy them
-// into a file with dd and load it (a listing through *EXEC, so BASIC
-// reads it at full speed).  They are typed one at a time, each after the
+// into a file with dd and, for a program, load it (a listing through
+// *EXEC, so BASIC reads it at full speed).  Downloads go the other way:
+// sizeLine()/fileSize() find the file, copyOut() copies it to the card
+// with dd, and the page reads it from the card image.  They are typed one at a time, each after the
 // > prompt is back: keys typed while a *command runs reach the terminal
 // in cooked mode, where Return becomes LF, which BASIC's editor takes as
 // cursor left.  programLines() and keys() turn a program into
@@ -129,21 +131,36 @@ var BBCLoad = (function () {
   var GAP = 256 * 1024;		// between uploads, beyond Minix's read-ahead
   var LINE = 230;		// longest *command line typed
 
+  // is this a listing to load as a program?  A text file named .bas or
+  // .txt, or without an extension
+  function isListing(name, bytes) {
+    if (!/(\.(bas|txt)|^[^.]*)$/i.test(name.replace(/^.*[\\/]/, ''))) return false;
+    for (var i = 0; i < bytes.length; i++) {
+      var c = bytes[i];
+      if (c < 32 && c !== 9 && c !== 10 && c !== 13 && c !== 26) return false;
+    }
+    return bytes.length > 0;
+  }
+
   // An upload of the file name/bytes to the card from offset next on:
-  // {name, tokenised, size, writes: [{offset, bytes}], copy: the lines
-  // (with CR) that copy it into the current directory, load: the lines
-  // that load it, next}.
+  // {name, tokenised, listing, size, writes: [{offset, bytes}], copy: the
+  // lines (with CR) that copy it into the current directory, load: the
+  // lines that load it, next}.  With program, a tokenised file is LOADed
+  // and a listing (numbered if need be) read in with NEW and *EXEC;
+  // otherwise the file is copied as it is (data files, several programs).
   // Each part of the file goes at a multiple of its size, so that one dd
   // (bs=size skip=k count=1) reads it; a new upload never reuses card
   // blocks, which Minix may still have in its cache.
-  function upload(name, bytes, tokens, next) {
+  function upload(name, bytes, tokens, next, program) {
     var tok = isTokenised(bytes), data = bytes, i;
-    if (!tok) {
+    var listing = program && !tok && isListing(name, bytes);
+    if (listing) {
       var text = textLines(BBCLoad.latin1(bytes)).join('\r') + '\r';
       data = new Uint8Array(text.length);
       for (i = 0; i < text.length; i++) data[i] = text.charCodeAt(i) & 0xFF;
     }
-    var n = minixName(name, tok ? '.bbc' : '.bas'), writes = [], parts = [];
+    var n = minixName(name, tok ? '.bbc' : listing ? '.bas' : '');
+    var writes = [], parts = [];
     for (var p = 0; p < data.length; p += CHUNK) {
       var c = Math.min(CHUNK, data.length - p), k = Math.ceil(next / c);
       writes.push({ offset: k * c, bytes: data.subarray(p, p + c) });
@@ -166,9 +183,51 @@ var BBCLoad = (function () {
     if (group.length) flushGroup();
     else copy = ['*>' + n + '\r'];
     return {
-      name: n, tokenised: tok, size: data.length, writes: writes, copy: copy,
-      load: tok ? ['LOAD "' + n + '"\r'] : ['NEW\r', '*EXEC ' + n + '\r'],
+      name: n, tokenised: tok, listing: listing, size: data.length,
+      writes: writes, copy: copy,
+      load: !program ? [] : tok ? ['LOAD "' + n + '"\r'] :
+        listing ? ['NEW\r', '*EXEC ' + n + '\r'] : [],
       next: next + GAP
+    };
+  }
+
+  // Downloads.  A name for the shell: letters, digits and . _ - /
+  function shellName(name) {
+    return name.trim().replace(/^"|"$/g, '').replace(/[^A-Za-z0-9._\/-]/g, '');
+  }
+
+  // the names a download looks for: a name without an extension also as
+  // name.bbc and name.BBC (SAVE adds .bbc if that file exists, else .BBC)
+  function downloadNames(name) {
+    var n = shellName(name);
+    return /\.[^\/]*$/.test(n) ? [n] : [n, n + '.bbc', n + '.BBC'];
+  }
+
+  // the line that shows the size of name (wc -c)
+  function sizeLine(name) {
+    return '*wc -c ' + downloadNames(name).join(' ') + ' 2>/dev/null\r';
+  }
+
+  // the file and its size in the output of sizeLine: {name, size} or null
+  function fileSize(output, name) {
+    var names = downloadNames(name);
+    for (var i = 0; i < names.length; i++) {
+      var re = new RegExp('^\\s*(\\d+)\\s+' + names[i].replace(/[.\/]/g, '\\$&') + '\\s*\r?$', 'm');
+      var m = re.exec(output);
+      if (m) return { name: names[i], size: +m[1] };
+    }
+    return null;
+  }
+
+  // the line that copies name (size bytes) to the card at offset (and
+  // sync, so that it is on the card, not in Minix's cache): {line,
+  // offset, next}
+  function copyOut(name, size, next) {
+    var k = Math.ceil(next / CHUNK);
+    return {
+      line: '*dd if=' + name + ' of=/dev/c0d0 bs=' + CHUNK + ' seek=' + k + ' 2>/dev/null; sync\r',
+      offset: k * CHUNK,
+      next: (k + Math.ceil(size / CHUNK)) * CHUNK + GAP
     };
   }
 
@@ -183,7 +242,8 @@ var BBCLoad = (function () {
   return {
     tokenTable: tokenTable, isTokenised: isTokenised, detokenise: detokenise,
     textLines: textLines, programLines: programLines, keys: keys,
-    upload: upload, latin1: latin1
+    upload: upload, latin1: latin1, isListing: isListing,
+    sizeLine: sizeLine, fileSize: fileSize, copyOut: copyOut
   };
 })();
 
