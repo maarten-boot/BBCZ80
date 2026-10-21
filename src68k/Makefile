@@ -87,4 +87,9 @@ mamecheck:	bbcbasic test/mathtest
 clean:
 	rm -f *.o test/*.o $(TESTS) bbcbasic test/cpu020
 
-.PHONY:	all check oscheck bascheck asmcheck mamecheck install clean
+# the stand-alone demo: build/demo/bbc68k-demo.tar.gz (demo/README.txt);
+# booted and run once by --test
+demo:	bbcbasic
+	python3 tools/mkdemo.py --test
+
+.PHONY:	all check oscheck bascheck asmcheck mamecheck install demo clean

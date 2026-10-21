@@ -623,3 +623,57 @@ The plan:
 
 The result is static files of a few MB that can be hosted anywhere,
 e.g. on R.T. Russell's site.
+
+## Entry 24 — 2026-10-21
+
+### User requests
+> ok, start with the r68k tarball
+
+Mid-turn questions:
+> could that be hosted on a local pc and run without internet ?
+> can the web hosted comp running bbc basic load external bbc basic files ?
+> or should we also make a docker image available
+
+Answered:
+* yes, everything runs offline;
+* loading files in the web version: see the reply;
+* Docker: recommended, see the reply.
+
+### Actions taken
+* **`src68k/demo/`:**
+  * `demo.sh`;
+  * `README.txt`;
+  * `etc/demo`: the console runs BBC BASIC with the menu, without a
+    login; `*BYE` drops to a shell, and `exit` brings the demo back;
+  * `etc/ttytab`: the console only; a getty on tty00 would show on the
+    same r68k output;
+  * six programs (mandel, sieve, hanoi, life, asm, queens) and a menu.
+* **`tools/mkdemo.py`** (`make demo`) builds
+  `build/demo/bbc68k-demo.tar.gz`, about 1.2 MB:
+  * the programs are tokenised by the Z80 BBC BASIC under RunCPM and
+    saved as `/usr/demo/*.bbc` (the texts are also there as `*.bas`);
+  * the RAM-disk root is in ROSCODE1.BIN;
+  * r68k is built from its tracked sources with -O2 and linked
+    statically. The checkout's own build has no -O; -O2 is about 14×
+    faster;
+  * the firmware and the licence files are included;
+  * `--test` boots the demo, runs every program from the menu and sends
+    a lone Escape during life.
+* **Test harness fix:** r68k makes its stdin O_NONBLOCK. With stdin and
+  stdout on the same pty open file, output was lost once the pty was
+  full. `demo.sh` and the test give r68k its own open of the tty as
+  stdin.
+* **Lone ESC (the user chose the kernel fix):** in the Minix tree,
+  `kernel/roscons.c` now times out a held-back ESC (or ESC O) after 3
+  ticks:
+  * `kb_timer` wakes the TTY task;
+  * `rs_read` (`roscrs232.c`) calls `cons_esc_timeout` after the
+    buffered characters.
+
+  Checks:
+  * PF1 (ESC O P) still dumps the process table;
+  * Escape stops life;
+  * bascheck passes (0 of 24 failed).
+
+  The kernel was rebuilt (`boot/image.bin`). The Minix change is not
+  committed, and `build/mame/image-115200.bin` was not rebuilt.

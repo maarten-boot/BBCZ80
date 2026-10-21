@@ -1,0 +1,16 @@
+# /etc/demo - the console of the BBC BASIC demo (src68k/demo).
+# INIT runs it instead of getty, with no environment; when it ends, INIT
+# starts it again.
+
+PATH=/bin:/usr/bin
+HOME=/usr/demo
+TERM=vt100
+export PATH HOME TERM
+cd $HOME
+bbcbasic menu
+echo
+echo "You have left BBC BASIC.  This is the Minix shell:"
+echo "  bbcbasic      start BBC BASIC again"
+echo "  ls, cat ...   look around (the demo programs are in /usr/demo)"
+echo "  exit          back to the demo menu"
+exec sh

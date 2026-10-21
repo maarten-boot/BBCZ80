@@ -1,0 +1,7 @@
+# /etc/ttytab - terminals of the BBC BASIC demo (src68k/demo).
+#
+# name		type	getty			init
+# The console starts the demo (/etc/demo) instead of getty: BBC BASIC
+# with the menu, without a login.  tty00 (DUART channel B) has no getty:
+# r68k shows its output on the console too.
+console		vt100	"sh /etc/demo"
