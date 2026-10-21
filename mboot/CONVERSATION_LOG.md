@@ -704,3 +704,27 @@ Answered: yes. All 8 upstream programs in `tests/` are in bascheck as
 * **`demo.sh`** now refuses to start without a terminal (`docker run -it`
   is needed). The README has the Docker commands.
 * **arm64:** not tested; this host has no qemu binfmt.
+
+## Entry 26 — 2026-10-21
+
+### User requests
+> yes, commit the kernel fix and rebuild the MAME image
+
+Mid-turn:
+> make me a patch also for the kernel fix
+
+### Actions taken
+* **MAME image:** rebuilt `build/mame/image-115200.bin` with the fix
+  (`make CONSBAUD=115200`), then rebuilt the tree's default 38400 image.
+* **Tested on MAME** with a scratch copy of `mamesession.py` that has a
+  `sendraw` step:
+  * PF1 (ESC O P) prints the process table;
+  * a lone ESC during `REPEAT ... UNTIL FALSE` gives "Escape at line 10";
+  * bascheck t14core passes.
+* **Minix tree:** committed `107f0d0` "rosco_m68k: pass a lone ESC on
+  after a timeout" on `rosco-m68k`, 1 ahead of origin. The commit also
+  updates the port spec's `roscons.c` row and adds a log entry to
+  `ROSCO_M68K_CONVERSATION_LOG.md`.
+* **Patch:** `mboot/patches/minix-0001-lone-esc-timeout.patch`, also in
+  `/home/mboot/vibe/push-bundle-2026-10-21/` with a git bundle. `git am`
+  on `origin/rosco-m68k` gives the same tree as the commit.
