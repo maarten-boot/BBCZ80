@@ -572,3 +572,27 @@ Made `/home/mboot/vibe/push-bundle-2026-10-20/` and a `.tar.gz` of it:
 
 Checked: the bundles clone, and the patch series reproduce the same
 trees.
+
+## Entry 22 — 2026-10-21
+
+### User question
+> i have a request to demonstrate the bbc basic interpreter. how can we
+> make a easy stand alone demo environment?
+
+### Answer (no work done yet)
+Options, lightest first:
+* **r68k tarball (recommended):** r68k is an interactive console
+  emulator already (raw terminal on stdin/stdout). A demo needs only
+  the r68k binary (~1 MB, static link for portability),
+  `firmware/rosco_m68k.rom` and a ROSCODE1.BIN with the root file system
+  as a RAM disk (~0.8 MB, made by `mkrosco -x root.img`). That is about
+  2 MB in total, it boots in seconds and starts fresh every time. Add
+  demo programs and a start script that boots straight into BBC BASIC.
+  Note: r68k is not throttled, so it runs faster than a real 10 MHz board.
+* **Container of the same (for Mac/Windows):** the tarball in a small
+  image, run with `docker run -it`.
+* **MAME rosco-emulator image:** about 400 MB plus a 43 MB SD card. It
+  shows real 10 MHz timing and the real firmware, but boots slowly.
+* **Real rosco_m68k board:** write `rosco_sd.bin` to an SD card.
+* **Browser (future):** r68k compiled to WASM with xterm.js; the most
+  convenient for an audience, but the most work.
