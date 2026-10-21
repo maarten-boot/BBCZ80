@@ -823,3 +823,14 @@ Mid-turn:
 * **All tests pass:** bascheck 24/24, demo test, Node web test, browser
   test, ttycheck, the container image test, and on MAME (three bascheck
   suites, ESC, the speed).
+
+## Entry 29 — 2026-10-21
+
+### User request
+> make a tarball of the web page so I can send it
+
+### Actions taken
+Made `/home/mboot/vibe/bbc68k-web-2026-10-21.tar.gz` (606 KB, sha256
+8c315831…a9f5): `bbc68k-web/bbc68k.html` (the tested page, fd97f14) and a
+README.txt for the recipient (how to open it, Load program, keys,
+browsers, speed, what is not there yet).
