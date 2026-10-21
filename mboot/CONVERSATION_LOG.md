@@ -783,3 +783,43 @@ Mid-turn:
       a program runs.
 * Not done yet: a hosted copy, multi-file (non-SINGLE_FILE) variant,
   saving programs from the page.
+
+## Entry 28 — 2026-10-21
+
+### User request
+> fix the escape polling, option 2; the demo will be for Mr Russel mainly
+> to test the basic implementation, downloading is less important
+> currently , efficient uploading is more urgent in this test.
+
+### Actions taken
+* **ESCape by signal** (`osl.c`, see PORT_PLAN §18):
+  * terminal mode 4 while a program runs: ISIG with VINTR=ESC (off with
+    `*ESC OFF`), NOFLSH, IXON;
+  * a SIGINT handler (`sigaction`) sets the flag; `os_poll` only flushes
+    and keeps mode 4;
+  * `flush()` retries after EINTR.
+* **Scripts:** the SIGINT reaches the whole foreground process group, so
+  `demo/etc/demo` ignores it around bbcbasic (`trap '' 2`).
+* **Kernel bug found** (Minix tree `3b61801`): `do_sigreturn` lost the
+  interrupted code's condition codes. BASIC failed about one run in four;
+  after the fix 20 of 20 pass. MAME image rebuilt. Patch copy:
+  `mboot/patches/minix-0002-sigreturn-ccr.patch`.
+* **Speed** (20000 empty loops at a terminal): 10 MHz web 6.5 → 3.9 s;
+  MAME interactive 3.70 s (with input from a file it was 3.67).
+  Demo (r68k): the BASIC loop 0.72 → 0.49 s.
+* **`tools/ttycheck.py`** (`make ttycheck`): eleven checks on a pty, all
+  ok.
+* **Uploading** (web page):
+  * Load program writes files to an emulated SD card (`web/pre.js`:
+    `rosco_sd.bin` in memory, through r68k's firmware SD traps);
+  * typed `*dd` lines copy them into BASIC's directory (`dd` added to the
+    demo image), one line at a time after the prompt (typeahead during a
+    *command gets ICRNL: Return becomes LF = cursor left);
+  * one file is LOADed, or NEW + `*EXEC` for a listing; several files are
+    copied for CHAIN;
+  * 0.1–0.4 s per file (typing took 3–12 s);
+  * tested in Node (upstream tests, a listing, two files + CHAIN) and
+    Chromium (one and two files through the file input).
+* **All tests pass:** bascheck 24/24, demo test, Node web test, browser
+  test, ttycheck, the container image test, and on MAME (three bascheck
+  suites, ESC, the speed).

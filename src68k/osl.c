@@ -54,11 +54,11 @@ void os_bye(void);
 void os_bput(int ch, int b);
 
 unsigned char os_flags;
-unsigned char os_inkey;			/* key read ahead by os_poll */
+unsigned char os_inkey;			/* key read ahead by getkey (after ESC) */
 
 static int istty;			/* stdin is a terminal */
-static struct termios oldtio, rawtio;
-static int rawmode;			/* 0 cooked, 1 raw (VMIN 1), 2 poll */
+static struct termios oldtio, rawtio, runtio;
+static int rawmode;			/* setmode's mode; -1: set it again */
 static unsigned char optval;		/* *OPT */
 static int column;			/* for POS */
 static char *edptr;			/* EDIT capture pointer */
@@ -84,14 +84,28 @@ static struct chan chans[CH_SPOOL + 1];
 
 static void flush(void)
 {
-	if (olen > 0) {
-		write(1, obuf, olen);
-		olen = 0;
+	int i = 0, n;
+
+	while (i < olen) {		/* (ESCape can interrupt the write) */
+		n = write(1, obuf + i, olen - i);
+		if (n > 0)
+			i += n;
+		else if (n < 0 && errno == EINTR)
+			continue;
+		else
+			break;
 	}
+	olen = 0;
 }
 
 /* Terminal mode: 0 cooked (as found), 1 raw blocking, 2 raw polling,
- * 3 raw with VTIME = tenths of a second.
+ * 3 raw with VTIME = tenths of a second, 4 running a program.
+ * Mode 4 is raw but lets the terminal driver watch for ESCape: ESC is the
+ * interrupt character (ISIG, VINTR; not with *ESC OFF), whose SIGINT sets
+ * the ESCape flag (sigesc), so the ESCape test needs no system call (see
+ * os_poll).  NOFLSH keeps the typeahead and the output; IXON lets ^S/^Q
+ * stop and start the output.  The modes that read keys have ISIG off:
+ * there ESC is a key as before.
  */
 static void setmode(int m, int tenths)
 {
@@ -99,6 +113,16 @@ static void setmode(int m, int tenths)
 		return;
 	if (m == 0) {
 		tcsetattr(0, TCSANOW, &oldtio);
+	} else if (m == 4) {
+		runtio = rawtio;
+		runtio.c_lflag |= ISIG | NOFLSH;
+		runtio.c_iflag |= IXON;
+		runtio.c_cc[VINTR] = (os_flags & F_NOESC) ? _POSIX_VDISABLE : ESC;
+		runtio.c_cc[VQUIT] = _POSIX_VDISABLE;
+		runtio.c_cc[VSUSP] = _POSIX_VDISABLE;
+		runtio.c_cc[VMIN] = 1;
+		runtio.c_cc[VTIME] = 0;
+		tcsetattr(0, TCSANOW, &runtio);
 	} else {
 		rawtio.c_cc[VMIN] = (m == 1) ? 1 : 0;
 		rawtio.c_cc[VTIME] = (m == 3) ? tenths : 0;
@@ -131,6 +155,12 @@ static void setesc(void)
 		os_flags |= F_ESC;
 }
 
+/* SIGINT: ESC while a program runs (setmode 4) */
+static void sigesc(int sig)
+{
+	setesc();
+}
+
 /* out - send a character to the console (and the *SPOOL file) */
 static void out(int c)
 {
@@ -156,27 +186,15 @@ static void out(int c)
 	}
 }
 
-/* os_poll - TEST: sample for ESCape (and keep a key for OSKEY) */
+/* os_poll - TEST (every 20th TRAP): flush the output and, on a terminal,
+ * leave it in mode 4, where ESC raises SIGINT and sigesc sets the ESCape
+ * flag that TRAP tests.  (Reading the keyboard here, as the CP/M version
+ * does, took a system call each time: about 40% of the time of a loop.)
+ */
 void os_poll(void)
 {
-	int c;
-
 	flush();
-	if (!istty)
-		return;
-	if (os_inkey != 0)
-		return;
-	c = readkey(2, 0);
-	if (c < 0)
-		return;
-	if (c == ('S' & 0x1f)) {		/* pause display */
-		readkey(1, 0);
-		return;
-	}
-	if (c == ESC)
-		setesc();
-	else
-		os_inkey = c;
+	setmode(4, 0);
 }
 
 void os_wrch(int c)
@@ -946,20 +964,21 @@ static void cmd_era(char *s)
 static void cmd_esc(char *s)
 {
 	s = skipsp(s);
-	if (upper(s[0]) == 'O' && upper(s[1]) == 'N') {
+	if (upper(s[0]) == 'O' && upper(s[1]) == 'N')
 		os_flags &= ~F_NOESC;
-		return;
-	}
-	if (upper(s[0]) == 'O' && upper(s[1]) == 'F' && upper(s[2]) == 'F') {
+	else if (upper(s[0]) == 'O' && upper(s[1]) == 'F'
+	    && upper(s[2]) == 'F')
 		os_flags |= F_NOESC;
-		return;
+	else {
+		if (upper(s[0]) == 'O')		/* *ESC O n, as CP/M */
+			s++;
+		if (hexarg(&s))
+			os_flags |= F_NOESC;
+		else
+			os_flags &= ~F_NOESC;
 	}
-	if (upper(s[0]) == 'O')			/* *ESC O n, as CP/M */
-		s++;
-	if (hexarg(&s))
-		os_flags |= F_NOESC;
-	else
-		os_flags &= ~F_NOESC;
+	if (rawmode == 4)			/* (VINTR depends on it) */
+		rawmode = -1;
 }
 
 static void spoolexec(char *s, int ch, int flag)
@@ -1140,6 +1159,7 @@ static void sigquit(int sig)
 int os_init(int argc, char **argv)
 {
 	int ch;
+	struct sigaction sa;
 
 	for (ch = 0; ch <= CH_SPOOL; ch++)
 		chans[ch].fd = -1;
@@ -1155,6 +1175,10 @@ int os_init(int argc, char **argv)
 		rawtio.c_oflag &= ~OPOST;		/* BASIC sends CR LF */
 		rawmode = 0;
 		setmode(1, 0);
+		sa.sa_handler = sigesc;		/* ESC in mode 4 */
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = 0;
+		sigaction(SIGINT, &sa, (struct sigaction *) 0);
 	}
 	signal(SIGTERM, sigquit);
 	signal(SIGHUP, sigquit);

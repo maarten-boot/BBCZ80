@@ -236,7 +236,9 @@ def main():
                    if f.endswith('.bas'))
     tokenise(progs, progdir)
     files = [('/etc/demo', 644, os.path.join(DEMO, 'etc', 'demo')),
-             ('/usr/bin/bbcbasic', 755, os.path.join(SRC, 'bbcbasic'))]
+             ('/usr/bin/bbcbasic', 755, os.path.join(SRC, 'bbcbasic')),
+             # for the web page's uploads from its SD card (web/loader.js)
+             ('/bin/dd', 755, os.path.join(rosco, 'cmds', 'bin', 'dd'))]
     for n in progs:
         files.append(('/usr/demo/%s.bbc' % n, 644,
                       os.path.join(progdir, n + '.bbc')))

@@ -1,8 +1,11 @@
 // The test of the web version (tools/mkweb.py --test), in Node:
 //	node test.js R68K_JS TOKENS_JSON TESTS_DIR REF_DIR
-// Boots the emulator, runs the asm demo from the menu, then types the
-// upstream test programs (TESTS_DIR/*.BBC) in through loader.js, runs them
-// and compares their output with the bascheck references (REF_DIR/u_*.ref).
+// Boots the emulator and runs the asm demo from the menu.  Then, as the
+// page's Load program does (loader.js upload: the SD card and dd):
+// * the upstream test programs (TESTS_DIR/*.BBC), each loaded, run and
+//   compared with its bascheck reference (REF_DIR/u_*.ref);
+// * a text listing (the demo's sieve.bas), read in with *EXEC and run;
+// * two files at once, the second CHAINed.
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -13,7 +16,7 @@ const tokens = BBCLoad.tokenTable(JSON.parse(fs.readFileSync(tokensJson)));
 // the programs that run on their own (bascheck's u_*.in: CHAIN "NAME")
 const PROGRAMS = ['BYREFTST', 'EXITTEST', 'FORTEST', 'INT32TST', 'SLICETST'];
 
-let out = '', mark = 0, M;
+let out = '', mark = 0, M, sdNext = 1 << 20;
 const t0 = Date.now();
 
 function send(s) {
@@ -39,6 +42,23 @@ function until(text, secs) {
 
 function secs() { return ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }
 
+// upload as the page does: the lines that copy (and with load, load) it
+function upload(name, bytes, load) {
+  const up = BBCLoad.upload(name, bytes, tokens, sdNext);
+  for (const w of up.writes) M.r68kSdWrite(w.offset, w.bytes);
+  sdNext = up.next;
+  return up.copy.concat(load ? up.load : []);
+}
+
+// type lines as the page does, each after the prompt is back
+async function typeLines(lines) {
+  for (const l of lines) {
+    send(l);
+    await until(l.replace(/\r$/, ''), 60);
+    await until('\n>', 120);
+  }
+}
+
 async function main() {
   M = await require(path.resolve(r68kJs))({
     r68kOutput: (b) => { out += Buffer.from(b).toString('latin1'); },
@@ -54,18 +74,42 @@ async function main() {
   await until('\n>', 30);
 
   for (const name of PROGRAMS) {
-    const lines = BBCLoad.programLines(fs.readFileSync(path.join(testsDir, name + '.BBC')), tokens);
-    send(BBCLoad.keys(lines) + 'RUN\r');
-    await until('\n>RUN', 600);
+    const t1 = Date.now();
+    await typeLines(upload(name + '.BBC', fs.readFileSync(path.join(testsDir, name + '.BBC')), true));
+    const up = (Date.now() - t1) / 1000;
+    send('RUN\r');
+    await until('RUN\r', 60);
     const got = (await until('\n>', 600)).replace(/\r/g, '').replace(/^\n/, '').replace(/>$/, '');
     const ref = fs.readFileSync(path.join(refDir, 'u_' + name.toLowerCase() + '.ref'), 'latin1');
     const same = got.trim() === ref.replace(/\r/g, '').trim();
-    console.log(`${same ? 'ok  ' : 'FAIL'}  ${name}: ${lines.length} lines typed in and run (${secs()})`);
+    console.log(`${same ? 'ok  ' : 'FAIL'}  ${name}: uploaded and loaded in ${up.toFixed(1)} s, run (${secs()})`);
     if (!same) {
       failed++;
       console.log('--- got\n' + got + '\n--- expected\n' + ref);
     }
   }
+
+  // a listing: NEW and *EXEC, then RUN (Return at its INPUT)
+  let t1 = Date.now();
+  await typeLines(upload('sieve.bas', fs.readFileSync(path.join(path.dirname(__filename), '..', 'demo', 'progs', 'sieve.bas')), true));
+  await until('250 ENDPROC', 60);
+  await until('\n>', 60);
+  const ex = (Date.now() - t1) / 1000;
+  send('RUN\r');
+  await until('?', 60);
+  send('\r');
+  let ok2 = (await until('\n>', 120)).includes('There are 5133 primes up to 50000');
+  console.log(`${ok2 ? 'ok  ' : 'FAIL'}  a listing (sieve.bas): uploaded and *EXECed in ${ex.toFixed(1)} s, run`);
+  if (!ok2) failed++;
+
+  // two files, then CHAIN the second
+  t1 = Date.now();
+  await typeLines(upload('EXITTEST.BBC', fs.readFileSync(path.join(testsDir, 'EXITTEST.BBC')), false).concat(
+                 upload('FORTEST.BBC', fs.readFileSync(path.join(testsDir, 'FORTEST.BBC')), false)));
+  send('CHAIN "FORTEST"\r');
+  ok2 = (await until('\n>', 300)).includes('FOR...NEXT tests completed.');
+  console.log(`${ok2 ? 'ok  ' : 'FAIL'}  two files uploaded together, CHAIN "FORTEST" (${((Date.now() - t1) / 1000).toFixed(1)} s)`);
+  if (!ok2) failed++;
   console.log(failed ? `${failed} failed` : 'all ok');
   process.exit(failed ? 1 : 0);
 }

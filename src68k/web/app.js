@@ -8,7 +8,9 @@
   var statusEl = document.getElementById('status');
   var stopBtn = document.getElementById('stop');
   var M = null;			// the emulator module, once it runs
-  var typing = null;		// timer while a program is typed in
+  var typing = null;		// timer while keys are typed in
+  var lineOut = null;		// output while typeLines waits for a prompt
+  var sdNext = 1 << 20;		// free space on the SD card (loader.js)
 
   var term = new Terminal({
     cols: COLS, rows: ROWS, scrollback: 0, cursorBlink: true,
@@ -33,14 +35,6 @@
     statusEl.classList.toggle('busy', !!busy);
   }
 
-  function latin1(bytes) {
-    var s = '';
-    for (var i = 0; i < bytes.length; i += 8192) {
-      s += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
-    }
-    return s;
-  }
-
   function send(text) {
     if (!M) return;
     for (var i = 0; i < text.length; i++) {
@@ -50,7 +44,11 @@
   }
 
   R68K({
-    r68kOutput: function (bytes) { term.write(latin1(bytes)); },
+    r68kOutput: function (bytes) {
+      var text = BBCLoad.latin1(bytes);
+      term.write(text);
+      if (lineOut !== null) lineOut += text;
+    },
     printErr: function (s) { console.warn(s); }
   }).then(function (mod) {
     M = mod;
@@ -61,49 +59,80 @@
     status('The emulator did not start: ' + e);
   });
 
-  // typing a program in: progress until the keys are taken
-  function typeIn(name, lines) {
-    if (!M) return;
-    if (!lines.length) {
-      status(name + ': no program found');
-      return;
-    }
-    send(BBCLoad.keys(lines));
-    var total = M._r68k_pending();
+  // type lines at the > prompt, each when the prompt is back (loader.js
+  // says why); then done()
+  function typeLines(lines, what, done) {
+    var i = 0, total = lines.length;
     stopBtn.hidden = false;
     clearInterval(typing);
+    lineOut = '';
+    send(lines[0]);
     typing = setInterval(function () {
-      var left = M._r68k_pending();
-      if (left === 0) {
-        clearInterval(typing);
-        typing = null;
-        stopBtn.hidden = true;
-        status(name + ': ' + lines.length + ' lines typed in; type RUN');
-      } else {
-        status('Typing ' + name + ': ' + Math.round(100 * (total - left) / total) + '%', true);
+      if (lineOut.indexOf('\n>') < 0 || M._r68k_pending()) {
+        status(what + ' (' + (i + 1) + '/' + total + ')', true);
+        return;
       }
-    }, 150);
+      if (++i < total) {
+        lineOut = '';
+        send(lines[i]);
+        return;
+      }
+      clearInterval(typing);
+      typing = null;
+      lineOut = null;
+      stopBtn.hidden = true;
+      done();
+    }, 50);
     term.focus();
   }
 
-  function loadFile(file) {
-    var r = new FileReader();
-    r.onload = function () {
-      typeIn(file.name, BBCLoad.programLines(new Uint8Array(r.result), BBC_TOKENS));
-    };
-    r.readAsArrayBuffer(file);
+  // Load program: the files go to the SD card, dd copies them into BASIC's
+  // directory (loader.js); one file is loaded too (LOAD, or NEW and *EXEC
+  // for a listing), several are left for CHAIN or LOAD.
+  function loadFiles(list) {
+    var files = Array.prototype.slice.call(list);	// (the input is cleared)
+    if (!M || !files.length) return;
+    var done = 0, ups = [];
+    files.forEach(function (file, i) {
+      var r = new FileReader();
+      r.onload = function () {
+        ups[i] = { file: file, bytes: new Uint8Array(r.result) };
+        if (++done === files.length) copyFiles(ups);
+      };
+      r.readAsArrayBuffer(file);
+    });
+  }
+
+  function copyFiles(ups) {
+    var lines = [], names = [];
+    ups.forEach(function (u) {
+      var up = BBCLoad.upload(u.file.name, u.bytes, BBC_TOKENS, sdNext);
+      up.writes.forEach(function (w) { M.r68kSdWrite(w.offset, w.bytes); });
+      sdNext = up.next;
+      lines = lines.concat(up.copy);
+      names.push(up.name);
+      u.up = up;
+    });
+    var one = ups.length === 1 ? ups[0].up : null;
+    if (one) lines = lines.concat(one.load);
+    typeLines(lines, 'Copying ' + names.join(', '), function () {
+      if (!one) status(names.length + ' files copied: ' + names.join(', ') + '; CHAIN or LOAD them');
+      else if (one.tokenised) status(one.name + ' loaded (' + one.size + ' bytes); type RUN');
+      else status(one.name + ' (a listing) being read in by *EXEC; then type RUN');
+    });
   }
 
   document.getElementById('file').addEventListener('change', function (e) {
-    if (e.target.files[0]) loadFile(e.target.files[0]);
+    loadFiles(e.target.files);
     e.target.value = '';
   });
   stopBtn.addEventListener('click', function () {
     if (M) M._r68k_drop();
     clearInterval(typing);
     typing = null;
+    lineOut = null;
     stopBtn.hidden = true;
-    status('Typing stopped');
+    status('Stopped');
     term.focus();
   });
   screenEl.addEventListener('dragover', function (e) {
@@ -114,7 +143,7 @@
   screenEl.addEventListener('drop', function (e) {
     e.preventDefault();
     screenEl.classList.remove('drop');
-    if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+    loadFiles(e.dataTransfer.files);
   });
 
   document.getElementById('speed').addEventListener('change', function (e) {

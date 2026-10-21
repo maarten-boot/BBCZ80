@@ -1,0 +1,71 @@
+From 3b61801bba161c59009c7d47097fcec27d4cd0d0 Mon Sep 17 00:00:00 2001
+From: mboot <mboot@deb-gui-usa.rl.lan>
+Date: Wed, 21 Oct 2026 07:37:19 -0400
+Subject: [PATCH] rosco_m68k: sigreturn restores the condition codes
+
+do_sigreturn() took the whole status register from the process at the
+sigreturn call, so the interrupted code went on with the signal handler's
+condition codes: a signal between a compare and its branch changed the
+branch.  On the M68000 the user byte (X N Z V C) now comes from the
+sigcontext; the supervisor byte stays protected.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ ROSCO_M68K_CONVERSATION_LOG.md | 23 +++++++++++++++++++++++
+ src/kernel/system.c            |  8 ++++++++
+ 2 files changed, 31 insertions(+)
+
+diff --git a/ROSCO_M68K_CONVERSATION_LOG.md b/ROSCO_M68K_CONVERSATION_LOG.md
+index b159db6..12ad9c5 100644
+--- a/ROSCO_M68K_CONVERSATION_LOG.md
++++ b/ROSCO_M68K_CONVERSATION_LOG.md
+@@ -1478,3 +1478,26 @@ Not committed yet.
+   * MAME (CONSBAUD=115200): PF1, then Escape in a running
+     `REPEAT ... UNTIL FALSE`, gives "Escape at line 10".
+ * Rebuilt: the default `boot/image.bin` (38400).
++
++## sigreturn keeps the condition codes (2026-10-21)
++
++* **Problem** (found by the BBC BASIC port, whose ESCape is now a SIGINT
++  from the console):
++  * `do_sigreturn()` (system.c) restored every register from the
++    sigcontext except the status register. It took that from the process
++    as it was at the sigreturn call (`sc.sc_psw = rp->p_reg.psw`, there
++    so that a user cannot set supervisor bits).
++  * So the interrupted code resumed with the condition codes of the
++    signal handler's exit, not its own. A signal between a compare and
++    its branch changed where the branch went.
++  * BBC BASIC failed about one run in four (Syntax error, lost state); C
++    code compiled by ACK or gcc is exposed to it the same way.
++* **Fix (M68000):** the supervisor byte stays as it is; the user's X N Z
++  V C come from the sigcontext:
++  `sc.sc_psw = (rp->p_reg.psw & ~0x1F) | (sc.sc_psw & 0x1F)`.
++* **Tested** with the port's terminal test (ESCape signals during loops,
++  GET, INKEY with *ESC OFF, after *commands): 20 of 20 runs pass, against
++  about 3 of 4 before.
++* **Rebuilt:**
++  * the default `boot/image.bin` (38400);
++  * the MAME image (CONSBAUD=115200) in the BBCZ80 tree.
+diff --git a/src/kernel/system.c b/src/kernel/system.c
+index 6b9e99d..4fdc383 100644
+--- a/src/kernel/system.c
++++ b/src/kernel/system.c
+@@ -655,7 +655,15 @@ register message *m_ptr;
+ 	rp->p_reg.sp = sc.sc_sp;
+ 	return (OK);
+   }
++#if (CHIP == M68000)
++  /* The supervisor byte stays as it is, but the condition codes (X N Z V
++   * C) are the interrupted code's: a signal between a compare and its
++   * branch must not change where the branch goes.
++   */
++  sc.sc_psw  = (rp->p_reg.psw & ~0x1F) | (sc.sc_psw & 0x1F);
++#else
+   sc.sc_psw  = rp->p_reg.psw;
++#endif
+ 
+ #if (CHIP == INTEL)
+   /* Don't panic kernel if user gave bad selectors. */
+-- 
+2.47.3
+

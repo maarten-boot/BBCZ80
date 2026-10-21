@@ -270,7 +270,8 @@ little-endian; D3 = stub first, 68000 assembler in a later phase.
   line editor (control keys plus vt100 cursor keys, insert/overwrite,
   EDIT n → LIST capture).
 * **ESCape:** `*ESC ON/OFF`; TRAP samples the keyboard every 20th call;
-  piped (non-tty) input is read as plain lines.
+  piped (non-tty) input is read as plain lines. (Since §18 ESC raises a
+  SIGINT instead, and TRAP only flushes the output.)
 * **Files:** channels 1–7 with a 512-byte buffer each, exact
   PTR#/EXT#/EOF#, and the last-byte carry on BGET#. LOAD and SAVE.
 * **Commands:**
@@ -296,7 +297,7 @@ in a TRAP loop, and `*ESC OFF`), OSKEY timeout and keys, TIME and cursor.
   ESC O P/Q/R/S) holds back a lone ESC until the next key arrives, so
   BASIC's ESCape only takes effect at the next keypress on the console.
   To be decided: a kernel change (release the ESC after a short timeout),
-  or an extra escape key in BASIC.
+  or an extra escape key in BASIC. (Done in §18: the kernel timeout.)
 * **Alignment:** `.align 256` is not honoured in `.bss`.
 
 ## 11. Phase 4 (MAIN, EVAL, EXEC), 2026-10-20: first milestone reached
@@ -647,3 +648,48 @@ card):
 * bascheck: 24 of 24 suites match the Z80 (42 s);
 * asmcheck: 162 of 162;
 * mathcheck: 14801 vectors bit-exact (47 s).
+
+## 18. Demo, web version and ESCape by signal (2026-10-21)
+
+**Stand-alone demo** (`make demo`, `demo/`, `tools/mkdemo.py`):
+* r68k (-O2, static), its ROM and a ROSCODE1.BIN whose RAM-disk root
+  boots into BBC BASIC with a menu of six demo programs;
+* also as a container image (`mkdemo.py --docker`).
+
+**Web version** (`make web`, `web/README.md`): one self-contained page
+(1.9 MB) with r68k compiled to WebAssembly.
+* **Load program** copies files through an emulated SD card: the page
+  writes the card image, and typed `*dd` commands copy the bytes into
+  BASIC's directory. One file is LOADed (or read in with `*EXEC` for a
+  listing). Each file takes 0.1–0.4 s; typing a program in took 3–12 s.
+
+**Kernel (Minix tree):**
+* `roscons.c`: a lone ESC is passed on after 3 ticks.
+* `system.c` `do_sigreturn` (68000): the interrupted code's condition
+  codes are restored; before, they were those of the sigreturn call.
+  Found because BASIC failed about one run in four with ESCape by
+  signal: a signal between a compare and its branch.
+
+**ESCape by signal** (`osl.c`):
+* **Old cost:** with a terminal for input, the CP/M-style poll in TRAP
+  (a `read()` every 20th TRAP) took about 40% of the time of a loop on
+  Minix. With it, 20000 empty FOR loops took 6.5 s at 10 MHz, against
+  3.7 s on MAME with input from a file.
+* **Mode 4 ("running"):** raw, but ISIG with VINTR = ESC (disabled by
+  `*ESC OFF`), NOFLSH, and IXON (^S/^Q). `sigesc` sets the flag;
+  `os_poll` only flushes and keeps mode 4. The key-reading modes have
+  ISIG off, so ESC is a key there as before.
+* **Result:** 3.9 s at 10 MHz. On the demo: the BASIC loop 0.72 → 0.49 s,
+  sieve 2.83 → 1.98 s.
+* **Consequence:** the SIGINT goes to the whole foreground process
+  group. A shell script that runs bbcbasic must ignore it
+  (`trap '' 2`, as `demo/etc/demo` does); interactive shells survive.
+* **Test:** `tools/ttycheck.py` (`make ttycheck`) checks it on a pty:
+  * ESCape in a loop and at GET;
+  * typeahead;
+  * `*ESC OFF` with INKEY;
+  * ^S/^Q;
+  * the editor keys;
+  * after a `*` command;
+  * `*BYE` to the shell;
+  * an interactive shell.

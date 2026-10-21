@@ -10,7 +10,9 @@ compiled to WebAssembly by Emscripten (emcc on the PATH):
   (Duart.cpp: the page's terminal) and web/webmain.cpp in place of main()
   (main.cpp is compiled with its main renamed);
 * the boot image of the stand-alone demo (build/demo/bbc68k-demo/
-  ROSCODE1.BIN, make demo), embedded.
+  ROSCODE1.BIN, make demo), embedded;
+* web/pre.js: the SD card (rosco_sd.bin in memory) that uploads go
+  through.
 The keyword table for loading tokenised programs is taken from main.s.
 xterm.js (@xterm/xterm XTERM) is downloaded once to build/web/vendor.
 Everything is inlined (-sSINGLE_FILE), so the page works offline, also
@@ -18,8 +20,9 @@ opened as a file.
 
 --test builds a Node version too (build/web/node) and runs web/test.js:
 boot, the asm demo from the menu, and the upstream test programs (tests/)
-typed in through loader.js and run, compared with their bascheck
-references (test/bas/u_*.ref).  Then, if chromium and the Python
+uploaded through loader.js and run, compared with their bascheck
+references (test/bas/u_*.ref), a listing read in with *EXEC, and two files
+uploaded together and CHAINed.  Then, if chromium and the Python
 websockets module are there, web/browsertest.py tries the page itself in
 headless Chromium (keys, Escape, Load program, the speed setting).
 """
@@ -107,6 +110,7 @@ def compile_r68k(r68k):
 def link(objs, rom, out, env, single):
     os.makedirs(os.path.dirname(out), exist_ok=True)
     args = ['em++'] + LDFLAGS + objs + ['-o', out, '-sENVIRONMENT=' + env,
+            '--pre-js', os.path.join(WEB, 'pre.js'),
             '--embed-file', os.path.join(DEMO, 'ROSCODE1.BIN') + '@/ROSCODE1.BIN',
             '--embed-file', rom + '@/firmware/rosco_m68k.rom']
     if single:

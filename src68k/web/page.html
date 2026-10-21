@@ -87,8 +87,8 @@ footer pre { white-space: pre-wrap; font-size: 12px; background: var(--panel); p
   running under Minix 2.0.4 on an emulated rosco_m68k (68010) &mdash; all in this page, offline.</div>
 </header>
 <div class="bar">
-  <label class="btn" title="Type a program (.bbc or a text listing) into BASIC">Load program&hellip;
-    <input type="file" id="file" accept=".bbc,.bas,.txt,.BBC,.BAS,.TXT"></label>
+  <label class="btn" title="Copy programs (.bbc or text listings) to BASIC's directory; one is loaded">Load program&hellip;
+    <input type="file" id="file" multiple></label>
   <button id="stop" hidden>Stop typing</button>
   <select id="speed" title="Emulation speed">
     <option value="0">Full speed</option>
@@ -113,11 +113,20 @@ footer pre { white-space: pre-wrap; font-size: 12px; background: var(--panel); p
     <dt><code>*BYE</code></dt><dd>to the Minix shell; <code>exit</code> there brings the demo back</dd>
   </dl>
   <h2>Your own programs</h2>
-  <p><b>Load program</b> (or dropping a file on the screen) types a program into BASIC at the
-  <code>&gt;</code> prompt: a tokenised <code>.bbc</code> file of BBC BASIC for Z80, CP/M, Windows or SDL,
-  or a text listing (without line numbers it is numbered 10, 20, &hellip;). Then type <code>RUN</code>.
-  BBC Micro (Acorn) files are tokenised differently and are not understood; graphics and sound do
-  not exist on this text terminal. The disk is a RAM disk: everything is gone after Reset.</p>
+  <p><b>Load program</b> (or dropping files on the screen) copies files into BASIC's directory
+  (<code>/usr/demo</code>), through the emulated SD card and <code>dd</code>, so it takes a moment
+  whatever the size. Do it at the <code>&gt;</code> prompt.</p>
+  <ul>
+    <li><b>One file</b> is loaded too: a tokenised <code>.bbc</code> program of BBC BASIC for Z80,
+    CP/M, Windows or SDL with <code>LOAD</code>; a text listing with <code>NEW</code> and
+    <code>*EXEC</code> (without line numbers it is numbered 10, 20, &hellip;). Then type
+    <code>RUN</code>.</li>
+    <li><b>Several files</b> are only copied, for <code>CHAIN</code> or <code>LOAD</code>
+    (programs that chain each other, data files).</li>
+  </ul>
+  <p>File names keep letters, digits and <code>. _ -</code>, at most 14 characters. BBC Micro
+  (Acorn) files are tokenised differently and are not understood; graphics and sound do not exist
+  on this text terminal. The disk is a RAM disk: everything is gone after Reset.</p>
 </section>
 <main><div id="screen"></div></main>
 <footer>

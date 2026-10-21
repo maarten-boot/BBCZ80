@@ -9,8 +9,10 @@ events as a user types them:
 * runs the asm demo from the menu;
 * stops life with Escape;
 * loads TESTS_DIR/FORTEST.BBC with the Load program button (its file
-  input), types RUN and checks the result;
-* runs a timing loop at full speed and at 10 MHz.
+  input), types RUN and checks the result; then two files at once
+  (EXITTEST.BBC, BYREFTST.BBC) and CHAINs one;
+* runs a timing loop at full speed and at 10 MHz; at 10 MHz it must take
+  about as long as on the MAME rosco_m68k (3.67 s).
 The screen is read from xterm.js's rows in the page.
 """
 
@@ -117,12 +119,24 @@ async def run(page_file, tests):
             doc = await p.call('DOM.getDocument')
             node = await p.call('DOM.querySelector', nodeId=doc['root']['nodeId'],
                                 selector='#file')
+            t1 = time.time()
             await p.call('DOM.setFileInputFiles', nodeId=node['nodeId'],
                          files=[os.path.join(os.path.abspath(tests), 'FORTEST.BBC')])
-            st = await p.wait('typed in', 120, where='status')
+            st = await p.wait('loaded', 60, where='status')
+            t1 = time.time() - t1
             await p.type('RUN\r')
             s = await p.wait('FOR...NEXT tests completed.', 120)
-            print('ok    Load program: FORTEST.BBC (status "%s"), RUN completes' % st)
+            print('ok    Load program: FORTEST.BBC in %.1f s (status "%s"), RUN completes' % (t1, st))
+
+            await p.type('CLS\r')
+            await p.call('DOM.setFileInputFiles', nodeId=node['nodeId'],
+                         files=[os.path.join(os.path.abspath(tests), f)
+                                for f in ('EXITTEST.BBC', 'BYREFTST.BBC')])
+            st = await p.wait('files copied', 60, where='status')
+            await p.js("document.querySelector('.xterm-helper-textarea').focus()")
+            await p.type('CHAIN "BYREFTST"\r')
+            await p.wait('Byref tests completed.', 120)
+            print('ok    Load program with two files (status "%s"), CHAIN "BYREFTST"' % st)
 
             loop = 'T%=TIME:FOR I%=1 TO 20000:NEXT:PRINT "loop ";TIME-T%\r'
 
@@ -141,9 +155,9 @@ async def run(page_file, tests):
                        "s.dispatchEvent(new Event('change'))")
             await p.js("document.querySelector('.xterm-helper-textarea').focus()")
             slow = await timed()
-            ok = slow > fast
+            ok = slow > fast and 0.8 * 367 < slow < 1.25 * 367
             print('%s  speed: 20000 empty loops take %d cs at full speed, %d cs at 10 MHz'
-                  % ('ok  ' if ok else 'FAIL', fast, slow))
+                  ' (MAME: 367)' % ('ok  ' if ok else 'FAIL', fast, slow))
             failed += not ok
             await p.call('Page.captureScreenshot')
     except Exception as e:

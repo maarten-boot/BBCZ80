@@ -97,4 +97,9 @@ demo:	bbcbasic
 web:	demo
 	python3 tools/mkweb.py --test
 
-.PHONY:	all check oscheck bascheck asmcheck mamecheck install demo web clean
+# the keyboard at a terminal (ESCape, typeahead, ^S/^Q, the editor) on the
+# demo (tools/ttycheck.py)
+ttycheck:	demo
+	python3 tools/ttycheck.py
+
+.PHONY:	all check oscheck bascheck asmcheck mamecheck install demo web ttycheck clean

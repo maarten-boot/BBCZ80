@@ -255,8 +255,9 @@ RESET:	rts				! (*OPT is reset by *OPT 0)
 
 OSCALL:	rts
 
-! TRAP - test ESCape; every 20th call sample the keyboard (and flush the
-! console output).  LTRAP - test ESCape.
+! TRAP - test ESCape; every 20th call flush the console output (os_poll,
+! which also keeps the terminal where ESC raises the SIGINT that sets the
+! flag).  LTRAP - test ESCape.
 TRAP:	sub.b	#1,trpcnt
 	bne	LTRAP
 	move.b	#20,trpcnt
