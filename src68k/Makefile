@@ -92,4 +92,9 @@ clean:
 demo:	bbcbasic
 	python3 tools/mkdemo.py --test
 
-.PHONY:	all check oscheck bascheck asmcheck mamecheck install demo clean
+# the web version: build/web/bbc68k.html, one page that works offline
+# (web/README.md); needs emcc and the demo's boot image
+web:	demo
+	python3 tools/mkweb.py --test
+
+.PHONY:	all check oscheck bascheck asmcheck mamecheck install demo web clean

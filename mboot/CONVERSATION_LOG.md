@@ -728,3 +728,58 @@ Mid-turn:
 * **Patch:** `mboot/patches/minix-0001-lone-esc-timeout.patch`, also in
   `/home/mboot/vibe/push-bundle-2026-10-21/` with a git bundle. `git am`
   on `origin/rosco-m68k` gives the same tree as the commit.
+
+## Entry 27 — 2026-10-21
+
+### User request
+> now start on the browser version
+
+### Actions taken
+* **`src68k/web/`** (see its README.md), built by `make web`
+  (`tools/mkweb.py --test`):
+  * `r68k-web.patch`: Duart.cpp under `#ifdef __EMSCRIPTEN__`;
+  * `webmain.cpp`: a frame loop replaces main();
+  * `loader.js`: `.bbc` detokeniser and text listings;
+  * `page.html`, `app.js`: xterm.js 5.5.0 inlined, Load program, drag
+    and drop, Stop typing, a Full speed / 10 MHz switch, Reset, Help,
+    licences;
+  * `test.js` (Node) and `browsertest.py` (headless Chromium over CDP).
+* **Result:** `build/web/bbc68k.html`, 1.9 MB, one file, works offline
+  and from file://.
+* **Tests, all ok:**
+  * Node: boot (0.9 s), the asm demo, and BYREFTST, EXITTEST, FORTEST,
+    INT32TST and SLICETST typed in through the loader and run, output
+    identical to the bascheck references;
+  * Chromium: key events, Escape, Load program (FORTEST), speed setting.
+* **Problems found and fixed:**
+  * **Startup:** C++ exceptions were not enabled; under Node, argv[0]
+    (the ROM path) was the host script; the non-MODULARIZE `Module`
+    global was shadowed in CommonJS.
+  * **6× slower than native:** Emscripten's JavaScript setjmp emulation
+    (Musashi sets a bus-error jmp_buf in `m68k_execute`) wrapped every
+    opcode dispatch in invoke_*. Fixed with `-fwasm-exceptions
+    -sSUPPORT_LONGJMP=wasm`. That rules out Asyncify, hence the frame
+    loop, with SETIMMEDIATE frames and a timeout while idle. Now about
+    3× native; 3% CPU when idle.
+  * **Pasted programs lost characters:** the kernel's rs buffer (256)
+    filled up. Keys were paced per CPU step, but when idle the CPU spins
+    at an enormous emulated speed, while Minix drains input only on
+    (real-time) clock ticks. Found by sampling `icount` in `rs_lines`
+    (kernel.map/nm): web 256, native 54. Keys are now paced at 1 ms of
+    real time.
+* **Speed (20000 empty FOR loops):**
+  * the web build's 10 MHz setting gives 6.50 s, exact at 9.98 MHz, but
+    MAME gives 3.67 s;
+  * the cycle profiler gives 38.2M cycles = 3.82 s.
+  * **Cause:** with a terminal for input (istty), BASIC checks for
+    Escape every 20th TRAP. Each check is a Minix `read()` system call,
+    about 27K cycles, and they took ~40% of the time (PC histogram:
+    sys_call, interrupt, phys_copy). The benchmarks and MAME read from a
+    file and never poll. A real board used interactively pays the same
+    cost.
+  * **Possible port improvements (not done; for the user):**
+    * poll less often;
+    * or let the tty deliver ESC as SIGINT (VINTR=ESC with ISIG) while
+      a program runs.
+* Not done yet: a hosted copy, multi-file (non-SINGLE_FILE) variant,
+  saving programs from the page.
