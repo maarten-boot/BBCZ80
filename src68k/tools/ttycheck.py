@@ -160,6 +160,9 @@ def main():
 
         t.send('PRINT 12\x1b[D3\r')
         check('line editor: cursor left, insert', re.search(r'\n +132\r', t.until(r' +\d+\r*\n>')) is not None)
+        t.send('PRINT 45\x1bOD6\r')	# (ESC O x: application mode keys)
+        check('line editor: ESC O D (cursor left) too',
+              re.search(r'\n +465\r', t.until(r' +\d+\r*\n>')) is not None)
         t.send('PRINT 5\x1b')
         t.read(0.5)
         t.send('PRINT 6\r')

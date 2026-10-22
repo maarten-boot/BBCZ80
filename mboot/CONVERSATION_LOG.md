@@ -1035,3 +1035,29 @@ host/hostwin modes, `ttycheck --exe`, `make host` / `make hostcheck`.
   sha256 67d663b0…): `bbc68k.exe` and a Windows README.
 * **Still to check on real Windows:** Escape and the cursor keys at the
   console (Wine in a pty loses a lone ESC).
+
+## Entry 37 — 2026-10-22
+
+### User report
+> i tested it on windows, esc works, i see no arrows doing anything . i
+> send the zip to mr Russel for his testign set to apply.
+
+Mid-turn:
+> ok in the editor let me see if i can test something.
+
+### Actions taken
+* **Cause (likely):** the console's VT input mode
+  (ENABLE_VIRTUAL_TERMINAL_INPUT, untestable under Wine) delivered the
+  arrows in a form the editor did not take (e.g. ESC O x).
+* **Fixes:**
+  * `hostmain.cpp` no longer uses VT input; `console_key` maps the key
+    codes (arrows, Home/End, Insert/Delete) to vt100 itself;
+  * `osl.c`'s editor also accepts ESC O x.
+* **Tests:**
+  * `host/keytest.cpp` injects real Windows key events (WriteConsoleInput,
+    Left/Home with no character) into bbc68k.exe's console under Wine:
+    Left and Home work. It is now part of `hostcheck.py`;
+  * `ttycheck` has an ESC O D case;
+  * all ok, and bascheck host/hostwin 24/24 each.
+* **New zip:** `/home/mboot/vibe/bbc68k-windows-2026-10-22b.zip`
+  (sha256 ec66f752…).

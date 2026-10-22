@@ -10,6 +10,8 @@ under Wine), in a new folder with one file in it: BASIC lines piped in
 binary file of 100000 bytes, a gap past the end, *MKDIR, *CD, paths,
 *REN, *ERA, *RMDIR, the file that was there read, a path out of the
 folder refused, *DIR), then the folder checked from here, byte by byte.
+For Windows also the console keys: host/keytest.cpp (built here with
+MinGW) puts key events, cursor keys too, into bbc68k.exe's console.
 """
 
 import os
@@ -82,9 +84,44 @@ def run(kind):
     return failed
 
 
+def keys_windows():
+    """the cursor keys of bbc68k.exe's console (host/keytest.cpp)"""
+    import pty
+    import select
+    import time
+    exe = os.path.join(TOP, 'build', 'host', 'windows', 'bbc68k.exe')
+    kt = os.path.join(TOP, 'build', 'host', 'keytest.exe')
+    subprocess.run(['x86_64-w64-mingw32-g++-posix', '-O2', '-static', '-o', kt,
+                    os.path.join(TOP, 'src68k', 'host', 'keytest.cpp')], check=True)
+    d = tempfile.mkdtemp(dir=os.path.join(TOP, 'build', 'host'))
+    fd, slave = pty.openpty()
+    p = subprocess.Popen(['wine', kt, exe], cwd=d, stdin=slave, stdout=slave,
+                         stderr=subprocess.DEVNULL)
+    os.close(slave)
+    buf, end = b'', time.time() + 60
+    while time.time() < end and p.poll() is None:
+        r, _, _ = select.select([fd], [], [], 0.2)
+        if r:
+            try:
+                buf += os.read(fd, 65536)
+            except OSError:
+                break
+    # (Wine draws spaces as cursor moves: compare without them)
+    plain = re.sub(rb'\x1b\[[0-9;?]*[A-Za-z]', b'', buf).replace(b'\r', b'').replace(b' ', b'')
+    failed = 0
+    for name, ok in (('console keys: Left (PRINT 12, Left, 3: 132)', b'\n132\n' in plain),
+                     ('console keys: Home (PRINT 99, Home, X: Mistake)',
+                      b'XPRINT99' in plain and b'\n99\n' not in plain)):
+        print('%s  %s' % ('ok  ' if ok else 'FAIL', name))
+        failed += not ok
+    return failed
+
+
 def main():
     kinds = sys.argv[1:] or ['linux', 'windows']
     failed = sum(run(k) for k in kinds)
+    if 'windows' in kinds:
+        failed += keys_windows()
     print('all ok' if not failed else '%d failed' % failed)
     return 1 if failed else 0
 

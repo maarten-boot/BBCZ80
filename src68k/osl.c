@@ -207,7 +207,7 @@ void os_wrch(int c)
 }
 
 /* getkey - read a key, up to cs centiseconds (cs < 0: wait for ever).
- * vt100 cursor keys come as ESC [ x and are mapped to the editor's
+ * vt100 cursor keys come as ESC [ x (or ESC O x) and are mapped to the editor's
  * control keys.  Returns the character, -1 on time-out.
  */
 static int getkey(long cs)
@@ -241,8 +241,8 @@ static int getkey(long cs)
 	}
 	if (c != ESC || !istty)
 		return c;
-	c2 = readkey(3, 1);			/* cursor key? */
-	if (c2 != '[') {
+	c2 = readkey(3, 1);			/* cursor key? ESC [ x, or */
+	if (c2 != '[' && c2 != 'O') {		/* ESC O x (application mode) */
 		if (c2 >= 0)
 			os_inkey = c2;
 		return ESC;

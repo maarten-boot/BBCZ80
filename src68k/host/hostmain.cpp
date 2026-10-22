@@ -173,14 +173,10 @@ static void setup_console()
     hout = GetStdHandle(STD_OUTPUT_HANDLE);
     _setmode(_fileno(stdout), _O_BINARY);
     console = GetConsoleMode(hin, &inmode) != 0;
-    if (console) {
-        // raw keys; the console's vt100 input where it has it (Windows 10),
-        // else console_key's mapping of the cursor keys
-        DWORD m = inmode & ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT
-                             | ENABLE_PROCESSED_INPUT);
-        if (!SetConsoleMode(hin, m | ENABLE_VIRTUAL_TERMINAL_INPUT))
-            SetConsoleMode(hin, m);
-    }
+    if (console)	// raw keys; console_key makes the cursor keys vt100
+        SetConsoleMode(hin, inmode & ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT
+                                       | ENABLE_PROCESSED_INPUT
+                                       | ENABLE_VIRTUAL_TERMINAL_INPUT));
     if (GetConsoleMode(hout, &outmode))
         SetConsoleMode(hout, outmode | ENABLE_PROCESSED_OUTPUT
                        | ENABLE_VIRTUAL_TERMINAL_PROCESSING);

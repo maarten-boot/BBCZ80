@@ -70,6 +70,13 @@ in. There is no SD card and no image.
   the host byte by byte.
 * **`tools/ttycheck.py --exe build/host/linux/bbc68k`:** the keyboard in a
   pty.
+* **Console keys, `host/keytest.cpp` (in `hostcheck.py`):** it puts key
+  events into `bbc68k.exe`'s console as a Windows keyboard does (Left and
+  Home with no character) and checks the line editor's result.
+* **Cursor keys on Windows:** the program maps the key codes to vt100
+  sequences itself. The console's own VT input mode is not used: on
+  Windows it made the arrows do nothing (reported by the user). BASIC's
+  editor also takes the `ESC O x` form of the cursor keys.
 * **Under Wine in a pty,** a lone ESC (Escape, and the ESC of a cursor
-  key's sequence) is lost by Wine's console layer. A real Windows console
-  reports the keys themselves, so this part is for checking on Windows.
+  key's sequence) is lost by Wine's console layer, so the console keys
+  are tested with `keytest` instead.
