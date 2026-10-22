@@ -67,6 +67,7 @@ static unsigned char optval;		/* *OPT */
 static int column;			/* for POS */
 static char *edptr;			/* EDIT capture pointer */
 static char *edbuf;			/* EDIT capture buffer */
+static char *edend;			/* EDIT capture limit: the first line */
 static long toffset;			/* TIME offset (centiseconds) */
 static int hz = 60;
 
@@ -169,8 +170,10 @@ static void sigesc(int sig)
 static void out(int c)
 {
 	if (os_flags & F_EDIT) {		/* EDIT: capture the line */
-		if (c >= ' ' && edptr < edbuf + 255)
+		if (c >= ' ' && edptr < edend)
 			*edptr++ = c;
+		else if (c == LF)		/* (EDIT, EDIT m,n: the first) */
+			edend = edptr;
 		return;
 	}
 	obuf[olen++] = c;
@@ -456,6 +459,7 @@ int os_line(char *buf)
 		return 1;
 	out(LF);
 	edbuf = edptr = buf;
+	edend = buf + 255;
 	/* EDIT n (immediate mode only) -> LIST n, capturing the output */
 	if (curlin == 0 && autono == 0) {
 		static char edit[] = "EDIT";

@@ -111,6 +111,7 @@ hostcheck:	host
 	BBC_EMU=hostwin python3 tools/bascheck.py
 	python3 tools/hostcheck.py
 	python3 tools/ttycheck.py --exe ../build/host/linux/bbc68k
+	python3 tools/editcheck.py ../build/host/linux/bbc68k
 
 # the bare demo: tarball and container image (tools/mkbaredemo.py)
 baredemo:	bare

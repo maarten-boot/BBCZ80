@@ -13,7 +13,8 @@
 //   input is a pipe or a file, its bytes.  Ctrl-] at the console quits.
 //   Keys go to the machine once it has first been idle (BASIC waits for
 //   input): typed earlier, the firmware's start would lose them.
-// * Output: vt100 (the Windows console is put in that mode).
+// * Output: vt100 (the Windows console is put in that mode); a BS at the
+//   left edge goes back to the row above (wrap_bs).
 // * The CPU runs in steps of 10000 cycles with a DUART poll after each, as
 //   in main.cpp; when the machine is idle (bare BASIC waits with STOP,
 //   4E72 just before the PC) the program sleeps until the timer interrupt
@@ -28,6 +29,7 @@
 #include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm>
 #include <cstring>
 #include <deque>
 #include <filesystem>
@@ -41,6 +43,7 @@
 #include <fcntl.h>
 #include <io.h>
 #else
+#include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
 #endif
@@ -100,9 +103,76 @@ static void quit(int code)
 
 static std::chrono::steady_clock::time_point last_output;
 
+static int out_width();			// the console's width; 0: not a console
+static bool out_wrapped();		// after the last column: on the next row?
+
+// The console wraps a long line, but a BS at its left edge stays there;
+// BASIC's line editor moves left with BS, so its cursor keys went wrong
+// on a line longer than the console.  wrap_bs follows the cursor's column
+// (CR, printing characters, the CSI sequences that move it) and makes such
+// a BS go to the end of the row above.
+static int out_col;			// == width: just after the last column
+static int out_esc;			// 1: after ESC, 2: in ESC [
+static int out_arg[2], out_nargs;
+
+static void wrap_bs(const char *data, size_t n, int w, std::string &o)
+{
+    for (size_t i = 0; i < n; i++) {
+        unsigned char c = (unsigned char) data[i];
+        if (out_col > w)
+            out_col = w;
+        if (out_esc == 1) {
+            out_esc = c == '[' ? 2 : 0;
+            out_arg[0] = out_arg[1] = out_nargs = 0;
+        } else if (out_esc == 2) {
+            if (c >= '0' && c <= '9') {
+                if (out_nargs < 2)
+                    out_arg[out_nargs] = out_arg[out_nargs] * 10 + c - '0';
+            } else if (c == ';') {
+                out_nargs++;
+            } else if (c >= 0x40) {
+                int a = out_arg[0] ? out_arg[0] : 1;
+                out_esc = 0;
+                if (c == 'H' || c == 'f')
+                    out_col = out_arg[1] ? out_arg[1] - 1 : 0;
+                else if (c == 'G')
+                    out_col = a - 1;
+                else if (c == 'C')
+                    out_col = std::min(out_col + a, w - 1);
+                else if (c == 'D')
+                    out_col = std::max(out_col - a, 0);
+            }
+        } else if (c == 0x1b) {
+            out_esc = 1;
+        } else if (c == '\r') {
+            out_col = 0;
+        } else if (c == '\t') {
+            out_col = std::min((out_col / 8 + 1) * 8, w - 1);
+        } else if (c == '\b' && (out_col == 0 || out_col == w)) {
+            if (out_col == 0 || out_wrapped())
+                o += "\x1b[A";
+            o += "\x1b[" + std::to_string(w) + "G";
+            out_col = w - 1;
+            continue;
+        } else if (c == '\b') {
+            out_col--;
+        } else if (c >= ' ' && c != 0x7f) {
+            out_col = out_col == w ? 1 : out_col + 1;
+        }
+        o += (char) c;
+    }
+}
+
 extern "C" void r68k_host_output(const char *data, size_t n)
 {
-    std::fwrite(data, 1, n, stdout);
+    int w = out_width();
+    if (w > 1) {
+        std::string o;
+        wrap_bs(data, n, w, o);
+        std::fwrite(o.data(), 1, o.size(), stdout);
+    } else {
+        std::fwrite(data, 1, n, stdout);
+    }
     last_output = std::chrono::steady_clock::now();
 }
 
@@ -114,6 +184,21 @@ extern "C" void r68k_host_exit(int code)
 #ifdef _WIN32
 static HANDLE hin, hout;
 static DWORD inmode, outmode;
+
+static int out_width()
+{
+    CONSOLE_SCREEN_BUFFER_INFO b;
+    return GetConsoleScreenBufferInfo(hout, &b) ? b.dwSize.X : 0;
+}
+
+// The console (without DISABLE_NEWLINE_AUTO_RETURN) goes to the next row at
+// once; a vt100 one (Windows Terminal) waits in the last column.
+static bool out_wrapped()
+{
+    CONSOLE_SCREEN_BUFFER_INFO b;
+    std::fflush(stdout);
+    return GetConsoleScreenBufferInfo(hout, &b) && b.dwCursorPosition.X == 0;
+}
 
 static void restore_console()
 {
@@ -183,6 +268,18 @@ static void setup_console()
 }
 #else
 static struct termios saved;
+
+static int out_width()
+{
+    struct winsize ws;
+    return ioctl(1, TIOCGWINSZ, &ws) == 0 ? ws.ws_col : 0;
+}
+
+// a vt100 (xterm) waits in the last column until the next character
+static bool out_wrapped()
+{
+    return false;
+}
 
 static void restore_console()
 {

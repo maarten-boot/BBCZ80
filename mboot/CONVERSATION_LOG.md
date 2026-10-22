@@ -1069,3 +1069,42 @@ Mid-turn:
   tree is clean, and the new zip awaits the user's Windows test. A stale
   background waiter (its pgrep matched its own command line) was stopped;
   the last demo container test had passed.
+
+## Entry 39 — 2026-10-22
+
+### User report
+> in both the old image today (22) and the 22b image the arrows do not
+> work right when i do LIST all lines are properly alined but when i enter
+> EDIT all appears on one line and e.g. right arrow erases the text, down
+> arrow works, up arrow does nothing so that is why right arrow seems to
+> erase the text it is already on a different line, left arrow also works
+
+### Cause
+* **The line is wider than the console.** The editor moves left with
+  BS, and a BS at the console's left edge stays put. Up (to the start)
+  and EDIT's redraw both stopped at column 0 of the last row, so Right
+  then retyped the start of the line over that row.
+* **Plain `EDIT`** is `LIST` with the output captured into the line,
+  which joined the whole program into one line (as on CP/M).
+
+### Actions taken (branch mboot/edit-wrap)
+* **`host/hostmain.cpp`:** `wrap_bs` tracks the cursor column against
+  the console width (Windows: GetConsoleScreenBufferInfo; Linux:
+  TIOCGWINSZ) and turns a BS at the left edge into ESC[A ESC[wG. After
+  the last column, Windows checks where the cursor really is (the
+  classic console wraps at once, Windows Terminal waits); Linux assumes
+  xterm's delayed wrap.
+* **`osl.c`:** EDIT captures the first listed line only.
+* **`tools/editcheck.py`** (in `make hostcheck`): a 40-column pty with a
+  vt100 screen model; it edits a two-row line with the cursor keys.
+  * The new build passes 12/12; the old build fails all 12 (the bug is
+    reproduced).
+* **Other checks:**
+  * bascheck host/hostwin/bare 24/24 each;
+  * hostcheck (Wine keytest) and ttycheck --exe all ok.
+  * The Windows side of `wrap_bs` cannot be tested under Wine in a pty.
+* **Found on the way:** `src68k/test/bas/a01asm.exp` is ignored by
+  `.gitignore` (`*.exp`) and was never committed. A fresh checkout's
+  bascheck fails a01asm. It is now added with `git add -f`.
+* **New zip:** `/home/mboot/vibe/bbc68k-windows-2026-10-22c.zip`
+  (sha256 9531f876…).

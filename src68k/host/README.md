@@ -77,6 +77,13 @@ in. There is no SD card and no image.
   sequences itself. The console's own VT input mode is not used: on
   Windows it made the arrows do nothing (reported by the user). BASIC's
   editor also takes the `ESC O x` form of the cursor keys.
+* **Lines longer than the console (`tools/editcheck.py`):** the console
+  wraps them, but a BS (the editor's cursor left) at the left edge stays
+  there, so on Windows EDIT of a long line went wrong (reported by the
+  user: Up did nothing, Right then wrote over the text). The program
+  follows the cursor's column and turns such a BS into "up a row, last
+  column" (`wrap_bs` in `hostmain.cpp`). editcheck edits a two-row line
+  with the cursor keys in a 40-column pty and checks the screen.
 * **Under Wine in a pty,** a lone ESC (Escape, and the ESC of a cursor
   key's sequence) is lost by Wine's console layer, so the console keys
   are tested with `keytest` instead.
