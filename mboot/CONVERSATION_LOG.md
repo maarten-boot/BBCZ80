@@ -1108,3 +1108,12 @@ Mid-turn:
   bascheck fails a01asm. It is now added with `git add -f`.
 * **New zip:** `/home/mboot/vibe/bbc68k-windows-2026-10-22c.zip`
   (sha256 9531f876…).
+
+## 40. Continue
+
+* **User:** "continue"
+* Nothing new to build. The EDIT-wrap fix (entry 39) is committed on
+  branch `mboot/edit-wrap` (a24e76b), one commit ahead of
+  `mboot/conversation-log`; editcheck still passes 12/12.
+* Waiting for the user's Windows test of
+  `bbc68k-windows-2026-10-22c.zip` (sha256 9531f876…, checked).
