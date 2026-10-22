@@ -1,8 +1,0 @@
-b1int         68901500 cycles    6748254 instructions  10.2 cycles/insn  outside bbcbasic 0.3%
-b2float       16158162 cycles    1655677 instructions  9.8 cycles/insn  outside bbcbasic 0.4%
-b3str         25756216 cycles    2690858 instructions  9.6 cycles/insn  outside bbcbasic 0.3%
-b4sieve       64526942 cycles    6340885 instructions  10.2 cycles/insn  outside bbcbasic 0.3%
-b5proc        15836624 cycles    1495376 instructions  10.6 cycles/insn  outside bbcbasic 0.6%
-b6vars        22873458 cycles    2261038 instructions  10.1 cycles/insn  outside bbcbasic 0.3%
-b7goto         4810384 cycles     460089 instructions  10.5 cycles/insn  outside bbcbasic 0.3%
-total        218863286 cycles

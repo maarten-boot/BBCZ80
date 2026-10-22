@@ -1,6 +1,0 @@
-10 REM strings
-20 ?&FFFFF0=1
-30 A$="":FOR I%=1 TO 300:A$=A$+CHR$(65+I% MOD 26):IF LEN A$>60 A$=MID$(A$,10)
-40 B$=LEFT$(A$,5)+RIGHT$(A$,5):N%=N%+INSTR(A$,"XYZ")+LEN STR$(I%):NEXT
-50 ?&FFFFF0=2
-60 PRINT N%;" ";B$

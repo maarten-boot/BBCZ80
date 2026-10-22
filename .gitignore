@@ -60,3 +60,4 @@ src68k/test/osmon
 __pycache__/
 src68k/bbcbasic
 src68k/main.s
+.claude/worktrees/
