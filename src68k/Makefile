@@ -93,9 +93,13 @@ demo:	bbcbasic
 	python3 tools/mkdemo.py --test
 
 # the web version: build/web/bbc68k.html, one page that works offline
-# (web/README.md); needs emcc and the demo's boot image
-web:	demo
+# (web/README.md), with bare BBC BASIC; webminix: the Minix demo in it
+# (build/web/bbc68k-minix.html).  Needs emcc.
+web:	bare
 	python3 tools/mkweb.py --test
+
+webminix:	demo
+	python3 tools/mkweb.py --minix --test
 
 # BBC BASIC on a bare rosco_m68k, no Minix (bare/, tools/mkbare.py):
 # build/bare/ROSCODE1.BIN, and with the demo programs build/bare/demo/;
@@ -106,10 +110,12 @@ bare:	$(BASOBJ)
 
 barecheck:	$(BASOBJ)
 	BBC_EMU=bare python3 tools/bascheck.py
+	python3 tools/mkbare.py
+	python3 tools/fatcheck.py
 
 # the keyboard at a terminal (ESCape, typeahead, ^S/^Q, the editor) on the
 # demo (tools/ttycheck.py)
 ttycheck:	demo
 	python3 tools/ttycheck.py
 
-.PHONY:	all check oscheck bascheck asmcheck mamecheck install demo web ttycheck bare barecheck clean
+.PHONY:	all check oscheck bascheck asmcheck mamecheck install demo web webminix ttycheck bare barecheck clean

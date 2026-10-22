@@ -7,9 +7,10 @@
 // A frame runs the CPU in steps of 10000 cycles, each followed by a DUART
 // poll (as main.cpp does), for up to SLICE_MS, and the next frame follows
 // at once (EM_TIMING_SETIMMEDIATE: the page stays responsive between
-// frames).  A frame ends early when Minix is idle (its idle task is a
-// branch to itself, 60FE, and the DUART has nothing pending); the next
-// frame then comes with the timer interrupt (EM_TIMING_SETTIMEOUT).
+// frames).  A frame ends early when the machine is idle: Minix's idle task
+// is a branch to itself (60FE), bare BBC BASIC waits with STOP (4E72, just
+// before the PC), and the DUART has nothing pending; the next frame then
+// comes with the timer interrupt (EM_TIMING_SETTIMEOUT).
 // r68k_speed(mhz) holds the speed down to mhz (0: as fast as possible),
 // with frames every LIMIT_MS.  Each frame also flushes the SD card's
 // stream (main.cpp's ifs), so that the page sees what Minix wrote to the
@@ -66,8 +67,9 @@ static void frame() {
         }
         m68k_execute(STEP);
         __duart->poll();
-        if (r68k_duart_idle
-                && m68k_read_memory_16(m68k_get_reg(NULL, M68K_REG_PC)) == 0x60FE) {
+        unsigned int pc = m68k_get_reg(NULL, M68K_REG_PC);
+        if (r68k_duart_idle && (m68k_read_memory_16(pc) == 0x60FE
+                || m68k_read_memory_16(pc - 4) == 0x4E72)) {
             if (mhz > 0) credit = 0;		// (idle time is not owed)
             wait = r68k_duart_wait < 1 ? 1 : (int)r68k_duart_wait;
             break;

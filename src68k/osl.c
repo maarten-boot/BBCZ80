@@ -972,6 +972,29 @@ static void cmd_dir(char *s)
 }
 #endif
 
+static void cmd_mkdir(char *s)
+{
+	char name[128];
+
+	s = getname(s, name);
+	endarg(s);
+	if (mkdir(name, 0777) != 0) {
+		if (errno == EEXIST)
+			oserror(196, "File exists");
+		oserror(204, "Bad name");
+	}
+}
+
+static void cmd_rmdir(char *s)
+{
+	char name[128];
+
+	s = getname(s, name);
+	endarg(s);
+	if (rmdir(name) != 0)
+		oserror(214, errno == ENOENT ? "File not found" : "Directory not empty");
+}
+
 static void cmd_era(char *s)
 {
 	char name[128], full[140];
@@ -1127,8 +1150,9 @@ static struct {
 	{ "BYE", cmd_bye }, { "CD", cmd_cd }, { "DIR", cmd_dir },
 	{ "ERASE", cmd_era }, { "ERA", cmd_era }, { "ESC", cmd_esc },
 	{ "EXEC", cmd_exec }, { "HELP", cmd_help }, { "LOAD", cmd_load },
-	{ "OPT", cmd_opt }, { "QUIT", cmd_bye }, { "RENAME", cmd_ren },
-	{ "REN", cmd_ren }, { "RESET", cmd_reset }, { "SAVE", cmd_save },
+	{ "MKDIR", cmd_mkdir }, { "OPT", cmd_opt }, { "QUIT", cmd_bye },
+	{ "RENAME", cmd_ren }, { "REN", cmd_ren }, { "RESET", cmd_reset },
+	{ "RMDIR", cmd_rmdir }, { "SAVE", cmd_save },
 	{ "SPOOL", cmd_spool }, { "TYPE", cmd_type }, { NULL, NULL }
 };
 

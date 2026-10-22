@@ -5,7 +5,8 @@ tests (bascheck) cannot reach.
 	ttycheck.py [DEMO_DIR]
 
 Runs the stand-alone demo (DEMO_DIR, default build/demo/bbc68k-demo, make
-demo) in a pty: r68k, Minix and BBC BASIC on the console, and types:
+demo) in a pty: r68k, Minix and BBC BASIC on the console (or a directory
+with r68k, its firmware and bare BBC BASIC's demo image), and types:
 * ESCape stopping a running loop, and a GET;
 * typeahead during a run, read by GET$ afterwards;
 * *ESC OFF: INKEY sees ESC (27), and *ESC ON again;
@@ -13,7 +14,8 @@ demo) in a pty: r68k, Minix and BBC BASIC on the console, and types:
 * the line editor: a cursor key, ESCape abandoning a line;
 * ESCape still working after a *command (the shell);
 * *BYE back to the demo's shell (the script survived the ESCape signals),
-  and BBC BASIC run from that interactive shell, which must survive too.
+  and BBC BASIC run from that interactive shell, which must survive too;
+  on bare BBC BASIC, *BYE starts BASIC again.
 It also prints the time of 20000 empty FOR loops.
 """
 
@@ -163,19 +165,22 @@ def main():
         print('      20000 empty FOR loops: %s cs' % re.search(r'loop (\d+)', t.until(r'loop \d+')).group(1))
 
         t.send('*BYE\r')
-        check('*BYE: back to the demo shell', 'You have left BBC BASIC' in t.until('# '))
-
-        t.send('bbcbasic\r')
-        t.until(r'\n>')
-        t.prog(['10 REPEAT:UNTIL FALSE'])
-        t.read(0.5)
-        t.send('\x1b')
-        t.until('Escape at line 10')
-        t.send('*BYE\r')
-        t.until('# ')
-        t.send('echo shell alive\r')
-        check('an interactive shell survives the ESCape signal',
-              'shell alive' in t.until(r'shell alive\r*\n# '))
+        text = t.until(r'(# |Return: BASIC prompt\) \? )')
+        if text.endswith('# '):		# Minix: the demo's shell
+            check('*BYE: back to the demo shell', 'You have left BBC BASIC' in text)
+            t.send('bbcbasic\r')
+            t.until(r'\n>')
+            t.prog(['10 REPEAT:UNTIL FALSE'])
+            t.read(0.5)
+            t.send('\x1b')
+            t.until('Escape at line 10')
+            t.send('*BYE\r')
+            t.until('# ')
+            t.send('echo shell alive\r')
+            check('an interactive shell survives the ESCape signal',
+                  'shell alive' in t.until(r'shell alive\r*\n# '))
+        else:				# bare BBC BASIC: it starts again
+            check('*BYE: BBC BASIC starts again (bare)', 'BBC BASIC' in text)
     except TimeoutError as e:
         print('FAIL  timeout waiting for %s' % e)
         failed += 1

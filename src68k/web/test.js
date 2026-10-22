@@ -1,5 +1,8 @@
 // The test of the web version (tools/mkweb.py --test), in Node:
-//	node test.js R68K_JS TOKENS_JSON TESTS_DIR REF_DIR
+//	node test.js R68K_JS TOKENS_JSON TESTS_DIR REF_DIR bare|minix
+// bare: bare BBC BASIC, files on the SD card's FAT16 file system, which
+// the test reads and writes as the page does (fat.js); minix: files copied
+// with dd as the Minix page does.
 // Boots the emulator and runs the asm demo from the menu.  Then, as the
 // page's Load program does (loader.js upload: the SD card and dd):
 // * the upstream test programs (TESTS_DIR/*.BBC), each loaded, run and
@@ -14,8 +17,11 @@
 const fs = require('fs');
 const path = require('path');
 const BBCLoad = require('./loader.js');
+const BBCFat = require('./fat.js');
 
-const [r68kJs, tokensJson, testsDir, refDir] = process.argv.slice(2);
+const [r68kJs, tokensJson, testsDir, refDir, mode] = process.argv.slice(2);
+const bare = mode !== 'minix';
+let card = null;
 const tokens = BBCLoad.tokenTable(JSON.parse(fs.readFileSync(tokensJson)));
 // the programs that run on their own (bascheck's u_*.in: CHAIN "NAME")
 const PROGRAMS = ['BYREFTST', 'EXITTEST', 'FORTEST', 'INT32TST', 'SLICETST'];
@@ -48,6 +54,11 @@ function secs() { return ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }
 
 // upload as the page does: the lines that copy (and with load, load) it
 function upload(name, bytes, load) {
+  if (bare) {
+    const pr = BBCLoad.prepare(name, bytes, load, BBCFat.make83);
+    card.writeFile(pr.name, pr.data);
+    return pr.load;
+  }
   const up = BBCLoad.upload(name, bytes, tokens, sdNext, load);
   for (const w of up.writes) M.r68kSdWrite(w.offset, w.bytes);
   sdNext = up.next;
@@ -68,6 +79,13 @@ async function typeLines(lines) {
 
 // download as the page does: the bytes, or null
 async function download(name) {
+  if (bare) {
+    for (const n of /\.[^/]*$/.test(name) ? [name] : [name, name + '.BBC']) {
+      const b = card.readFile(n);
+      if (b) return b;
+    }
+    return null;
+  }
   const f = BBCLoad.fileSize(await typeLines([BBCLoad.sizeLine(name)]), name);
   if (!f) return null;
   const c = BBCLoad.copyOut(f.name, f.size, sdNext);
@@ -79,7 +97,9 @@ async function download(name) {
 async function main() {
   M = await require(path.resolve(r68kJs))({
     r68kOutput: (b) => { out += Buffer.from(b).toString('latin1'); },
+    sdFormat: bare,
   });
+  if (bare) card = BBCFat.card(M.r68kSdRead, M.r68kSdWrite);
   let failed = 0;
   await until('Return: BASIC prompt) ?', 60);
   console.log(`menu after ${secs()}`);

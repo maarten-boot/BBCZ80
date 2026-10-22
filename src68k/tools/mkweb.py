@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 """Make the web version: build/web/bbc68k.html, one self-contained page.
 
-	mkweb.py [-r R68K_DIR] [--test]
+	mkweb.py [-r R68K_DIR] [--minix] [--test]
 
-The page (web/page.html with web/app.js and web/loader.js) runs r68k
-compiled to WebAssembly by Emscripten (emcc on the PATH):
+The page (web/page.html with web/app.js, web/loader.js and web/fat.js)
+runs r68k compiled to WebAssembly by Emscripten (emcc on the PATH):
 * r68k's tracked sources (R68K_DIR, default ../r68k next to this
   repository; its firmware as built there), with web/r68k-web.patch
   (Duart.cpp: the page's terminal) and web/webmain.cpp in place of main()
   (main.cpp is compiled with its main renamed);
-* the boot image of the stand-alone demo (build/demo/bbc68k-demo/
-  ROSCODE1.BIN, make demo), embedded;
-* web/pre.js: the SD card (rosco_sd.bin in memory) that uploads go
-  through.
+* a boot image, embedded: bare BBC BASIC with the demo programs
+  (build/bare/demo/ROSCODE1.BIN, make bare), or with --minix the Minix
+  demo (build/demo/bbc68k-demo/ROSCODE1.BIN, make demo; the page is then
+  build/web/bbc68k-minix.html);
+* web/pre.js: the SD card (rosco_sd.bin in memory).  For bare BASIC it
+  is a FAT16 file system that the page puts uploads on and takes
+  downloads off (fat.js); Minix copies them with dd.
 The keyword table for loading tokenised programs is taken from main.s.
 xterm.js (@xterm/xterm XTERM) is downloaded once to build/web/vendor.
 Everything is inlined (-sSINGLE_FILE), so the page works offline, also
@@ -44,7 +47,8 @@ SRC = os.path.dirname(HERE)
 TOP = os.path.dirname(SRC)
 WEB = os.path.join(SRC, 'web')
 WORK = os.path.join(TOP, 'build', 'web')
-DEMO = os.path.join(TOP, 'build', 'demo', 'bbc68k-demo')
+DEMO = os.path.join(TOP, 'build', 'demo', 'bbc68k-demo')	# (--minix)
+BARE = os.path.join(TOP, 'build', 'bare', 'demo')		# (make bare)
 XTERM = '5.5.0'
 VENDOR = {			# file: (path in the npm package, sha256)
     'xterm.js': ('lib/xterm.js', '1f991ac3b4b283ebf96e60ae23a00a52765dd3a2e46fa6fdda9f1aab032f7495'),
@@ -107,11 +111,11 @@ def compile_r68k(r68k):
     return sorted(os.path.join(obj, f) for f in os.listdir(obj))
 
 
-def link(objs, rom, out, env, single):
+def link(objs, rom, image, out, env, single):
     os.makedirs(os.path.dirname(out), exist_ok=True)
     args = ['em++'] + LDFLAGS + objs + ['-o', out, '-sENVIRONMENT=' + env,
             '--pre-js', os.path.join(WEB, 'pre.js'),
-            '--embed-file', os.path.join(DEMO, 'ROSCODE1.BIN') + '@/ROSCODE1.BIN',
+            '--embed-file', image + '@/ROSCODE1.BIN',
             '--embed-file', rom + '@/firmware/rosco_m68k.rom']
     if single:
         args.append('-sSINGLE_FILE=1')
@@ -148,7 +152,7 @@ def text(f):
         return b.decode('latin-1')
 
 
-def licences(r68k, vend):
+def licences(r68k, vend, minix_too):
     musashi = text(os.path.join(r68k, 'musashi', 'readme.txt'))
     musashi = musashi[musashi.index('LICENSE AND COPYRIGHT'):].split('\n\n\n')[0]
     minix = os.path.join(os.path.dirname(TOP), 'minix-st-2.0.4', 'src', 'LICENSE')
@@ -157,6 +161,8 @@ def licences(r68k, vend):
              ('Musashi', musashi),
              ('Minix 2.0.4', text(minix)),
              ('xterm.js', text(os.path.join(vend, 'LICENSE')))]
+    if not minix_too:
+        parts = [x for x in parts if x[0] != 'Minix 2.0.4']
     return ''.join('<h3>%s</h3><pre>%s</pre>' % (html.escape(t), html.escape(x))
                    for t, x in parts)
 
@@ -170,39 +176,51 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('-r', default=os.path.join(os.path.dirname(TOP), 'r68k'))
     ap.add_argument('--test', action='store_true')
+    ap.add_argument('--minix', action='store_true')
     a = ap.parse_args()
     r68k = os.path.abspath(a.r)
     rom = os.path.join(r68k, 'firmware', 'rosco_m68k.rom')
-    if not os.path.exists(os.path.join(DEMO, 'ROSCODE1.BIN')):
-        sys.exit('mkweb: no %s (make demo first)' % os.path.join(DEMO, 'ROSCODE1.BIN'))
+    image = os.path.join(DEMO if a.minix else BARE, 'ROSCODE1.BIN')
+    if not os.path.exists(image):
+        sys.exit('mkweb: no %s (make %s first)' % (image, 'demo' if a.minix else 'bare'))
     vend = vendor()
     objs = compile_r68k(r68k)
     js = os.path.join(WORK, 'page', 'r68k.js')
-    link(objs, rom, js, 'web', True)
+    link(objs, rom, image, js, 'web', True)
+    credits = ('BBC BASIC &copy; R.T. Russell &middot; 68000 port &middot; %sr68k &amp; rosco_m68k'
+               ' firmware\n  &copy; Ross Bamford &middot; Musashi &copy; Karl Stenerud &middot; xterm.js'
+               % ('Minix 2.0.4 &middot; ' if a.minix else ''))
     parts = {
         'XTERM_CSS': open(os.path.join(vend, 'xterm.css')).read(),
         'XTERM_JS': script(open(os.path.join(vend, 'xterm.js')).read()),
         'R68K_JS': script(open(js).read()),
         'LOADER_JS': script(open(os.path.join(WEB, 'loader.js')).read()),
+        'FAT_JS': script(open(os.path.join(WEB, 'fat.js')).read()),
+        'BARE': 'false' if a.minix else 'true',
+        'SYSTEM': ('running under Minix 2.0.4 on an emulated rosco_m68k (68010)' if a.minix
+                   else 'running straight on an emulated rosco_m68k (68010), no operating system'),
+        'HELP': open(os.path.join(WEB, 'help-minix.html' if a.minix else 'help-bare.html')).read(),
+        'CREDITS': credits,
         'TOKENS': json.dumps(keywords()),
         'APP_JS': script(open(os.path.join(WEB, 'app.js')).read()),
-        'LICENCES': licences(r68k, vend),
+        'LICENCES': licences(r68k, vend, a.minix),
     }
     page = re.sub(r'@@(\w+)@@', lambda m: parts[m.group(1)],
                   open(os.path.join(WEB, 'page.html')).read())
-    out = os.path.join(WORK, 'bbc68k.html')
+    out = os.path.join(WORK, 'bbc68k-minix.html' if a.minix else 'bbc68k.html')
     with open(out, 'w') as f:
         f.write(page)
     print('%s: %d bytes' % (out, os.path.getsize(out)))
     if a.test:
         node = os.path.join(WORK, 'node', 'r68k.js')
-        link(objs, rom, node, 'node', False)
+        link(objs, rom, image, node, 'node', False)
         with open(os.path.join(WORK, 'node', 'tokens.json'), 'w') as f:
             json.dump(keywords(), f)
         if subprocess.run(['node', os.path.join(WEB, 'test.js'), node,
                            os.path.join(WORK, 'node', 'tokens.json'),
                            os.path.join(TOP, 'tests'),
-                           os.path.join(SRC, 'test', 'bas')]).returncode:
+                           os.path.join(SRC, 'test', 'bas'),
+                           'minix' if a.minix else 'bare']).returncode:
             return 1
         if shutil.which('chromium') and importlib.util.find_spec('websockets'):
             return subprocess.run([sys.executable, os.path.join(WEB, 'browsertest.py'),

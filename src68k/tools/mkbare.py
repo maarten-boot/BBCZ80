@@ -4,7 +4,8 @@
 	mkbare.py [-m MINIX] [--demo] [-f FILE ...] [-w WORK] [-o OUT]
 
 The interpreter's objects (make bbcbasic) with osl.c compiled -DBARE and
-bare/bare.c (console, timer, RAM files) under it, bare/start.s first,
+bare/bare.c (console, timer, RAM files) and bare/fat.c (files on the SD
+card) under it, bare/start.s first,
 linked by the ACK's em_led at 0x40000, where the firmware loads
 ROSCODE1.BIN and starts it; aslod makes the flat binary of it.
 --demo builds in the demo programs (demo/progs, tokenised as mkdemo.py
@@ -84,6 +85,7 @@ def main():
     objs += [os.path.join(SRC, o) for o in OBJS]
     objs.append(cc('osl.c', os.path.join(work, 'osl.o')))
     objs.append(cc('bare/bare.c', os.path.join(work, 'bare.o')))
+    objs.append(cc('bare/fat.c', os.path.join(work, 'fat.o')))
     objs.append(cc(os.path.join(work, 'seeds.c'), os.path.join(work, 'seeds.o')))
     out = os.path.join(work, 'bbcbasic.out')
     env = dict(os.environ, ACKDIR=stage)

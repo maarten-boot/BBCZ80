@@ -1,5 +1,8 @@
 // The page of BBC BASIC 68000 (page.html): the terminal, the emulator
-// (R68K, from r68k.js) and the toolbar.
+// (R68K, from r68k.js) and the toolbar.  BBC_BARE (page.html, from
+// mkweb.py): bare BBC BASIC, whose files are on the SD card's FAT16 file
+// system, which the page reads and writes itself (fat.js); otherwise
+// Minix, which copies files to and from the card with dd.
 (function () {
   'use strict';
 
@@ -12,6 +15,7 @@
   var lineOut = null;		// output while typeLines waits for a prompt
   var tail = '';		// the last of the output: where is BASIC?
   var sdNext = 1 << 20;		// free space on the SD card (loader.js)
+  var card = null;		// the card's file system (bare: fat.js)
 
   var term = new Terminal({
     cols: COLS, rows: ROWS, scrollback: 0, cursorBlink: true,
@@ -51,9 +55,11 @@
       if (lineOut !== null) lineOut += text;
       tail = (tail + text).slice(-200);
     },
-    printErr: function (s) { console.warn(s); }
+    printErr: function (s) { console.warn(s); },
+    sdFormat: BBC_BARE
   }).then(function (mod) {
     M = mod;
+    if (BBC_BARE) card = BBCFat.card(M.r68kSdRead, M.r68kSdWrite);
     status('Running');
     term.onData(send);
     term.focus();
@@ -136,6 +142,7 @@
 
   function copyFiles(ups) {
     var lines = [], names = [];
+    if (card) return copyBare(ups);
     ups.forEach(function (u) {
       var up = BBCLoad.upload(u.file.name, u.bytes, BBC_TOKENS, sdNext, ups.length === 1);
       up.writes.forEach(function (w) { M.r68kSdWrite(w.offset, w.bytes); });
@@ -157,21 +164,43 @@
     });
   }
 
+  // bare: the files straight onto the card; one program is loaded
+  function copyBare(ups) {
+    var names = [], one = null;
+    try {
+      ups.forEach(function (u) {
+        var pr = BBCLoad.prepare(u.file.name, u.bytes, ups.length === 1, BBCFat.make83);
+        pr.name = card.writeFile(pr.name, pr.data);
+        names.push(pr.name);
+        if (ups.length === 1) one = pr;
+      });
+    } catch (e) {
+      status('Load program: ' + e.message);
+      return;
+    }
+    if (!one || !one.load.length) {
+      status((one ? one.name + ' (' + one.size + ' bytes; not a program)' : names.length +
+              ' files') + ' copied to the SD card' + (one ? '' : ': ' + names.join(', ')));
+      return;
+    }
+    toPrompt('Load program', function () {
+      typeLines(one.load, 'Loading ' + one.name, function () {
+        status(one.tokenised ? one.name + ' loaded (' + one.size + ' bytes); type RUN'
+               : one.name + ' (a listing) being read in by *EXEC; then type RUN');
+      });
+    });
+  }
+
   // Download: wc -c finds the file and its size, dd copies it to the SD
   // card (and sync), the page reads it from there and saves it
   var dlName = document.getElementById('dlname');
   function download() {
     var name = dlName.value;
     if (!M || !name.trim() || typing) return;
+    if (card) return downloadBare(name.trim());
     function save(f, c) {
       var bytes = M.r68kSdRead(c.offset, f.size);
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
-      a.download = f.name.replace(/^.*\//, '');
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
+      saveAs(f.name.replace(/^.*\//, ''), bytes);
       status(f.name + ': ' + bytes.length + ' bytes downloaded');
     }
     function found(outs) {
@@ -188,6 +217,32 @@
       typeLines([BBCLoad.sizeLine(name)], 'Finding ' + name, found);
     });
   }
+  // bare: straight off the card (a name without an extension also as
+  // name.BBC, as SAVE writes it)
+  function downloadBare(name) {
+    var tries = /\.[^\/]*$/.test(name) ? [name] : [name, name + '.BBC'], bytes = null, n;
+    for (var i = 0; i < tries.length && !bytes; i++) {
+      n = tries[i];
+      try { bytes = card.readFile(n); } catch (e) { bytes = null; }
+    }
+    if (!bytes) {
+      status(name + ': no such file on the SD card');
+      return;
+    }
+    saveAs(n.replace(/^.*\//, '').toUpperCase(), bytes);
+    status(n.toUpperCase() + ': ' + bytes.length + ' bytes downloaded');
+  }
+
+  function saveAs(name, bytes) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
+  }
+
   document.getElementById('download').addEventListener('click', download);
   dlName.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') download();

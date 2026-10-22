@@ -171,15 +171,17 @@ async def run(page_file, tests):
                        "document.getElementById('download').click()")
             st = await p.wait('downloaded', 60, where='status')
             f = os.path.join(dl, 'mine.BBC')
-            for _ in range(50):
-                if os.path.exists(f):
+            for _ in range(50):		# (bare: MINE.BBC, its 8.3 name)
+                got = [n for n in os.listdir(dl) if n.lower() == 'mine.bbc']
+                if got:
+                    f = os.path.join(dl, got[0])
                     break
                 await asyncio.sleep(0.1)
             got = open(f, 'rb').read() if os.path.exists(f) else b''
             orig = open(os.path.join(tests, 'BYREFTST.BBC'), 'rb').read()
             ok = len(got) > 3 and orig.startswith(got) and got.endswith(b'\xff')
             print('%s  SAVE "mine", Download: %s (status "%s")'
-                  % ('ok  ' if ok else 'FAIL', 'mine.BBC, %d bytes, as loaded' % len(got)
+                  % ('ok  ' if ok else 'FAIL', '%s, %d bytes, as loaded' % (os.path.basename(f), len(got))
                      if got else 'no file', st))
             failed += not ok
             shutil.rmtree(dl, ignore_errors=True)

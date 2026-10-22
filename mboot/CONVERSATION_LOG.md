@@ -916,3 +916,28 @@ Step 1, BBC BASIC on a bare rosco_m68k (PORT_PLAN §19): `bare/start.s`,
 Planned next:
 * the web page on bare BASIC;
 * step 2: FAT files on the SD card through the firmware's SD routines.
+
+## Entry 33 — 2026-10-22
+
+### User request
+> ok continue
+
+### Actions taken
+Step 2 and the web page on bare BASIC (PORT_PLAN §20):
+* **`bare/fat.c`:** FAT16/FAT32 on the SD card through the firmware;
+  stores dispatched in `bare.c` (card first, then RAM; `sd:`/`ram:`).
+* **New commands:** `*MKDIR`, `*RMDIR` (`osl.c`).
+* **Tests:**
+  * `tools/fatcheck.py`: three cards, all ok, fsck clean;
+  * MAME with the real firmware: files on the boot card, fsck clean.
+* **Web page:** bare BBC BASIC by default; `pre.js` formats the card,
+  and `web/fat.js` puts uploads on it and takes downloads off it.
+  `make webminix` keeps the Minix page.
+* **`webmain.cpp`:** STOP counts as idle (it had used a full core).
+* **Bugs found:**
+  * ACK `int` sign in `le16`;
+  * stale-sector risk (the cache now lasts one call);
+  * browser-test case of the 8.3 download name.
+* **Send tarball:** `/home/mboot/vibe/bbc68k-web-2026-10-22.tar.gz`
+  (400 KB, sha256 2869f623…): the bare page, a rewritten README, and
+  `rosco/ROSCODE1.BIN` for a real board.

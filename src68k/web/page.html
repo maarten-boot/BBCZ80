@@ -6,7 +6,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BBC BASIC 68000</title>
-<meta name="description" content="R.T. Russell's BBC BASIC (Z80) v5, ported to the 68000, running under Minix 2.0.4 on an emulated rosco_m68k, in the browser.">
+<meta name="description" content="R.T. Russell's BBC BASIC (Z80) v5, ported to the 68000, @@SYSTEM@@, in the browser.">
 <style>@@XTERM_CSS@@</style>
 <style>
 :root {
@@ -87,7 +87,7 @@ footer pre { white-space: pre-wrap; font-size: 12px; background: var(--panel); p
 <header>
   <h1>BBC BASIC <span>68000</span></h1>
   <div class="sub">R.T. Russell's BBC BASIC (Z80) v5, ported to 68000 assembly language,
-  running under Minix 2.0.4 on an emulated rosco_m68k (68010) &mdash; all in this page, offline.</div>
+  @@SYSTEM@@ &mdash; all in this page, offline.</div>
 </header>
 <div class="bar">
   <label class="btn" title="Copy programs (.bbc or text listings) to BASIC's directory; one is loaded">Load program&hellip;
@@ -105,56 +105,18 @@ footer pre { white-space: pre-wrap; font-size: 12px; background: var(--panel); p
   <div class="status" id="status" role="status">Starting&hellip;</div>
 </div>
 <section id="help" hidden>
-  <h2>Keys</h2>
-  <dl>
-    <dt><kbd>Esc</kbd></dt><dd>BBC BASIC's Escape: stops a running program</dd>
-    <dt><kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>&larr;</kbd> <kbd>&rarr;</kbd></dt><dd>edit the line being typed (start, end, left, right)</dd>
-    <dt>paste</dt><dd>types the text in (a numbered listing becomes a program)</dd>
-  </dl>
-  <h2>In BBC BASIC</h2>
-  <dl>
-    <dt><code>CHAIN "menu"</code></dt><dd>the menu of demo programs</dd>
-    <dt><code>LIST</code>, <code>RUN</code></dt><dd>list and run the program in memory</dd>
-    <dt><code>*DIR</code></dt><dd>the files (the demos are <code>*.bbc</code>, their text <code>*.bas</code>)</dd>
-    <dt><code>*BYE</code></dt><dd>to the Minix shell; <code>exit</code> there brings the demo back</dd>
-  </dl>
-  <h2>Your own programs</h2>
-  <p><b>Load program</b> (or dropping files on the screen) copies files into BASIC's directory
-  (<code>/usr/demo</code>), through the emulated SD card and <code>dd</code>, so it takes a moment
-  whatever the size. It types <code>*</code> commands at BASIC's <code>&gt;</code> prompt: if BASIC is
-  elsewhere (the menu, a running program), the page presses Escape first.</p>
-  <ul>
-    <li><b>One program</b> is loaded too: a tokenised <code>.bbc</code> program of BBC BASIC for Z80,
-    CP/M, Windows or SDL with <code>LOAD</code>; a text listing with <code>NEW</code> and
-    <code>*EXEC</code> (without line numbers it is numbered 10, 20, &hellip;). Then type
-    <code>RUN</code>.</li>
-    <li><b>Several files</b>, or one that is not a program (not <code>.bbc</code>, <code>.bas</code>
-    or <code>.txt</code>), are copied exactly as they are, for <code>CHAIN</code>, <code>LOAD</code> or
-    <code>OPENIN</code> (programs that chain each other, data files).</li>
-  </ul>
-  <h2>Saving to your computer</h2>
-  <p>Type a file name next to <b>Download</b> and press it (or Return): the file is copied from
-  BASIC's directory to your computer, through the SD card again. A name without an extension is
-  also tried with <code>.bbc</code> and <code>.BBC</code>, as <code>SAVE</code> writes it:</p>
-  <ul>
-    <li>a program: <code>SAVE "myprog"</code>, then download <code>myprog</code>;</li>
-    <li>a program's output: <code>*SPOOL out.txt</code>, <code>RUN</code>, <code>*SPOOL</code>, then
-    download <code>out.txt</code>;</li>
-    <li>a listing as text: <code>*SPOOL list.txt</code>, <code>LIST</code>, <code>*SPOOL</code>.</li>
-  </ul>
-  <p>File names keep letters, digits and <code>. _ -</code>, at most 14 characters. BBC Micro
-  (Acorn) files are tokenised differently and are not understood; graphics and sound do not exist
-  on this text terminal. The disk is a RAM disk: everything is gone after Reset.</p>
+@@HELP@@
 </section>
 <main><div id="screen"></div></main>
 <footer>
-  BBC BASIC &copy; R.T. Russell &middot; 68000 port &middot; Minix 2.0.4 &middot; r68k &amp; rosco_m68k firmware
-  &copy; Ross Bamford &middot; Musashi &copy; Karl Stenerud &middot; xterm.js
+  @@CREDITS@@
   <details><summary>Licences</summary>@@LICENCES@@</details>
 </footer>
 <script>@@XTERM_JS@@</script>
 <script>@@R68K_JS@@</script>
 <script>@@LOADER_JS@@</script>
+<script>@@FAT_JS@@</script>
+<script>var BBC_BARE = @@BARE@@;</script>
 <script>var BBC_TOKENS = BBCLoad.tokenTable(@@TOKENS@@);</script>
 <script>@@APP_JS@@</script>
 </body>

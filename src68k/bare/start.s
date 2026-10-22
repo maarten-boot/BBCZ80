@@ -13,6 +13,7 @@
 
 	.define	start, _bare_restart, _bare_isr, _bare_idle, _bare_getvbr
 	.define	_bare_setsr, _bare_ints, EXIT, .trpim, .trppc
+	.define	_bare_sdinit, _bare_sdread, _bare_sdwrite
 	.extern	_main, _bare_init, _bare_irq, _bare_argc, _bare_argv, __end
 
 	.sect	.text
@@ -78,6 +79,38 @@ _bare_ints:
 	move.w	#0x2000,sr
 	rts
 1:	move.w	#0x2700,sr
+	rts
+
+! The firmware's SD card routines (its extension function table, EFP):
+! a1 = SDCard structure, d1 = block, a2 = 512-byte buffer; result in d0.
+! They are gcc code with 32-bit ints; all registers but d0 are kept.
+!	long bare_sdinit(char *card)		0: ok
+!	long bare_sdread(char *card, long block, char *buf)	1: ok
+!	long bare_sdwrite(char *card, long block, char *buf)	1: ok
+EFP_SD_INIT	= 0x44C
+EFP_SD_READ	= 0x450
+EFP_SD_WRITE	= 0x454
+
+_bare_sdinit:
+	movem.l	d1-d7/a2-a6,-(sp)
+	move.l	4+48(sp),a1
+	move.l	EFP_SD_INIT,a0
+	jsr	(a0)
+	movem.l	(sp)+,d1-d7/a2-a6
+	rts
+
+_bare_sdread:
+	move.l	EFP_SD_READ,a0
+	bra	1f
+_bare_sdwrite:
+	move.l	EFP_SD_WRITE,a0
+1:	movem.l	d1-d7/a2-a6,-(sp)
+	move.l	4+48(sp),a1		! card
+	move.l	8+48(sp),d1		! block
+	move.l	12+48(sp),a2		! buffer
+	jsr	(a0)
+	movem.l	(sp)+,d1-d7/a2-a6
+	and.l	#0xFF,d0		! (a C bool)
 	rts
 
 	.sect	.data

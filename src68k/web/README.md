@@ -1,10 +1,14 @@
 # BBC BASIC 68000 in the browser
 
 `make web` (in `src68k`) builds `build/web/bbc68k.html`: one self-contained
-page, about 1.9 MB.
-* **What runs:** the stand-alone demo (`make demo`). That is Minix 2.0.4 on
-  an emulated rosco_m68k, which boots straight into BBC BASIC and its demo
-  menu.
+page, about 1.4 MB.
+* **What runs:** bare BBC BASIC (`make bare`, `bare/README.md`) on an
+  emulated rosco_m68k with no operating system, with the demo programs
+  and their menu. Files are on an SD card with a FAT16 file system,
+  which the page also reads and writes itself.
+* **The earlier page:** `make webminix` builds the one with Minix 2.0.4
+  under BASIC (`build/web/bbc68k-minix.html`). Files then go to and from
+  the card with `dd`, as described below for that page.
 * **Nothing else needed:** no server and no internet. The page can be
   opened as a file, or put on any web server as it is.
 
@@ -15,7 +19,9 @@ page, about 1.9 MB.
 | r68k | the rosco_m68k emulator, compiled to WebAssembly by Emscripten (`emcc`), from r68k's tracked sources (`../r68k`) |
 | `r68k-web.patch` | `machine/Duart.cpp` for the page; native builds are unchanged (`#ifdef __EMSCRIPTEN__`). Channel A's output is collected for `Module.r68kOutput`, keys come in through `r68k_key()` |
 | `webmain.cpp` | `main()` for the page. It sets up the machine as `main.cpp` does (`main.cpp` is still compiled, with its `main` renamed, for its trap handlers), then runs the CPU in frames (`emscripten_set_main_loop`) instead of an endless loop |
-| `pre.js` | the SD card: `rosco_sd.bin` in memory, which r68k's firmware traps read and write, and `r68kSdWrite()`/`r68kSdRead()` for the page |
+| `pre.js` | the SD card: `rosco_sd.bin` in memory, which r68k's firmware traps read and write, and `r68kSdWrite()`/`r68kSdRead()` for the page. For bare BASIC it is formatted FAT16 at the start (32 MB, one partition from sector 2048) |
+| `fat.js` | the card's FAT16 file system from the page's side: uploads go onto it, downloads come off it |
+| `help-bare.html`, `help-minix.html` | the page's Help for each |
 | `loader.js` | uploads and downloads through the SD card; also turns a program file into keystrokes |
 | `app.js`, `page.html` | the terminal (xterm.js 5.5.0, inlined), the toolbar and the help |
 | `tools/mkweb.py` | builds it all. The ROM and the demo's `ROSCODE1.BIN` are embedded, and everything is inlined (`-sSINGLE_FILE`). It takes BASIC's keyword table from `main.s` and downloads xterm.js once to `build/web/vendor` (checked by SHA-256) |
@@ -46,7 +52,20 @@ page, about 1.9 MB.
   per millisecond. At full speed the page runs about 20× faster than
   that, in Chrome or Node.
 
-### Loading programs
+### Loading and saving programs: bare BASIC
+
+* **Load program** writes the files onto the card with `fat.js` (8.3
+  names, `my prog.bas` becomes `MY_PROG.BAS`).
+  * One program is then loaded: the page types `LOAD "NAME"`, or `NEW`
+    and `*EXEC NAME` for a listing, at BASIC's prompt (Escape first if
+    BASIC is elsewhere).
+  * Several files, or one that is not a program, are only copied.
+* **Download** reads the file off the card. A name without an extension
+  is also tried as `NAME.BBC`, as SAVE writes it. Nothing is typed.
+* **Coherence:** `bare/fat.c` reads the card afresh in each call, so what
+  the page wrote between commands is seen.
+
+### Loading programs: the Minix page
 
 **Load program** (or dropping files on the screen) uploads files through
 the emulated SD card (`loader.js` `upload`):
@@ -81,7 +100,7 @@ where Return becomes LF, which BASIC's editor takes as cursor left.
   text (with the interpreter's keyword table; line numbers after GOTO
   etc. decoded) and make keystrokes of it.
 
-### Downloading files
+### Downloading files: the Minix page
 
 **Download** (a file name and the button, or Return) copies a file from
 BASIC's directory to the computer:

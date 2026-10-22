@@ -732,3 +732,40 @@ No Minix: `make bare` (`tools/mkbare.py`) builds `build/bare/ROSCODE1.BIN`,
   * the web page on it, with uploads/downloads;
   * step 2: files on the SD card's FAT file system through the
     firmware's SD routines, behind the same calls in `bare.c`.
+
+## 20. Step 2: files on the SD card; the web page on bare BASIC (2026-10-22)
+
+**`bare/fat.c`:** FAT16/FAT32 through the firmware's SD routines
+(`start.s` calls the EFP entries as the Minix kernel does).
+* The first FAT partition of the MBR, or a card without a partition
+  table.
+* 8.3 names (any case in, upper case on the card); long-name entries
+  skipped, and removed with their file.
+* Paths, `*CD`, and new `*MKDIR`/`*RMDIR` (in `osl.c`: mkdir/rmdir, so
+  for Minix too).
+* Both FATs updated; FAT32 FSInfo kept (free count, next free).
+* One sector buffer, written through, that lasts only within a call.
+* **Which store** (`bare.c`): a file is looked for on the card, then in
+  the RAM store; new files go on the card (in the store if not 8.3);
+  `sd:` and `ram:` choose.
+* **Tests:**
+  * `tools/fatcheck.py` (in `make barecheck`), three cards (mkfat.py
+    FAT16, a small FAT16 and a FAT32 from mkfs.fat): programs, a
+    3000-line file, a 100000-byte file, a gap, directories, *REN/*ERA,
+    *BYE; fsck.fat clean;
+  * MAME with the real firmware: the same against the boot card;
+    fsck.fat clean.
+* **ACK pitfall:** `le16()` returning `int` made a 16-bit sector count of
+  0xF800 negative; it now returns `unsigned`.
+
+**The web page** now runs bare BBC BASIC (`make web`; the Minix one is
+`make webminix`).
+* **The card:** `pre.js` formats the card FAT16 (32 MB).
+* **`web/fat.js`:** puts uploads on the card and takes downloads off it;
+  only `LOAD`/`*EXEC` is typed, nothing for downloads.
+* **Idle:** `webmain.cpp` treats STOP (bare BASIC's idle) as idle, as
+  `bra.s *`; idle CPU 3.6%.
+* **Result:** the page is 1.4 MB (1.9 with Minix); boot to the menu
+  0.8 s.
+* **Tests:** Node and Chromium, both variants, all ok; `ttycheck` ok on
+  bare BASIC too (`*BYE` restarts BASIC).

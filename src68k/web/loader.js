@@ -151,7 +151,12 @@ var BBCLoad = (function () {
   // Each part of the file goes at a multiple of its size, so that one dd
   // (bs=size skip=k count=1) reads it; a new upload never reuses card
   // blocks, which Minix may still have in its cache.
-  function upload(name, bytes, tokens, next, program) {
+  // A file as it goes into BASIC's files: {name, tokenised, listing,
+  // data, load}.  With program, a tokenised file is LOADed and a listing
+  // (numbered if need be, CR line ends) read in with NEW and *EXEC; else it
+  // is copied as it is.  name83: an 8.3 name for the SD card (bare BBC
+  // BASIC; fat.js make83), else a Minix name.
+  function prepare(name, bytes, program, name83) {
     var tok = isTokenised(bytes), data = bytes, i;
     var listing = program && !tok && isListing(name, bytes);
     if (listing) {
@@ -159,7 +164,22 @@ var BBCLoad = (function () {
       data = new Uint8Array(text.length);
       for (i = 0; i < text.length; i++) data[i] = text.charCodeAt(i) & 0xFF;
     }
-    var n = minixName(name, tok ? '.bbc' : listing ? '.bas' : '');
+    var ext = tok ? '.bbc' : listing ? '.bas' : '', n;
+    if (name83) {
+      n = name83(name);
+      if (ext && n.indexOf('.') < 0) n += ext.toUpperCase();
+    } else {
+      n = minixName(name, ext);
+    }
+    return {
+      name: n, tokenised: tok, listing: listing, size: data.length, data: data,
+      load: !program ? [] : tok ? ['LOAD "' + n + '"\r'] :
+        listing ? ['NEW\r', '*EXEC ' + n + '\r'] : []
+    };
+  }
+
+  function upload(name, bytes, tokens, next, program) {
+    var pr = prepare(name, bytes, program), data = pr.data, n = pr.name;
     var writes = [], parts = [];
     for (var p = 0; p < data.length; p += CHUNK) {
       var c = Math.min(CHUNK, data.length - p), k = Math.ceil(next / c);
@@ -183,11 +203,8 @@ var BBCLoad = (function () {
     if (group.length) flushGroup();
     else copy = ['*>' + n + '\r'];
     return {
-      name: n, tokenised: tok, listing: listing, size: data.length,
-      writes: writes, copy: copy,
-      load: !program ? [] : tok ? ['LOAD "' + n + '"\r'] :
-        listing ? ['NEW\r', '*EXEC ' + n + '\r'] : [],
-      next: next + GAP
+      name: n, tokenised: pr.tokenised, listing: pr.listing, size: data.length,
+      writes: writes, copy: copy, load: pr.load, next: next + GAP
     };
   }
 
@@ -242,7 +259,7 @@ var BBCLoad = (function () {
   return {
     tokenTable: tokenTable, isTokenised: isTokenised, detokenise: detokenise,
     textLines: textLines, programLines: programLines, keys: keys,
-    upload: upload, latin1: latin1, isListing: isListing,
+    upload: upload, prepare: prepare, latin1: latin1, isListing: isListing,
     sizeLine: sizeLine, fileSize: fileSize, copyOut: copyOut
   };
 })();

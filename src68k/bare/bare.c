@@ -12,10 +12,12 @@
  *		from the interrupt), IXON (^S/^Q stop and start the output);
  *		no canonical mode (osl.c does not use it here);
  *   time	the DUART counter/timer, HZ interrupts a second;
- *   files	a RAM file store: up to NFILE files in 512-byte blocks in
- *		the top part of the memory (bare_init), one directory, names
- *		of up to NAMELEN characters, case sensitive.  It survives
- *		exit() (*BYE starts BASIC again), not a reset.
+ *   files	on the SD card's FAT file system (fat.c), if it has one,
+ *		and in a RAM file store: up to NFILE files in 512-byte
+ *		blocks in the top part of the memory (bare_init), one
+ *		directory, names of up to NAMELEN characters, case
+ *		sensitive, kept by exit() (*BYE starts BASIC again), not by
+ *		a reset.  See "the devices" for which is used.
  * The firmware is left alone otherwise (its System Data Block gives the
  * memory size).  start.s does the start-up and the interrupt entry.
  * Compiled by the ACK: int is 16 bits.
@@ -335,7 +337,18 @@ static struct fd *getfd(int fd)
 	return &fds[fd - 3];
 }
 
-int open(const char *name, int flags, ...)
+/* v right-aligned in w characters at p */
+static void fmtnum(char *p, long v, int w)
+{
+	int i;
+
+	for (i = w - 1; i >= 0; i--) {
+		p[i] = (v || i == w - 1) ? '0' + (int) (v % 10) : ' ';
+		v /= 10;
+	}
+}
+
+static int ram_open(const char *name, int flags)
 {
 	struct rfile *f;
 	int i;
@@ -379,7 +392,7 @@ int open(const char *name, int flags, ...)
 	return i + 3;
 }
 
-int close(int fd)
+static int ram_close(int fd)
 {
 	struct fd *d = getfd(fd);
 
@@ -389,15 +402,13 @@ int close(int fd)
 	return 0;
 }
 
-ssize_t read(int fd, void *buf, size_t n)
+static int ram_read(int fd, void *buf, int n)
 {
 	struct fd *d;
 	struct rfile *f;
 	char *p = buf;
 	int got = 0;
 
-	if (fd == 0)
-		return con_read(buf, (int) n);
 	if ((d = getfd(fd)) == 0)
 		return -1;
 	f = &files[d->file];
@@ -415,17 +426,13 @@ ssize_t read(int fd, void *buf, size_t n)
 	return got;
 }
 
-ssize_t write(int fd, const void *buf, size_t n)
+static int ram_write(int fd, const void *buf, int n)
 {
 	struct fd *d;
 	struct rfile *f;
 	const char *p = buf;
 	int put = 0;
 
-	if (fd == 1 || fd == 2) {
-		con_write(buf, (int) n);
-		return n;
-	}
 	if ((d = getfd(fd)) == 0)
 		return -1;
 	if ((d->flags & O_ACCMODE) == O_RDONLY) {
@@ -454,7 +461,7 @@ ssize_t write(int fd, const void *buf, size_t n)
 	return put;
 }
 
-off_t lseek(int fd, off_t off, int whence)
+static long ram_lseek(int fd, long off, int whence)
 {
 	struct fd *d = getfd(fd);
 	long pos;
@@ -471,7 +478,7 @@ off_t lseek(int fd, off_t off, int whence)
 	return pos;
 }
 
-int fstat(int fd, struct stat *st)
+static int ram_fstat(int fd, struct stat *st)
 {
 	struct fd *d = getfd(fd);
 
@@ -483,7 +490,7 @@ int fstat(int fd, struct stat *st)
 	return 0;
 }
 
-int access(const char *name, int mode)
+static int ram_access(const char *name)
 {
 	if (lookup(name))
 		return 0;
@@ -491,7 +498,7 @@ int access(const char *name, int mode)
 	return -1;
 }
 
-int unlink(const char *name)
+static int ram_unlink(const char *name)
 {
 	struct rfile *f = lookup(name);
 
@@ -504,7 +511,7 @@ int unlink(const char *name)
 	return 0;
 }
 
-int rename(const char *old, const char *new)
+static int ram_rename(const char *old, const char *new)
 {
 	struct rfile *f = lookup(old), *g;
 
@@ -515,55 +522,258 @@ int rename(const char *old, const char *new)
 		return -1;
 	}
 	if ((g = lookup(new)) != 0 && g != f)
-		unlink(new);
+		ram_unlink(new);
 	strcpy(f->name, new);
 	return 0;
 }
 
-int chdir(const char *name)
+/*==================================================== the devices ====*/
+
+/* Files are on the SD card (fat.c, if it has a FAT file system at the
+ * start) or in the RAM store.  "sd:name" and "ram:name" say which;
+ * otherwise a file is looked for on the card, then in the store, and a
+ * new one goes on the card if there is one.  File descriptors: the
+ * store's 3 .., the card's SDFD + its handle.
+ */
+#define SDFD	32
+
+int fat_mount(void);
+int fat_open(const char *path, int flags);
+int fat_close(int k);
+int fat_read(int k, char *buf, int n);
+int fat_write(int k, const char *buf, int n);
+long fat_lseek(int k, long pos);
+long fat_tell(int k);
+long fat_size(int k);
+int fat_exists(const char *path);
+int fat_unlink(const char *path);
+int fat_rename(const char *old, const char *new);
+int fat_chdir(const char *path);
+int fat_mkdir(const char *path);
+int fat_rmdir(const char *path);
+void fat_list(void (*emit)(char *, long, int));
+
+static int sd;			/* the card has a FAT file system */
+static int sdflags[8];		/* open flags of the card's files */
+
+/* "sd:" -> 1, "ram:" -> 2, else 0; *name past it */
+static int device(const char **name)
 {
-	if (strcmp(name, "/") == 0 || strcmp(name, ".") == 0)
+	const char *n = *name;
+
+	if ((n[0] == 's' || n[0] == 'S') && (n[1] == 'd' || n[1] == 'D')
+	    && n[2] == ':') {
+		*name = n + 3;
+		return 1;
+	}
+	if ((n[0] == 'r' || n[0] == 'R') && (n[1] == 'a' || n[1] == 'A')
+	    && (n[2] == 'm' || n[2] == 'M') && n[3] == ':') {
+		*name = n + 4;
+		return 2;
+	}
+	return 0;
+}
+
+static int sd_open(const char *name, int flags)
+{
+	int k;
+
+	if (!sd) {
+		errno = ENOENT;
+		return -1;
+	}
+	if ((k = fat_open(name, flags)) < 0)
+		return -1;
+	sdflags[k] = flags;
+	return SDFD + k;
+}
+
+int open(const char *name, int flags, ...)
+{
+	int dev = device(&name), fd;
+
+	if (dev == 1)
+		return sd_open(name, flags);
+	if (dev == 2 || !sd)
+		return ram_open(name, flags);
+	/* a new file (OPENOUT, SAVE) goes on the card, unless the name is
+	 * not 8.3 (EINVAL): then in the store
+	 */
+	if ((flags & O_CREAT) && !(flags & O_TRUNC) && !fat_exists(name)
+	    && ram_access(name) == 0)
+		return ram_open(name, flags);
+	if ((fd = sd_open(name, flags)) >= 0
+	    || (errno != ENOENT && errno != EINVAL))
+		return fd;
+	return ram_open(name, flags);
+}
+
+int close(int fd)
+{
+	if (fd >= SDFD && fd < SDFD + 8)
+		return fat_close(fd - SDFD);
+	return ram_close(fd);
+}
+
+ssize_t read(int fd, void *buf, size_t n)
+{
+	if (fd == 0)
+		return con_read(buf, (int) n);
+	if (fd >= SDFD && fd < SDFD + 8)
+		return fat_read(fd - SDFD, buf, (int) n);
+	return ram_read(fd, buf, (int) n);
+}
+
+ssize_t write(int fd, const void *buf, size_t n)
+{
+	if (fd == 1 || fd == 2) {
+		con_write(buf, (int) n);
+		return n;
+	}
+	if (fd >= SDFD && fd < SDFD + 8) {
+		if ((sdflags[fd - SDFD] & O_ACCMODE) == O_RDONLY) {
+			errno = EBADF;
+			return -1;
+		}
+		return fat_write(fd - SDFD, buf, (int) n);
+	}
+	return ram_write(fd, buf, (int) n);
+}
+
+off_t lseek(int fd, off_t off, int whence)
+{
+	int k = fd - SDFD;
+	long pos;
+
+	if (k < 0 || k >= 8)
+		return ram_lseek(fd, off, whence);
+	pos = whence == SEEK_SET ? off : whence == SEEK_CUR ? fat_tell(k) + off
+	    : fat_size(k) + off;
+	if (pos < 0) {
+		errno = EINVAL;
+		return -1;
+	}
+	return fat_lseek(k, pos);
+}
+
+int fstat(int fd, struct stat *st)
+{
+	if (fd >= SDFD && fd < SDFD + 8) {
+		memset(st, 0, sizeof(*st));
+		st->st_mode = S_IFREG | 0666;
+		st->st_size = fat_size(fd - SDFD);
+		return 0;
+	}
+	return ram_fstat(fd, st);
+}
+
+int access(const char *name, int mode)
+{
+	int dev = device(&name);
+
+	if (dev != 2 && sd && fat_exists(name))
+		return 0;
+	if (dev != 1 && ram_access(name) == 0)
 		return 0;
 	errno = ENOENT;
 	return -1;
 }
 
-/* v right-aligned in w characters at p */
-static void fmtnum(char *p, long v, int w)
+int unlink(const char *name)
 {
-	int i;
+	int dev = device(&name);
 
-	for (i = w - 1; i >= 0; i--) {
-		p[i] = (v || i == w - 1) ? '0' + (int) (v % 10) : ' ';
-		v /= 10;
+	if (dev != 2 && sd && fat_exists(name))
+		return fat_unlink(name);
+	if (dev == 1) {
+		errno = ENOENT;
+		return -1;
 	}
+	return ram_unlink(name);
 }
 
-/* *DIR: the files, their sizes and the free space */
-void bare_dir(void)
+int rename(const char *old, const char *new)
+{
+	int dev = device(&old);
+
+	device(&new);
+	if (dev != 2 && sd && fat_exists(old))
+		return fat_rename(old, new);
+	if (dev == 1) {
+		errno = ENOENT;
+		return -1;
+	}
+	return ram_rename(old, new);
+}
+
+/* *DIR: the card's current directory, then the RAM store */
+static void dirline(char *name, long size, int isdir)
 {
 	char line[NAMELEN + 16];
-	int i, n, nfree = 0;
+	int n;
 
-	for (i = 0; i < NFILE; i++) {
-		if (!files[i].name[0])
-			continue;
-		strcpy(line, files[i].name);
-		for (n = strlen(line); n < NAMELEN + 1; n++)
-			line[n] = ' ';
-		fmtnum(line + n, files[i].size, 9);
-		strcpy(line + n + 9, "\r\n");
-		con_write(line, strlen(line));
+	strcpy(line, name);
+	for (n = strlen(line); n < NAMELEN + 1; n++)
+		line[n] = ' ';
+	if (isdir)
+		strcpy(line + n, "    <DIR>");
+	else
+		fmtnum(line + n, size, 9);
+	strcpy(line + n + 9, "\r\n");
+	con_write(line, strlen(line));
+}
+
+void bare_dir(void)
+{
+	int i, nfree = 0, any = 0;
+
+	if (sd) {
+		con_write("SD card:\r\n", 10);
+		fat_list(dirline);
 	}
+	for (i = 0; i < NFILE; i++)
+		if (files[i].name[0])
+			any = 1;
+	if (sd && !any)
+		return;
+	if (sd)
+		con_write("RAM:\r\n", 6);
+	for (i = 0; i < NFILE; i++)
+		if (files[i].name[0])
+			dirline(files[i].name, files[i].size, 0);
 	for (i = 0; i < nblocks; i++)
 		if (next[i] == FREE)
 			nfree++;
-	strcpy(line, "free");
-	for (n = 4; n < NAMELEN + 1; n++)
-		line[n] = ' ';
-	fmtnum(line + n, (long) nfree * BLK, 9);
-	strcpy(line + n + 9, "\r\n");
-	con_write(line, strlen(line));
+	dirline("free", (long) nfree * BLK, 0);
+}
+
+int mkdir(const char *name, Mode_t mode)
+{
+	device(&name);
+	if (sd)
+		return fat_mkdir(name);
+	errno = EINVAL;			/* (the RAM store has one directory) */
+	return -1;
+}
+
+int rmdir(const char *name)
+{
+	device(&name);
+	if (sd)
+		return fat_rmdir(name);
+	errno = ENOENT;
+	return -1;
+}
+
+int chdir(const char *name)
+{
+	device(&name);
+	if (sd)
+		return fat_chdir(name);
+	if (strcmp(name, "/") == 0 || strcmp(name, ".") == 0)
+		return 0;
+	errno = ENOENT;
+	return -1;
 }
 
 /*==================================================== start ==========*/
@@ -597,14 +807,17 @@ long bare_init(int cold)
 		for (i = 0; i < nblocks; i++)
 			next[i] = FREE;
 		for (s = bare_seeds; s->name; s++) {
-			int fd = open(s->name, O_RDWR | O_CREAT | O_TRUNC, 0666);
+			int fd = ram_open(s->name, O_RDWR | O_CREAT | O_TRUNC);
 			long k;
 			for (k = 0; k < s->size; k += 16384)
-				write(fd, s->data + k,
-				    (size_t) (s->size - k > 16384 ? 16384 : s->size - k));
-			close(fd);
+				ram_write(fd, s->data + k,
+				    (int) (s->size - k > 16384 ? 16384 : s->size - k));
+			ram_close(fd);
 		}
 	}
+
+	/* the SD card, if it has a FAT file system */
+	sd = fat_mount();
 
 	/* the console as found: like a Minix tty, osl.c changes it */
 	memset(&tio, 0, sizeof(tio));
