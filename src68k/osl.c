@@ -67,6 +67,7 @@ static unsigned char optval;		/* *OPT */
 static int column;			/* for POS */
 static char *edptr;			/* EDIT capture pointer */
 static char *edbuf;			/* EDIT capture buffer */
+static char *edend;			/* EDIT capture limit: the first line */
 static long toffset;			/* TIME offset (centiseconds) */
 static int hz = 60;
 
@@ -169,8 +170,10 @@ static void sigesc(int sig)
 static void out(int c)
 {
 	if (os_flags & F_EDIT) {		/* EDIT: capture the line */
-		if (c >= ' ' && edptr < edbuf + 255)
+		if (c >= ' ' && edptr < edend)
 			*edptr++ = c;
+		else if (c == LF)		/* (EDIT, EDIT m,n: the first) */
+			edend = edptr;
 		return;
 	}
 	obuf[olen++] = c;
@@ -207,7 +210,7 @@ void os_wrch(int c)
 }
 
 /* getkey - read a key, up to cs centiseconds (cs < 0: wait for ever).
- * vt100 cursor keys come as ESC [ x and are mapped to the editor's
+ * vt100 cursor keys come as ESC [ x (or ESC O x) and are mapped to the editor's
  * control keys.  Returns the character, -1 on time-out.
  */
 static int getkey(long cs)
@@ -241,8 +244,8 @@ static int getkey(long cs)
 	}
 	if (c != ESC || !istty)
 		return c;
-	c2 = readkey(3, 1);			/* cursor key? */
-	if (c2 != '[') {
+	c2 = readkey(3, 1);			/* cursor key? ESC [ x, or */
+	if (c2 != '[' && c2 != 'O') {		/* ESC O x (application mode) */
 		if (c2 >= 0)
 			os_inkey = c2;
 		return ESC;
@@ -456,6 +459,7 @@ int os_line(char *buf)
 		return 1;
 	out(LF);
 	edbuf = edptr = buf;
+	edend = buf + 255;
 	/* EDIT n (immediate mode only) -> LIST n, capturing the output */
 	if (curlin == 0 && autono == 0) {
 		static char edit[] = "EDIT";

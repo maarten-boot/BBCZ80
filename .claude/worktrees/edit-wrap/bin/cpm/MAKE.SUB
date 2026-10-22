@@ -1,0 +1,14 @@
+z80asm dist/rmf
+z80asm main/rmf
+z80asm exec/rmf
+z80asm eval/rmf
+z80asm asmb/rmf
+z80asm cmos/rmf
+z80asm math/rmf
+z80asm hook/rmf
+z80asm data/rmf
+era bbcbasic.com
+link bbcbasic=dist,main,exec,eval,asmb,math,hook,cmos,/p:4B00,data
+hexbin bbcbasic
+era bbcbasic.hex
+ren bbcbasic.com=bbcbasic.bin

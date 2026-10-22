@@ -1,0 +1,10 @@
+mamesession.py scripts (Minix tree src/rosco/tools) for the SD card that
+tools/mamebench.py builds in build/mame.  Run, from build/mame:
+
+  podman run --rm --userns=keep-id -e SDL_VIDEODRIVER=dummy -v $PWD:/work \
+    -v $MINIX/src/rosco/tools:/tools:ro --entrypoint python3 \
+    localhost/rosco-emulator /tools/mamesession.py /opt/rosco \
+    /work/rosco_sd.bin /work/out.log /work/shell1.txt
+
+shell1.txt  * commands and OSCLI from BASIC (console and piped stdin)
+shell2.txt  an interactive *sh subshell, then INPUT in BASIC

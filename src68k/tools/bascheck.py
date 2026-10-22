@@ -22,6 +22,12 @@ image per group with the #file files in its RAM store, in r68k on a pty
 (the demo's -O2 r68k if there is one); the lines are typed at the >
 prompt, each after the prompt is back, and *BYE ends a test (BASIC starts
 again with the files kept).
+BBC_EMU=host and BBC_EMU=hostwin test BBC BASIC as a program on the PC
+(tools/mkhost.py): build/host/linux/bbc68k, or build/host/windows/
+bbc68k.exe under Wine; each test in a new folder with its #file files (the
+program's files), its lines piped in after a Return for the demo menu and
+NEW (the menu program goes), and
+*BYE (which ends the program) at the end.
 -k keeps the 68k outputs as build/bas/NAME.out; -n only prints them (no
 Z80 reference, for 68k-only things such as the assembler).
 Exit status 1 if any test differs.
@@ -43,6 +49,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # BBC_EMU=mame: the MAME rosco-emulator (runmame.py) instead of r68k
 MAME = os.environ.get('BBC_EMU') == 'mame'
 BARE = os.environ.get('BBC_EMU') == 'bare'
+HOSTED = os.environ.get('BBC_EMU') in ('host', 'hostwin')
 RUNNER = 'runmame.py' if MAME else 'runminix.py'
 SRC = os.path.dirname(HERE)
 TOP = os.path.dirname(SRC)
@@ -189,6 +196,32 @@ def run_bare(tests, secs):
     return {t: '>' + r for t, r in res.items()}
 
 
+def run_host(tests, secs):
+    """The tests on BBC BASIC as a PC program (see the module text)."""
+    import tempfile
+    win = os.environ.get('BBC_EMU') == 'hostwin'
+    exe = os.path.join(TOP, 'build', 'host', 'windows' if win else 'linux',
+                       'bbc68k.exe' if win else 'bbc68k')
+    res = {}
+    for t in tests:
+        lines, files = parse(t)
+        with tempfile.TemporaryDirectory(dir=os.path.join(TOP, 'build', 'host')) as d:
+            for p in files:
+                shutil.copy(p, os.path.join(d, os.path.basename(p)))
+            inp = ('\rNEW\r' + '\r'.join(lines) + '\r*BYE\r').encode('latin-1')
+            try:
+                out = subprocess.run((['wine'] if win else []) + [exe], input=inp, cwd=d,
+                                     capture_output=True, timeout=secs + 30).stdout
+            except subprocess.TimeoutExpired as e:
+                out = (e.stdout or b'') + b'\n(timeout)'
+        text = out.decode('latin-1').replace('\r', '')
+        # past the demo menu: its "Type CHAIN" line ends what is not ours
+        k = text.find('Type CHAIN "menu" to come back here.\n')
+        text = text[k + 37:] if k >= 0 else '(no menu)\n' + text
+        res[t] = text
+    return res
+
+
 def groups(tests):
     """Split the tests into boots by the size of their #file files."""
     out, cur, size = [], [], 0
@@ -229,7 +262,8 @@ def main():
     refs = {} if a.n else {t: reference(t) for t in tests}
     got = {}
     for g in groups(tests):
-        got.update(run_bare(g, a.t) if BARE else run68k(g, a.t))
+        got.update(run_host(g, a.t) if HOSTED else run_bare(g, a.t) if BARE
+                   else run68k(g, a.t))
     bad = 0
     for t in tests:
         g = clean68k(got[t])

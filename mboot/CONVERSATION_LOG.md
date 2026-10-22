@@ -1014,3 +1014,125 @@ Test programs are in `build/win/t`.
   when present). Files are those of the folder the .exe runs in.
 * **Tests:** the BASIC suite and the fatcheck checks against a host
   folder, under Wine through pipes.
+
+## Entry 36 — 2026-10-22
+
+### User request
+> ok resume
+
+### Actions taken
+The Windows exe (PORT_PLAN §21): `host/` (`hostmain.cpp`, `hostfs.cpp`,
+`compat/`), `tools/mkhost.py`, `tools/hostcheck.py`, bascheck's
+host/hostwin modes, `ttycheck --exe`, `make host` / `make hostcheck`.
+* **Problems found and fixed:**
+  * keys typed before BASIC was up were lost (now held until it is idle);
+  * the end-of-input test (60 Hz ticks wake the CPU);
+  * the tests' demo menu program in memory (NEW);
+  * Windows refusing to delete open files (FILETEST).
+* **Result:** all suites pass on the Windows exe under Wine and on the
+  Linux program.
+* **Package:** `/home/mboot/vibe/bbc68k-windows-2026-10-22.zip` (649 KB,
+  sha256 67d663b0…): `bbc68k.exe` and a Windows README.
+* **Still to check on real Windows:** Escape and the cursor keys at the
+  console (Wine in a pty loses a lone ESC).
+
+## Entry 37 — 2026-10-22
+
+### User report
+> i tested it on windows, esc works, i see no arrows doing anything . i
+> send the zip to mr Russel for his testign set to apply.
+
+Mid-turn:
+> ok in the editor let me see if i can test something.
+
+### Actions taken
+* **Cause (likely):** the console's VT input mode
+  (ENABLE_VIRTUAL_TERMINAL_INPUT, untestable under Wine) delivered the
+  arrows in a form the editor did not take (e.g. ESC O x).
+* **Fixes:**
+  * `hostmain.cpp` no longer uses VT input; `console_key` maps the key
+    codes (arrows, Home/End, Insert/Delete) to vt100 itself;
+  * `osl.c`'s editor also accepts ESC O x.
+* **Tests:**
+  * `host/keytest.cpp` injects real Windows key events (WriteConsoleInput,
+    Left/Home with no character) into bbc68k.exe's console under Wine:
+    Left and Home work. It is now part of `hostcheck.py`;
+  * `ttycheck` has an ESC O D case;
+  * all ok, and bascheck host/hostwin 24/24 each.
+* **New zip:** `/home/mboot/vibe/bbc68k-windows-2026-10-22b.zip`
+  (sha256 ec66f752…).
+
+## 38. Status check
+
+* **User:** "status ?"
+* Nothing in progress: the cursor-key fix is committed (c5ae923), the
+  tree is clean, and the new zip awaits the user's Windows test. A stale
+  background waiter (its pgrep matched its own command line) was stopped;
+  the last demo container test had passed.
+
+## Entry 39 — 2026-10-22
+
+### User report
+> in both the old image today (22) and the 22b image the arrows do not
+> work right when i do LIST all lines are properly alined but when i enter
+> EDIT all appears on one line and e.g. right arrow erases the text, down
+> arrow works, up arrow does nothing so that is why right arrow seems to
+> erase the text it is already on a different line, left arrow also works
+
+### Cause
+* **The line is wider than the console.** The editor moves left with
+  BS, and a BS at the console's left edge stays put. Up (to the start)
+  and EDIT's redraw both stopped at column 0 of the last row, so Right
+  then retyped the start of the line over that row.
+* **Plain `EDIT`** is `LIST` with the output captured into the line,
+  which joined the whole program into one line (as on CP/M).
+
+### Actions taken (branch mboot/edit-wrap)
+* **`host/hostmain.cpp`:** `wrap_bs` tracks the cursor column against
+  the console width (Windows: GetConsoleScreenBufferInfo; Linux:
+  TIOCGWINSZ) and turns a BS at the left edge into ESC[A ESC[wG. After
+  the last column, Windows checks where the cursor really is (the
+  classic console wraps at once, Windows Terminal waits); Linux assumes
+  xterm's delayed wrap.
+* **`osl.c`:** EDIT captures the first listed line only.
+* **`tools/editcheck.py`** (in `make hostcheck`): a 40-column pty with a
+  vt100 screen model; it edits a two-row line with the cursor keys.
+  * The new build passes 12/12; the old build fails all 12 (the bug is
+    reproduced).
+* **Other checks:**
+  * bascheck host/hostwin/bare 24/24 each;
+  * hostcheck (Wine keytest) and ttycheck --exe all ok.
+  * The Windows side of `wrap_bs` cannot be tested under Wine in a pty.
+* **Found on the way:** `src68k/test/bas/a01asm.exp` is ignored by
+  `.gitignore` (`*.exp`) and was never committed. A fresh checkout's
+  bascheck fails a01asm. It is now added with `git add -f`.
+* **New zip:** `/home/mboot/vibe/bbc68k-windows-2026-10-22c.zip`
+  (sha256 9531f876…).
+
+## 40. Continue
+
+* **User:** "continue"
+* Nothing new to build. The EDIT-wrap fix (entry 39) is committed on
+  branch `mboot/edit-wrap` (a24e76b), one commit ahead of
+  `mboot/conversation-log`; editcheck still passes 12/12.
+* Waiting for the user's Windows test of
+  `bbc68k-windows-2026-10-22c.zip` (sha256 9531f876…, checked).
+
+## 41. Windows test of zip c
+
+* **User:** "looks like its working no arrow key now deletes anything,
+  changing the line + return keeps the infor on LIST. naturally *EDIT
+  will not work"
+* **Result:** the EDIT-wrap fix (a24e76b) works on real Windows: the
+  cursor keys move across the wrapped line, and the edited line is kept.
+* `*EDIT` (a star command for an external editor) is not provided by
+  the port, as expected.
+* `mboot/edit-wrap` is ready to be fast-forwarded into
+  `mboot/conversation-log` when the user wants.
+
+## 42. Fast-forward
+
+* **User:** "do the fast-forward merge"
+* `mboot/conversation-log` fast-forwarded to `mboot/edit-wrap`
+  (fc470f3 → 3c271eb): the EDIT-wrap fix, editcheck.py, a01asm.exp and
+  log entries 39–41. Not pushed.

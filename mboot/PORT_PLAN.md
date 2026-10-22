@@ -769,3 +769,34 @@ No Minix: `make bare` (`tools/mkbare.py`) builds `build/bare/ROSCODE1.BIN`,
   0.8 s.
 * **Tests:** Node and Chromium, both variants, all ok; `ttycheck` ok on
   bare BASIC too (`*BYE` restarts BASIC).
+
+## 21. BBC BASIC as a PC program: Windows .exe and Linux (2026-10-22)
+
+`make host` (`tools/mkhost.py`, `host/README.md`):
+`build/host/windows/bbc68k.exe` (MinGW-w64, static, 1.8 MB) and
+`build/host/linux/bbc68k`. Each is r68k with the firmware and bare BBC
+BASIC (with the demos) built in.
+* **Console:** `R68K_HOSTED` in `r68k-web.patch` (the web build's DUART
+  path, output to `r68k_host_output`). `host/hostmain.cpp`: an input
+  thread (console keys, Windows cursor keys as vt100, or pipe bytes); it
+  sleeps while idle (STOP). Keys are held until BASIC is first idle.
+  Ctrl-] quits; piped input ends the program when used up and quiet.
+* **Host files:** `host/hostfs.cpp`, the folder the program started in.
+  * BASIC asks with ILLEGAL: d6 = "BBCH", d7 = op (`start.s`
+    `bare_host`).
+  * `bare.c` finds the host with a probe (vector 4 at `bare_nohost`),
+    then uses its files as the primary device (`host:` prefix).
+  * `*BYE` ends the program.
+  * Windows cannot delete an open file; that is emulated (removed at the
+    last close).
+* **MinGW:** `host/compat` (`byteswap.h`, `termios.h`, `sys/select.h`)
+  and `-lws2_32` let r68k's sources build unchanged.
+* **Tests:**
+  * `BBC_EMU=host` and `BBC_EMU=hostwin` (Wine) bascheck: 24/24 each;
+  * `tools/hostcheck.py` (both, the folder checked byte by byte): ok;
+  * `ttycheck --exe` (Linux, pty): ok;
+  * Wine in a pty: menu, typing, Ctrl-] ok. Wine's console loses a lone
+    ESC, so Escape and the cursor keys are for checking on real Windows.
+* **Also rechecked after the shared changes:** the web page (Node,
+  Chromium), the bare suite without a host (24/24), and MAME with the
+  real firmware (the probe is harmless; SD card files ok).

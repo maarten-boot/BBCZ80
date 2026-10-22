@@ -1,0 +1,21 @@
+# /etc/demo - the console of the BBC BASIC demo (src68k/demo).
+# INIT runs it instead of getty, with no environment; when it ends, INIT
+# starts it again.
+
+PATH=/bin:/usr/bin
+HOME=/usr/demo
+TERM=vt100
+export PATH HOME TERM
+cd $HOME
+# BBC BASIC's ESCape is the terminal's interrupt character while a program
+# runs: the SIGINT goes to this script too, which must not die of it
+# (bbcbasic catches it; the shell below gets the default back).
+trap '' 2
+bbcbasic menu
+trap 2
+echo
+echo "You have left BBC BASIC.  This is the Minix shell:"
+echo "  bbcbasic      start BBC BASIC again"
+echo "  ls, cat ...   look around (the demo programs are in /usr/demo)"
+echo "  exit          back to the demo menu"
+exec sh

@@ -13,7 +13,7 @@
 
 	.define	start, _bare_restart, _bare_isr, _bare_idle, _bare_getvbr
 	.define	_bare_setsr, _bare_ints, EXIT, .trpim, .trppc
-	.define	_bare_sdinit, _bare_sdread, _bare_sdwrite
+	.define	_bare_sdinit, _bare_sdread, _bare_sdwrite, _bare_host, _bare_nohost
 	.extern	_main, _bare_init, _bare_irq, _bare_argc, _bare_argv, __end
 
 	.sect	.text
@@ -112,6 +112,34 @@ _bare_sdwrite:
 	movem.l	(sp)+,d1-d7/a2-a6
 	and.l	#0xFF,d0		! (a C bool)
 	rts
+
+! bare_host(op, a, b, c): a call to the host, when BASIC runs as a program
+! on a PC (src68k/host: the emulator's hostfs.cpp): ILLEGAL with d6 =
+! "BBCH", d7 = op, d1-d3 = a, b, c; the result in d0.  Without such a host
+! (a rosco_m68k, r68k, the web page) the CPU takes the illegal instruction
+! exception: bare_init calls only PROBE then, with the vector at
+! bare_nohost, which makes d0 -1.
+!	long bare_host(int op, long a, long b, long c)
+HOST_MAGIC = 0x42424348
+
+_bare_host:
+	movem.l	d1-d3/d6-d7,-(sp)
+	move.w	4+20(sp),d7		! op
+	ext.l	d7
+	move.l	6+20(sp),d1
+	move.l	10+20(sp),d2
+	move.l	14+20(sp),d3
+	move.l	#HOST_MAGIC,d6
+	move.l	#-1,d0
+	.data2	0x4AFC			! illegal
+	movem.l	(sp)+,d1-d3/d6-d7
+	rts
+
+! the illegal instruction vector while bare_init asks for a host
+_bare_nohost:
+	add.l	#2,2(sp)		! (the 68010 frame: SR, PC, format)
+	move.l	#-1,d0
+	rte
 
 	.sect	.data
 cold:	.data2	1			! the image is fresh: clear the .bss

@@ -1,29 +1,38 @@
 --- a/machine/Duart.cpp
 +++ b/machine/Duart.cpp
-@@ -3,9 +3,53 @@
+@@ -3,9 +3,66 @@
  //
  
  #include <iostream>
 +#include "Duart.h"
-+#ifdef __EMSCRIPTEN__
++// The web page (Emscripten) and the hosted builds (R68K_HOSTED: the
++// Windows program of src68k/host) give channel A to their own console.
++#if defined(__EMSCRIPTEN__) || defined(R68K_HOSTED)
++#define R68K_PAGE_IO 1
 +#include <string>
++#endif
++#ifdef __EMSCRIPTEN__
 +#include <emscripten.h>
++#elif defined(R68K_PAGE_IO)
++#define EMSCRIPTEN_KEEPALIVE
++extern "C" void r68k_host_output(const char *data, size_t n);
 +#else
  #include <sys/select.h>
  #include <unistd.h>
 -#include "Duart.h"
 +#endif
 +
-+#ifdef __EMSCRIPTEN__
++#ifdef R68K_PAGE_IO
 +// In a web page (src68k/web in BBCZ80, with webmain.cpp in place of
-+// main()): channel A is the page's terminal.
++// main()), or a hosted build (src68k/host, hostmain.cpp): channel A is the
++// page's terminal, or the program's console.
 +// * Keys come in through r68k_key() (r68k_pending() of them are waiting,
 +//   r68k_drop() drops them) and go to the receiver at most one per KEY_TIME
 +//   of real time.  Minix takes input from the line's buffer (256 bytes) on
 +//   clock ticks, and the clock runs in real time, however fast the CPU
 +//   runs: pacing by CPU cycles would overrun the buffer with pasted text.
 +// * Output is collected until r68k_flush() hands it to
-+//   Module.r68kOutput(bytes).
++//   Module.r68kOutput(bytes) (hosted: r68k_host_output()).
 +// * Timer interrupts missed while the page was busy (the main loop runs in
 +//   frames) are made up, up to MAX_TICKS, so the Minix clock keeps time.
 +// * r68k_duart_idle: nothing pending (no key, no interrupt), and
@@ -46,8 +55,12 @@
 +
 +    void r68k_flush() {
 +        if (webOut.empty()) return;
++#ifdef __EMSCRIPTEN__
 +        EM_ASM({ if (Module.r68kOutput) Module.r68kOutput(HEAPU8.slice($0, $0 + $1)); },
 +               webOut.data(), webOut.size());
++#else
++        r68k_host_output(webOut.data(), webOut.size());
++#endif
 +        webOut.clear();
 +    }
 +}
@@ -55,11 +68,11 @@
  
  namespace rosco {
      namespace m68k {
-@@ -92,7 +136,11 @@
+@@ -92,7 +149,11 @@
                  switch ((address - BASE) >> 1) {
                  case MRA:       mrA[mrPtrA] = data; mrPtrA = 1; break;
                  case MISR_CRA:  if ((data & 0x70) == 0x10) mrPtrA = 0; break;
-+#ifdef __EMSCRIPTEN__
++#ifdef R68K_PAGE_IO
 +                case RHRA_THRA: webOut.push_back((char)data); break;
 +#else
                  case RHRA_THRA: std::cout.put((char)data); std::cout.flush(); break;
@@ -67,11 +80,11 @@
                  case IPCR_ACR:  acr = data; break;
                  case ISR_IMR:   imr = data; break;
                  case CTU_CTUR:  preset = (preset & 0x00FF) | (data << 8); break;
-@@ -107,6 +155,32 @@
+@@ -107,6 +168,32 @@
              }
  
              void Duart::poll() {
-+#ifdef __EMSCRIPTEN__
++#ifdef R68K_PAGE_IO
 +                if (counterRunning) {
 +                    auto now = std::chrono::steady_clock::now();
 +                    while (now >= nextExpiry && missedTicks < MAX_TICKS) {
@@ -100,7 +113,7 @@
                  if (counterRunning) {
                      auto now = std::chrono::steady_clock::now();
                      if (now >= nextExpiry) {
-@@ -127,6 +201,7 @@
+@@ -127,6 +214,7 @@
                      }
                  }
                  update();
