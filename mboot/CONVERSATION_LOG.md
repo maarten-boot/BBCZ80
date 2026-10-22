@@ -1117,3 +1117,15 @@ Mid-turn:
   `mboot/conversation-log`; editcheck still passes 12/12.
 * Waiting for the user's Windows test of
   `bbc68k-windows-2026-10-22c.zip` (sha256 9531f876…, checked).
+
+## 41. Windows test of zip c
+
+* **User:** "looks like its working no arrow key now deletes anything,
+  changing the line + return keeps the infor on LIST. naturally *EDIT
+  will not work"
+* **Result:** the EDIT-wrap fix (a24e76b) works on real Windows: the
+  cursor keys move across the wrapped line, and the edited line is kept.
+* `*EDIT` (a star command for an external editor) is not provided by
+  the port, as expected.
+* `mboot/edit-wrap` is ready to be fast-forwarded into
+  `mboot/conversation-log` when the user wants.
