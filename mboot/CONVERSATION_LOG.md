@@ -1219,3 +1219,49 @@ Mid-turn:
   not rebuilt.
 * **Still open:** the 2 minix lockdown commits (another session works in
   that tree), RunCPM on demand, build outputs to rebuild here.
+
+## 46. Inspection, and GitHub issue #1 from R.T. Russell
+
+* **User:** "inspect the current folder it is a project moved here from
+  another remote agent"; "inspect the issue found by mr Russel:
+  https://github.com/maarten-boot/BBCZ80/issues/1 and make a note to
+  address it later"; "add entry 46 now".
+* **Inspection (nothing changed):** `mboot/conversation-log` clean and
+  equal to origin (b6000f6). r68k, rosco-emulator and ack equal to
+  their origins. minix-st-2.0.4 still lacks the lockdown commits
+  107f0d0 and 3b61801; it has 2 modified files and 2 untracked dirs
+  from the other session (left alone). `../r68k/r68k` is still not
+  built. The `agent-s-8250/*` and `lockdown/*` remote-tracking refs
+  are stale (their remotes are gone).
+* **Issue #1, "Assembler macro not working":**
+  ```
+  10 DIM P% 20
+  20 [OPT FN1("test")
+  30 ]
+  40 END
+  60 DEF FN1(A$)
+  70 [OPT 2
+  80 dc.b A$
+  90 ]
+  100 = 2
+  ```
+  gives `Not in a FN at line 100` on the 68k port (reproduced with
+  `build/host/linux/bbc68k`). The Z80 BBCBASIC.COM under RunCPM (with
+  `DEFM A$`) runs it fine, so it is a port bug.
+  * It fails when the FN body has any `[...]` (even `[OPT 2:]`, no
+    parameters) and the FN is called from an operand inside an outer
+    `[...]` (`OPT` or `dc.b`). An FN without `[...]` under `OPT` works,
+    and so does `A%=FN1` with `[...]` inside.
+  * At `=` (FNEND, `exec2.s`) the top of the stack is no longer FNCHK
+    after the nested assembler block. Reading ASM, ASSEM, ASMB, H_OPT
+    and XEQ did not show what is left there; the next step is to trace
+    sp across the inner `[`..`]`.
+  * Second bug: the assembler state in `asmb.s` is global (asmsp,
+    asmstm, asmpc, asmdst, mclass/mopw/op1, LISTON), where the Z80
+    keeps IX/IY on the stack. The nested block clobbers the outer one:
+    an outer `OPT 2` statement gets listed, with empty source text.
+    Save and restore that state around the nested call, and add a test
+    to `src68k/test/bas`.
+* **Not fixed:** the user asked for a note only. Claude project memory
+  has `issue1-opt-fn-nested-asm.md` with the repro and these findings.
+  Nothing posted on the issue.
