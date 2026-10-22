@@ -101,6 +101,10 @@ web:	bare
 webminix:	demo
 	python3 tools/mkweb.py --minix --test
 
+# the bare demo: tarball and container image (tools/mkbaredemo.py)
+baredemo:	bare
+	python3 tools/mkbaredemo.py --docker --test
+
 # BBC BASIC on a bare rosco_m68k, no Minix (bare/, tools/mkbare.py):
 # build/bare/ROSCODE1.BIN, and with the demo programs build/bare/demo/;
 # barecheck runs the BASIC tests on it
@@ -118,4 +122,4 @@ barecheck:	$(BASOBJ)
 ttycheck:	demo
 	python3 tools/ttycheck.py
 
-.PHONY:	all check oscheck bascheck asmcheck mamecheck install demo web webminix ttycheck bare barecheck clean
+.PHONY:	all check oscheck bascheck asmcheck mamecheck install demo web webminix ttycheck bare barecheck baredemo clean
