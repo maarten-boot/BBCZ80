@@ -941,3 +941,35 @@ Step 2 and the web page on bare BASIC (PORT_PLAN §20):
 * **Send tarball:** `/home/mboot/vibe/bbc68k-web-2026-10-22.tar.gz`
   (400 KB, sha256 2869f623…): the bare page, a rewritten README, and
   `rosco/ROSCODE1.BIN` for a real board.
+
+## Entry 34 — 2026-10-22
+
+### User request
+> make a docker image of the bare version too
+
+Mid-turn question:
+> i was thinking that perhaps we could mane a windows exe of the demo.
+> normal stdin and stdout should work and perhaps we could read and write
+> files directly from the windows host instead of simulating a sd card.
+> would that be feasable ?
+
+Answered: yes. A Windows r68k (MinGW, Win32 console instead of termios)
+and host files through an emulator trap in place of the SD card; see the
+reply. Not started.
+
+### Actions taken
+* **`tools/mkbaredemo.py`:** builds `build/bare/bbc68k-bare.tar.gz`
+  (1.0 MB): r68k (-O2, static), the firmware, bare BASIC with the demos,
+  `demo/demo-bare.sh` as `demo.sh`, `demo/README-bare.txt`, and
+  `card.img.gz` (an empty FAT16 card as the web page's, unpacked into
+  the card directory the first time, `BBC_CARD`).
+* **`--docker`:** builds the image `bbc68k-bare` (saved as
+  `build/bare/bbc68k-bare-image.tar.gz`, 2.9 MB), with `/card` as a
+  volume.
+* **`mkdemo.py`:** `docker()` generalised (image, extra Dockerfile
+  lines, test runs); `build_r68k()` and `licences()` factored out.
+* **Tests:**
+  * native: asm demo, SAVE on the card, the file kept for the next start;
+  * container: two runs with one volume, the file from the first seen by
+    `*DIR` in the second.
+  * All ok.

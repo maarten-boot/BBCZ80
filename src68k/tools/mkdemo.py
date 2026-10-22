@@ -163,10 +163,51 @@ def test(out):
     return ok
 
 
-def docker(r68k, out, test):
-    """Build and save the image; with test, run it once.  Returns ok."""
+def build_r68k(r68k, out, work):
+    """out/r68k: r68k's tracked sources (git ls-files) built in
+    work/r68k-src, optimised, linked statically; and its firmware
+    """
+    rsrc = os.path.join(work, 'r68k-src')
+    if os.path.exists(rsrc):
+        shutil.rmtree(rsrc)
+    os.makedirs(rsrc)
+    for f in subprocess.run(['git', 'ls-files'], cwd=r68k, check=True,
+                            capture_output=True, text=True).stdout.split():
+        os.makedirs(os.path.dirname(os.path.join(rsrc, f)), exist_ok=True)
+        shutil.copy(os.path.join(r68k, f), os.path.join(rsrc, f))
+    subprocess.run(['make', 'r68k', 'CXX=g++ -static',
+                    'CXXFLAGS=-O2 -Iinclude', 'CFLAGS=-O2'], cwd=rsrc,
+                   check=True, stdout=subprocess.DEVNULL)
+    subprocess.run(['strip', '-o', os.path.join(out, 'r68k'),
+                    os.path.join(rsrc, 'r68k')], check=True)
+    shutil.copy(os.path.join(r68k, 'firmware', 'rosco_m68k.rom'),
+                os.path.join(out, 'firmware'))
+
+
+def licences(r68k, out, minix=None):
+    """the licence files of the parts (minix: the Minix LICENSE, if in)"""
+    shutil.copy(os.path.join(r68k, 'LICENSE.md'),
+                os.path.join(out, 'LICENSE-r68k.md'))
+    text = open(os.path.join(r68k, 'musashi', 'readme.txt'),
+                encoding='latin-1').read()
+    with open(os.path.join(out, 'LICENSE-musashi.txt'), 'w') as f:
+        f.write(text[text.index('LICENSE AND COPYRIGHT'):].split('\n\n\n')[0]
+                + '\n')
+    if minix:
+        shutil.copy(minix, os.path.join(out, 'LICENSE-minix.txt'))
+    shutil.copy(os.path.join(TOP, 'licence.txt'),
+                os.path.join(out, 'LICENCE-bbcbasic.txt'))
+
+
+def docker(r68k, out, test, name=NAME, image=IMAGE, extra='', runs=None,
+           work=WORK):
+    """Build the image (demo/Dockerfile, plus the lines extra) and save it
+    as WORK/NAME-image.tar.gz; with test, run it: runs is a list of
+    ([docker run options], [(output regex, keys) ...], text the output
+    must have); by default the asm demo from the menu.  Returns ok.
+    """
     tool = os.environ.get('DOCKER', 'podman')
-    ctx = os.path.join(WORK, 'docker')
+    ctx = os.path.join(work, 'docker')
     if os.path.exists(ctx):
         shutil.rmtree(ctx)
     for f in subprocess.run(['git', 'ls-files'], cwd=r68k, check=True,
@@ -176,24 +217,40 @@ def docker(r68k, out, test):
         shutil.copy(os.path.join(r68k, f), os.path.join(ctx, 'r68k', f))
     shutil.copytree(out, os.path.join(ctx, 'demo'),
                     ignore=shutil.ignore_patterns('r68k'))
-    shutil.copy(os.path.join(DEMO, 'Dockerfile'), ctx)
-    subprocess.run([tool, 'build', '-t', IMAGE, ctx], check=True)
-    tgz = os.path.join(WORK, NAME + '-image.tar.gz')
+    with open(os.path.join(DEMO, 'Dockerfile')) as f, \
+            open(os.path.join(ctx, 'Dockerfile'), 'w') as g:
+        g.write(f.read() + extra)
+    subprocess.run([tool, 'build', '-t', image, ctx], check=True)
+    tgz = os.path.join(work, name + '-image.tar.gz')
     with open(tgz, 'wb') as f:
-        save = subprocess.Popen([tool, 'save', IMAGE], stdout=subprocess.PIPE)
+        save = subprocess.Popen([tool, 'save', image], stdout=subprocess.PIPE)
         subprocess.run(['gzip', '-9'], stdin=save.stdout, stdout=f, check=True)
         if save.wait():
             sys.exit('mkdemo: %s save failed' % tool)
     print('%s: %d bytes' % (tgz, os.path.getsize(tgz)))
     if not test:
         return True
+    if runs is None:
+        runs = [([], [(rb'Return: BASIC prompt\) \?', '5\r'),
+                      (rb'for the menu[^\n]*\n>', '\x1d')],
+                 'HELLO FROM THE 68000!')]
+    ok = True
+    for args, steps, want in runs:
+        ok = run_container(tool, image, args, list(steps), want) and ok
+    print('mkdemo --test (%s image %s): %s' % (tool, image, 'ok' if ok else 'FAILED'))
+    return ok
+
+
+def run_container(tool, image, args, steps, want):
+    """docker run -it ARGS IMAGE in a pty, typing keys when the output
+    matches; ok if all steps were taken, it ended well and want is in
+    the output
+    """
     pid, fd = pty.fork()
     if pid == 0:
-        os.execvp(tool, [tool, 'run', '-it', '--rm', IMAGE])
+        os.execvp(tool, [tool, 'run', '-it', '--rm'] + args + [image])
     buf = b''
     end = time.time() + 120
-    steps = [(rb'Return: BASIC prompt\) \?', '5\r'),
-             (rb'for the menu[^\n]*\n>', '\x1d')]
     try:
         while time.time() < end:
             r, _, _ = select.select([fd], [], [], 1)
@@ -210,9 +267,7 @@ def docker(r68k, out, test):
         _, status = os.waitpid(pid, 0) if not steps else (0, -1)
     text = buf.decode('latin-1')
     print(text[-600:])
-    ok = not steps and status == 0 and 'HELLO FROM THE 68000!' in text
-    print('mkdemo --test (%s image): %s' % (tool, 'ok' if ok else 'FAILED'))
-    return ok
+    return not steps and status == 0 and want in text
 
 
 def main():
@@ -251,37 +306,11 @@ def main():
                     os.path.join(rosco, 'boot', 'image.bin')], cwd=WORK,
                    check=True, stdout=subprocess.DEVNULL)
 
-    # r68k: its tracked sources (git ls-files), optimised, linked statically
-    rsrc = os.path.join(WORK, 'r68k-src')
-    if os.path.exists(rsrc):
-        shutil.rmtree(rsrc)
-    os.makedirs(rsrc)
-    for f in subprocess.run(['git', 'ls-files'], cwd=r68k, check=True,
-                            capture_output=True, text=True).stdout.split():
-        os.makedirs(os.path.dirname(os.path.join(rsrc, f)), exist_ok=True)
-        shutil.copy(os.path.join(r68k, f), os.path.join(rsrc, f))
-    subprocess.run(['make', 'r68k', 'CXX=g++ -static',
-                    'CXXFLAGS=-O2 -Iinclude', 'CFLAGS=-O2'], cwd=rsrc,
-                   check=True, stdout=subprocess.DEVNULL)
-    subprocess.run(['strip', '-o', os.path.join(out, 'r68k'),
-                    os.path.join(rsrc, 'r68k')], check=True)
-    shutil.copy(os.path.join(r68k, 'firmware', 'rosco_m68k.rom'),
-                os.path.join(out, 'firmware'))
-
+    build_r68k(r68k, out, WORK)
     shutil.copy(os.path.join(DEMO, 'demo.sh'), out)
     os.chmod(os.path.join(out, 'demo.sh'), 0o755)
     shutil.copy(os.path.join(DEMO, 'README.txt'), out)
-    shutil.copy(os.path.join(r68k, 'LICENSE.md'),
-                os.path.join(out, 'LICENSE-r68k.md'))
-    text = open(os.path.join(r68k, 'musashi', 'readme.txt'),
-                encoding='latin-1').read()
-    with open(os.path.join(out, 'LICENSE-musashi.txt'), 'w') as f:
-        f.write(text[text.index('LICENSE AND COPYRIGHT'):].split('\n\n\n')[0]
-                + '\n')
-    shutil.copy(os.path.join(os.path.abspath(a.m), 'src', 'LICENSE'),
-                os.path.join(out, 'LICENSE-minix.txt'))
-    shutil.copy(os.path.join(TOP, 'licence.txt'),
-                os.path.join(out, 'LICENCE-bbcbasic.txt'))
+    licences(r68k, out, os.path.join(os.path.abspath(a.m), 'src', 'LICENSE'))
 
     tgz = os.path.join(WORK, NAME + '.tar.gz')
     with tarfile.open(tgz, 'w:gz') as t:
