@@ -1196,3 +1196,26 @@ Mid-turn:
   still name `/home/mboot/vibe`); an uncommitted edit in rosco-emulator
   `src/osd/modules/debugger/none.cpp`; the minix commits; build outputs
   to rebuild here.
+
+## 45. Memory, pushes and the MAME debugscript fix
+
+* **User:** "BBCZ80 with pointer in parent, b, content ok"; "reverify i
+  pushed some stuff in both"; "show me the rosco-emulator edit"; "a,
+  commit it"; "add entry 45 now".
+* **Claude project memory** installed for this repo's path
+  (`~/.claude/projects/-net-...-68k-BBCZ80/memory/`): the port note with
+  the new paths and current status, the podman keep-id note marked as
+  old-host only (on vibe-u26 `docker` is real Docker), and a new
+  lockdown-recovery note. The parent `68k` project memory got a pointer
+  to it; its existing index line (rebuild-images-at-end) was overwritten
+  by mistake and restored word for word.
+* **Pushes by the user, verified on GitHub (https ls-remote):** BBCZ80
+  `mboot/conversation-log` at fed9a96, r68k `rosco-minix-duart` at
+  2d92829. Claude's shell has no SSH key for GitHub, so the user pushes.
+* **rosco-emulator:** the uncommitted `src/osd/modules/debugger/none.cpp`
+  change from the minix session of 2026-10-18 (run the `-debugscript`
+  before the null debugger resumes, so headless breakpoints with actions
+  work) committed as f283c47 on `rosco-m68k-ram-bios`. Not pushed; MAME
+  not rebuilt.
+* **Still open:** the 2 minix lockdown commits (another session works in
+  that tree), RunCPM on demand, build outputs to rebuild here.
