@@ -40,6 +40,8 @@ void bare_isr(void);
 void bare_idle(void);
 long bare_getvbr(void);
 int bare_ints(int on);
+long bare_host(int op, long a, long b, long c);
+void bare_nohost(void);
 
 /* the files a build brings along (seeds.c, made by tools/mkbare.py) */
 struct seed {
@@ -228,15 +230,21 @@ clock_t times(struct tms *t)
 	return ticks;
 }
 
-/* *BYE, and anything else that ends the program: BASIC again */
+/* *BYE, and anything else that ends the program: BASIC again, or as a
+ * program on a PC (bare_host) the end of the program
+ */
+static int host;
+
 void exit(int st)
 {
+	if (host)
+		bare_host(15, (long) st, 0L, 0L);		/* (H_EXIT) */
 	bare_restart();
 }
 
 void _exit(int st)
 {
-	bare_restart();
+	exit(st);
 }
 
 pid_t fork(void)
@@ -529,13 +537,23 @@ static int ram_rename(const char *old, const char *new)
 
 /*==================================================== the devices ====*/
 
-/* Files are on the SD card (fat.c, if it has a FAT file system at the
- * start) or in the RAM store.  "sd:name" and "ram:name" say which;
- * otherwise a file is looked for on the card, then in the store, and a
- * new one goes on the card if there is one.  File descriptors: the
- * store's 3 .., the card's SDFD + its handle.
+/* Files are in one of three places:
+ *   HOST	the files of the PC, when BASIC runs as a program there
+ *		(src68k/host; bare_host, found by bare_init);
+ *   SD		the SD card (fat.c), if it has a FAT file system;
+ *   RAM	the RAM store above.
+ * The first that is there is the primary device: a new file goes there,
+ * and a file is looked for there, then in the RAM store (where the demo
+ * programs are).  "host:", "sd:" and "ram:" in front of a name say which.
+ * File descriptors: the store's 3 .., the card's SDFD + its handle, the
+ * host's HOSTFD + its handle.
  */
+#define D_HOST	1
+#define D_SD	2
+#define D_RAM	3
 #define SDFD	32
+#define HOSTFD	48
+#define NHOST	16
 
 int fat_mount(void);
 int fat_open(const char *path, int flags);
@@ -553,115 +571,213 @@ int fat_mkdir(const char *path);
 int fat_rmdir(const char *path);
 void fat_list(void (*emit)(char *, long, int));
 
+#define HOST_MAGIC	0x42424348L
+#define H_PROBE	1
+#define H_OPEN	2
+#define H_CLOSE	3
+#define H_READ	4
+#define H_WRITE	5
+#define H_SEEK	6
+#define H_SIZE	7
+#define H_UNLINK 8
+#define H_RENAME 9
+#define H_MKDIR	10
+#define H_RMDIR	11
+#define H_CHDIR	12
+#define H_EXISTS 13
+#define H_DIRENT 14
+#define H_EXIT	15
+
 static int sd;			/* the card has a FAT file system */
 static int sdflags[8];		/* open flags of the card's files */
+static int hostflags[NHOST];
+static long hostpos[NHOST];
 
-/* "sd:" -> 1, "ram:" -> 2, else 0; *name past it */
+/* "host:" -> D_HOST, "sd:" -> D_SD, "ram:" -> D_RAM, else 0; *name past it */
 static int device(const char **name)
 {
-	const char *n = *name;
+	static struct { char *pre; int dev; } p[] = {
+		{ "host:", D_HOST }, { "sd:", D_SD }, { "ram:", D_RAM }, { 0, 0 }
+	};
+	int i, k;
 
-	if ((n[0] == 's' || n[0] == 'S') && (n[1] == 'd' || n[1] == 'D')
-	    && n[2] == ':') {
-		*name = n + 3;
-		return 1;
-	}
-	if ((n[0] == 'r' || n[0] == 'R') && (n[1] == 'a' || n[1] == 'A')
-	    && (n[2] == 'm' || n[2] == 'M') && n[3] == ':') {
-		*name = n + 4;
-		return 2;
+	for (i = 0; p[i].pre; i++) {
+		for (k = 0; p[i].pre[k]; k++) {
+			int c = (*name)[k];
+			if (c >= 'A' && c <= 'Z')
+				c += 32;
+			if (c != p[i].pre[k])
+				break;
+		}
+		if (p[i].pre[k] == 0) {
+			*name += k;
+			return p[i].dev;
+		}
 	}
 	return 0;
 }
 
-static int sd_open(const char *name, int flags)
+static int primary(void)
 {
-	int k;
+	return host ? D_HOST : sd ? D_SD : D_RAM;
+}
 
-	if (!sd) {
-		errno = ENOENT;
+/* a host call's result: < 0 is a Minix errno */
+static long hres(long r)
+{
+	if (r < 0) {
+		errno = (int) -r;
 		return -1;
 	}
-	if ((k = fat_open(name, flags)) < 0)
-		return -1;
-	sdflags[k] = flags;
-	return SDFD + k;
+	return r;
+}
+
+static int dev_open(int dev, const char *name, int flags)
+{
+	long k;
+
+	switch (dev) {
+	case D_HOST:
+		if (!host || (k = hres(bare_host(H_OPEN, (long) name, (long) flags, 0L))) < 0) {
+			if (!host)
+				errno = ENOENT;
+			return -1;
+		}
+		hostflags[k] = flags;
+		hostpos[k] = 0;
+		return HOSTFD + (int) k;
+	case D_SD:
+		if (!sd) {
+			errno = ENOENT;
+			return -1;
+		}
+		if ((k = fat_open(name, flags)) < 0)
+			return -1;
+		sdflags[k] = flags;
+		return SDFD + (int) k;
+	}
+	return ram_open(name, flags);
+}
+
+static int dev_exists(int dev, const char *name)
+{
+	switch (dev) {
+	case D_HOST:
+		return host && bare_host(H_EXISTS, (long) name, 0L, 0L) == 1;
+	case D_SD:
+		return sd && fat_exists(name);
+	}
+	return ram_access(name) == 0;
 }
 
 int open(const char *name, int flags, ...)
 {
-	int dev = device(&name), fd;
+	int dev = device(&name), p = primary(), fd;
 
-	if (dev == 1)
-		return sd_open(name, flags);
-	if (dev == 2 || !sd)
+	if (dev)
+		return dev_open(dev, name, flags);
+	if (p == D_RAM)
 		return ram_open(name, flags);
-	/* a new file (OPENOUT, SAVE) goes on the card, unless the name is
-	 * not 8.3 (EINVAL): then in the store
+	/* a new file (OPENOUT, SAVE) goes to the primary device; one that is
+	 * only in the store stays there; a name the card cannot take
+	 * (EINVAL: not 8.3) goes to the store
 	 */
-	if ((flags & O_CREAT) && !(flags & O_TRUNC) && !fat_exists(name)
+	if ((flags & O_CREAT) && !(flags & O_TRUNC) && !dev_exists(p, name)
 	    && ram_access(name) == 0)
 		return ram_open(name, flags);
-	if ((fd = sd_open(name, flags)) >= 0
+	if ((fd = dev_open(p, name, flags)) >= 0
 	    || (errno != ENOENT && errno != EINVAL))
 		return fd;
 	return ram_open(name, flags);
 }
 
+#define IS_SD(fd)	((fd) >= SDFD && (fd) < SDFD + 8)
+#define IS_HOST(fd)	((fd) >= HOSTFD && (fd) < HOSTFD + NHOST)
+
 int close(int fd)
 {
-	if (fd >= SDFD && fd < SDFD + 8)
+	if (IS_SD(fd))
 		return fat_close(fd - SDFD);
+	if (IS_HOST(fd))
+		return (int) hres(bare_host(H_CLOSE, (long) (fd - HOSTFD), 0L, 0L));
 	return ram_close(fd);
 }
 
 ssize_t read(int fd, void *buf, size_t n)
 {
+	long r;
+
 	if (fd == 0)
 		return con_read(buf, (int) n);
-	if (fd >= SDFD && fd < SDFD + 8)
+	if (IS_SD(fd))
 		return fat_read(fd - SDFD, buf, (int) n);
+	if (IS_HOST(fd)) {
+		r = hres(bare_host(H_READ, (long) (fd - HOSTFD), (long) buf, (long) n));
+		if (r > 0)
+			hostpos[fd - HOSTFD] += r;
+		return (ssize_t) r;
+	}
 	return ram_read(fd, buf, (int) n);
 }
 
 ssize_t write(int fd, const void *buf, size_t n)
 {
+	long r;
+
 	if (fd == 1 || fd == 2) {
 		con_write(buf, (int) n);
 		return n;
 	}
-	if (fd >= SDFD && fd < SDFD + 8) {
-		if ((sdflags[fd - SDFD] & O_ACCMODE) == O_RDONLY) {
+	if (IS_SD(fd) || IS_HOST(fd)) {
+		int fl = IS_SD(fd) ? sdflags[fd - SDFD] : hostflags[fd - HOSTFD];
+		if ((fl & O_ACCMODE) == O_RDONLY) {
 			errno = EBADF;
 			return -1;
 		}
+	}
+	if (IS_SD(fd))
 		return fat_write(fd - SDFD, buf, (int) n);
+	if (IS_HOST(fd)) {
+		r = hres(bare_host(H_WRITE, (long) (fd - HOSTFD), (long) buf, (long) n));
+		if (r > 0)
+			hostpos[fd - HOSTFD] += r;
+		return (ssize_t) r;
 	}
 	return ram_write(fd, buf, (int) n);
 }
 
 off_t lseek(int fd, off_t off, int whence)
 {
-	int k = fd - SDFD;
-	long pos;
+	long pos, cur, size;
 
-	if (k < 0 || k >= 8)
+	if (!IS_SD(fd) && !IS_HOST(fd))
 		return ram_lseek(fd, off, whence);
-	pos = whence == SEEK_SET ? off : whence == SEEK_CUR ? fat_tell(k) + off
-	    : fat_size(k) + off;
+	if (IS_SD(fd)) {
+		cur = fat_tell(fd - SDFD);
+		size = fat_size(fd - SDFD);
+	} else {
+		cur = hostpos[fd - HOSTFD];
+		size = whence == SEEK_END
+		    ? bare_host(H_SIZE, (long) (fd - HOSTFD), 0L, 0L) : 0L;
+	}
+	pos = whence == SEEK_SET ? off : whence == SEEK_CUR ? cur + off : size + off;
 	if (pos < 0) {
 		errno = EINVAL;
 		return -1;
 	}
-	return fat_lseek(k, pos);
+	if (IS_SD(fd))
+		return fat_lseek(fd - SDFD, pos);
+	hostpos[fd - HOSTFD] = pos;
+	return hres(bare_host(H_SEEK, (long) (fd - HOSTFD), pos, 0L));
 }
 
 int fstat(int fd, struct stat *st)
 {
-	if (fd >= SDFD && fd < SDFD + 8) {
+	if (IS_SD(fd) || IS_HOST(fd)) {
 		memset(st, 0, sizeof(*st));
 		st->st_mode = S_IFREG | 0666;
-		st->st_size = fat_size(fd - SDFD);
+		st->st_size = IS_SD(fd) ? fat_size(fd - SDFD)
+		    : bare_host(H_SIZE, (long) (fd - HOSTFD), 0L, 0L);
 		return 0;
 	}
 	return ram_fstat(fd, st);
@@ -671,9 +787,8 @@ int access(const char *name, int mode)
 {
 	int dev = device(&name);
 
-	if (dev != 2 && sd && fat_exists(name))
-		return 0;
-	if (dev != 1 && ram_access(name) == 0)
+	if (dev ? dev_exists(dev, name)
+	    : dev_exists(primary(), name) || ram_access(name) == 0)
 		return 0;
 	errno = ENOENT;
 	return -1;
@@ -681,11 +796,13 @@ int access(const char *name, int mode)
 
 int unlink(const char *name)
 {
-	int dev = device(&name);
+	int dev = device(&name), p = dev ? dev : primary();
 
-	if (dev != 2 && sd && fat_exists(name))
+	if (p == D_HOST && dev_exists(p, name))
+		return (int) hres(bare_host(H_UNLINK, (long) name, 0L, 0L));
+	if (p == D_SD && dev_exists(p, name))
 		return fat_unlink(name);
-	if (dev == 1) {
+	if (dev && dev != D_RAM) {
 		errno = ENOENT;
 		return -1;
 	}
@@ -694,25 +811,28 @@ int unlink(const char *name)
 
 int rename(const char *old, const char *new)
 {
-	int dev = device(&old);
+	int dev = device(&old), p = dev ? dev : primary();
 
 	device(&new);
-	if (dev != 2 && sd && fat_exists(old))
+	if (p == D_HOST && dev_exists(p, old))
+		return (int) hres(bare_host(H_RENAME, (long) old, (long) new, 0L));
+	if (p == D_SD && dev_exists(p, old))
 		return fat_rename(old, new);
-	if (dev == 1) {
+	if (dev && dev != D_RAM) {
 		errno = ENOENT;
 		return -1;
 	}
 	return ram_rename(old, new);
 }
 
-/* *DIR: the card's current directory, then the RAM store */
+/* *DIR: the primary device's current directory, then the RAM store */
 static void dirline(char *name, long size, int isdir)
 {
-	char line[NAMELEN + 16];
+	char line[64 + 16];
 	int n;
 
-	strcpy(line, name);
+	strncpy(line, name, 63);
+	line[63] = 0;
 	for (n = strlen(line); n < NAMELEN + 1; n++)
 		line[n] = ' ';
 	if (isdir)
@@ -725,18 +845,24 @@ static void dirline(char *name, long size, int isdir)
 
 void bare_dir(void)
 {
+	char name[66];
 	int i, nfree = 0, any = 0;
+	long size;
 
-	if (sd) {
+	if (host) {
+		con_write("Files:\r\n", 8);
+		for (i = 0; (size = bare_host(H_DIRENT, (long) i, (long) name, 0L)) >= 0; i++)
+			dirline(name, size, name[strlen(name) + 1]);
+	} else if (sd) {
 		con_write("SD card:\r\n", 10);
 		fat_list(dirline);
 	}
 	for (i = 0; i < NFILE; i++)
 		if (files[i].name[0])
 			any = 1;
-	if (sd && !any)
+	if ((host || sd) && !any)
 		return;
-	if (sd)
+	if (host || sd)
 		con_write("RAM:\r\n", 6);
 	for (i = 0; i < NFILE; i++)
 		if (files[i].name[0])
@@ -749,8 +875,11 @@ void bare_dir(void)
 
 int mkdir(const char *name, Mode_t mode)
 {
-	device(&name);
-	if (sd)
+	int dev = device(&name), p = dev ? dev : primary();
+
+	if (p == D_HOST && host)
+		return (int) hres(bare_host(H_MKDIR, (long) name, 0L, 0L));
+	if (p == D_SD && sd)
 		return fat_mkdir(name);
 	errno = EINVAL;			/* (the RAM store has one directory) */
 	return -1;
@@ -758,8 +887,11 @@ int mkdir(const char *name, Mode_t mode)
 
 int rmdir(const char *name)
 {
-	device(&name);
-	if (sd)
+	int dev = device(&name), p = dev ? dev : primary();
+
+	if (p == D_HOST && host)
+		return (int) hres(bare_host(H_RMDIR, (long) name, 0L, 0L));
+	if (p == D_SD && sd)
 		return fat_rmdir(name);
 	errno = ENOENT;
 	return -1;
@@ -767,8 +899,11 @@ int rmdir(const char *name)
 
 int chdir(const char *name)
 {
-	device(&name);
-	if (sd)
+	int dev = device(&name), p = dev ? dev : primary();
+
+	if (p == D_HOST && host)
+		return (int) hres(bare_host(H_CHDIR, (long) name, 0L, 0L));
+	if (p == D_SD && sd)
 		return fat_chdir(name);
 	if (strcmp(name, "/") == 0 || strcmp(name, ".") == 0)
 		return 0;
@@ -777,6 +912,11 @@ int chdir(const char *name)
 }
 
 /*==================================================== start ==========*/
+
+static long *vbr0(void)
+{
+	return (long *) bare_getvbr();
+}
 
 extern char _end[];
 
@@ -816,8 +956,17 @@ long bare_init(int cold)
 		}
 	}
 
-	/* the SD card, if it has a FAT file system */
-	sd = fat_mount();
+	/* host files (BASIC as a program on a PC), asked for with the
+	 * illegal instruction vector at bare_nohost; the SD card, if it has
+	 * a FAT file system and there are no host files
+	 */
+	{
+		long old = vbr0()[4];
+		vbr0()[4] = (long) bare_nohost;
+		host = bare_host(H_PROBE, 0L, 0L, 0L) == HOST_MAGIC;
+		vbr0()[4] = old;
+	}
+	sd = host ? 0 : fat_mount();
 
 	/* the console as found: like a Minix tty, osl.c changes it */
 	memset(&tio, 0, sizeof(tio));

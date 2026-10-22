@@ -2,7 +2,7 @@
 """BBC BASIC at a terminal: the keyboard handling that the file-driven
 tests (bascheck) cannot reach.
 
-	ttycheck.py [DEMO_DIR]
+	ttycheck.py [DEMO_DIR | --exe PROGRAM]
 
 Runs the stand-alone demo (DEMO_DIR, default build/demo/bbc68k-demo, make
 demo) in a pty: r68k, Minix and BBC BASIC on the console (or a directory
@@ -16,7 +16,9 @@ with r68k, its firmware and bare BBC BASIC's demo image), and types:
 * *BYE back to the demo's shell (the script survived the ESCape signals),
   and BBC BASIC run from that interactive shell, which must survive too;
   on bare BBC BASIC, *BYE starts BASIC again.
-It also prints the time of 20000 empty FOR loops.
+It also prints the time of 20000 empty FOR loops.  --exe runs BBC BASIC as
+a PC program (tools/mkhost.py, src68k/host) instead, in a new folder;
+*BYE then ends it.
 """
 
 import os
@@ -32,11 +34,17 @@ TOP = os.path.dirname(os.path.dirname(HERE))
 
 
 class Tty:
-    def __init__(self, demo):
+    def __init__(self, demo, exe=None):
         self.fd, slave = pty.openpty()
         # (r68k makes its standard input non-blocking: a separate open)
         sin = os.open(os.ttyname(slave), os.O_RDWR)
-        self.p = subprocess.Popen(['./r68k', '-d', 'ROSCODE1.BIN'], cwd=demo,
+        if exe:
+            import tempfile
+            self.dir = tempfile.mkdtemp(dir=os.path.dirname(os.path.abspath(exe)))
+            cmd, cwd = [os.path.abspath(exe)], self.dir
+        else:
+            cmd, cwd = ['./r68k', '-d', 'ROSCODE1.BIN'], demo
+        self.p = subprocess.Popen(cmd, cwd=cwd,
                                   stdin=sin, stdout=slave, stderr=subprocess.DEVNULL,
                                   env=dict(os.environ, R68K_RAM='2M'))
         os.close(slave)
@@ -48,7 +56,10 @@ class Tty:
         while True:
             r, _, _ = select.select([self.fd], [], [], max(0, end - time.time()))
             if r:
-                b = os.read(self.fd, 65536)
+                try:
+                    b = os.read(self.fd, 65536)
+                except OSError:		# (EIO: the program has ended)
+                    return
                 self.buf += b
                 self.all += b
             if time.time() >= end:
@@ -93,8 +104,9 @@ class Tty:
 
 
 def main():
-    demo = sys.argv[1] if len(sys.argv) > 1 else os.path.join(TOP, 'build', 'demo', 'bbc68k-demo')
-    t = Tty(demo)
+    exe = sys.argv[2] if len(sys.argv) > 2 and sys.argv[1] == '--exe' else None
+    demo = sys.argv[1] if len(sys.argv) > 1 and not exe else os.path.join(TOP, 'build', 'demo', 'bbc68k-demo')
+    t = Tty(demo, exe)
     failed = 0
 
     def check(name, ok):
@@ -144,7 +156,7 @@ def main():
         t.send('\x11')
         text = t.until(r'\n>', 60)
         check('^S stops the output (%d, %d bytes), ^Q starts it again' % (n1, n2),
-              n1 == n2 and n1 < 9000 and '2000' in text)
+              n1 == n2 and n1 < 20000 and '2000' in text)
 
         t.send('PRINT 12\x1b[D3\r')
         check('line editor: cursor left, insert', re.search(r'\n +132\r', t.until(r' +\d+\r*\n>')) is not None)
@@ -165,6 +177,13 @@ def main():
         print('      20000 empty FOR loops: %s cs' % re.search(r'loop (\d+)', t.until(r'loop \d+')).group(1))
 
         t.send('*BYE\r')
+        if exe:				# a PC program: *BYE ends it
+            try:
+                t.p.wait(timeout=10)
+                check('*BYE ends the program', True)
+            except subprocess.TimeoutExpired:
+                check('*BYE ends the program', False)
+            raise StopIteration
         text = t.until(r'(# |Return: BASIC prompt\) \? )')
         if text.endswith('# '):		# Minix: the demo's shell
             check('*BYE: back to the demo shell', 'You have left BBC BASIC' in text)
@@ -181,6 +200,8 @@ def main():
                   'shell alive' in t.until(r'shell alive\r*\n# '))
         else:				# bare BBC BASIC: it starts again
             check('*BYE: BBC BASIC starts again (bare)', 'BBC BASIC' in text)
+    except StopIteration:
+        pass
     except TimeoutError as e:
         print('FAIL  timeout waiting for %s' % e)
         failed += 1

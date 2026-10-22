@@ -1014,3 +1014,24 @@ Test programs are in `build/win/t`.
   when present). Files are those of the folder the .exe runs in.
 * **Tests:** the BASIC suite and the fatcheck checks against a host
   folder, under Wine through pipes.
+
+## Entry 36 — 2026-10-22
+
+### User request
+> ok resume
+
+### Actions taken
+The Windows exe (PORT_PLAN §21): `host/` (`hostmain.cpp`, `hostfs.cpp`,
+`compat/`), `tools/mkhost.py`, `tools/hostcheck.py`, bascheck's
+host/hostwin modes, `ttycheck --exe`, `make host` / `make hostcheck`.
+* **Problems found and fixed:**
+  * keys typed before BASIC was up were lost (now held until it is idle);
+  * the end-of-input test (60 Hz ticks wake the CPU);
+  * the tests' demo menu program in memory (NEW);
+  * Windows refusing to delete open files (FILETEST).
+* **Result:** all suites pass on the Windows exe under Wine and on the
+  Linux program.
+* **Package:** `/home/mboot/vibe/bbc68k-windows-2026-10-22.zip` (649 KB,
+  sha256 67d663b0…): `bbc68k.exe` and a Windows README.
+* **Still to check on real Windows:** Escape and the cursor keys at the
+  console (Wine in a pty loses a lone ESC).

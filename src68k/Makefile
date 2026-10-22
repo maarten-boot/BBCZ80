@@ -101,6 +101,17 @@ web:	bare
 webminix:	demo
 	python3 tools/mkweb.py --minix --test
 
+# BBC BASIC as a PC program: build/host/windows/bbc68k.exe and
+# build/host/linux/bbc68k (host/README.md); hostcheck tests both (Wine)
+host:	bare
+	python3 tools/mkhost.py
+
+hostcheck:	host
+	BBC_EMU=host python3 tools/bascheck.py
+	BBC_EMU=hostwin python3 tools/bascheck.py
+	python3 tools/hostcheck.py
+	python3 tools/ttycheck.py --exe ../build/host/linux/bbc68k
+
 # the bare demo: tarball and container image (tools/mkbaredemo.py)
 baredemo:	bare
 	python3 tools/mkbaredemo.py --docker --test
@@ -122,4 +133,4 @@ barecheck:	$(BASOBJ)
 ttycheck:	demo
 	python3 tools/ttycheck.py
 
-.PHONY:	all check oscheck bascheck asmcheck mamecheck install demo web webminix ttycheck bare barecheck baredemo clean
+.PHONY:	all check oscheck bascheck asmcheck mamecheck install demo web webminix ttycheck bare barecheck baredemo host hostcheck clean
