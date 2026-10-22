@@ -1129,3 +1129,10 @@ Mid-turn:
   the port, as expected.
 * `mboot/edit-wrap` is ready to be fast-forwarded into
   `mboot/conversation-log` when the user wants.
+
+## 42. Fast-forward
+
+* **User:** "do the fast-forward merge"
+* `mboot/conversation-log` fast-forwarded to `mboot/edit-wrap`
+  (fc470f3 → 3c271eb): the EDIT-wrap fix, editcheck.py, a01asm.exp and
+  log entries 39–41. Not pushed.
