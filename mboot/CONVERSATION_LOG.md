@@ -1136,3 +1136,29 @@ Mid-turn:
 * `mboot/conversation-log` fast-forwarded to `mboot/edit-wrap`
   (fc470f3 → 3c271eb): the EDIT-wrap fix, editcheck.py, a01asm.exp and
   log entries 39–41. Not pushed.
+
+## 43. Lockdown before moving hosts
+
+* **User:** "ok we are currently on a remote host and some of the code
+  you have access to in ../* is not yet on the new target host where we
+  are going to move you or out of sync. prepare for a lockdown here and
+  then i will transfer you to another host and we can investigate what
+  next steps we have to do to synchronize the repositories."
+* **Snapshot of `/home/mboot/vibe` (nothing pushed):**
+  * BBCZ80 `mboot/conversation-log`: the whole port on origin/master
+    (410e7fb), not pushed. `mboot/edit-wrap` is merged into it. This
+    entry is on `mboot/lockdown`, one commit ahead; fast-forward
+    `mboot/conversation-log` to it. The remote-tracking refs
+    `agent-s-8250/*` (a remote with no URL) are ancestors and need
+    nothing.
+  * minix-st-2.0.4 `rosco-m68k`: 2 commits ahead of origin (107f0d0,
+    3b61801).
+  * r68k `rosco-minix-duart`: 1 commit ahead of origin (2d92829).
+  * rosco-emulator, RunCPM: same as origin.
+  * Build outputs (git-ignored) are not carried over; rebuild them on the
+    new host.
+* **Lockdown kit:** `/home/mboot/vibe/lockdown-2026-10-22/` (and a
+  `.tar.gz` of it): full git bundles of BBCZ80, minix and r68k,
+  `MANIFEST.txt` (exact heads, remotes, ahead counts, artifact sha256s),
+  `verify.sh` to compare a host's repos with the manifest, the release
+  zips and tarballs, and a copy of Claude's project memory.
