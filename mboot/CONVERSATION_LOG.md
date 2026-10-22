@@ -973,3 +973,44 @@ reply. Not started.
   * container: two runs with one volume, the file from the first seen by
     `*DIR` in the second.
   * All ok.
+
+## Entry 35 — 2026-10-22
+
+### User messages
+> i installed mingw, pleas check if any thing you need is still missing.
+> wind is installed, verify forst if you need more
+> when you can take a break so i can restart you (a new claude version
+> arrived)
+
+### Findings (Windows exe, not started)
+Test programs are in `build/win/t`.
+* **MinGW-w64 GCC 14:** use `x86_64-w64-mingw32-g++-posix` (std::thread,
+  for r68k's main.cpp).
+  * C++20, `<filesystem>`, `<chrono>`, the console API with
+    ENABLE_VIRTUAL_TERMINAL_PROCESSING, and `-static` all work.
+  * The .exe needs only KERNEL32.dll and msvcrt.dll.
+* **Wine runs the 64-bit .exe.** The "wine32 missing" message only
+  concerns 32-bit programs.
+  * In a pty, Wine's console passes keys and Return, but a lone ESC is
+    taken as the start of an escape sequence (ESC Z arrived as Z). A real
+    Windows console gives ESC.
+  * Wine's console output puts cursor hide/show codes around each
+    character (strip CSI codes in tests).
+* **Piped stdin under Wine:** GetConsoleMode fails and GetFileType = 3
+  (pipe), as expected. The test with PeekNamedPipe/ReadFile printed no
+  bytes yet; to look into (perhaps PeekNamedPipe on Wine's pipe, or the
+  shell pipe timing).
+
+### Plan (agreed in outline)
+* **r68k for Windows:**
+  * Win32 console input (ReadConsoleInput; arrows etc. to vt100
+    sequences; VT input mode where there is one) instead of
+    termios/select;
+  * VT output;
+  * piped stdin/stdout for scripted runs and tests;
+  * the ROM and bare BASIC built into one static .exe.
+* **Host files:** an emulator trap for open/read/write/seek/close/
+  unlink/rename/dir/chdir, used by bare.c as a third device (the default
+  when present). Files are those of the folder the .exe runs in.
+* **Tests:** the BASIC suite and the fatcheck checks against a host
+  folder, under Wine through pipes.
