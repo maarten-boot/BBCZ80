@@ -1162,3 +1162,37 @@ Mid-turn:
   `MANIFEST.txt` (exact heads, remotes, ahead counts, artifact sha256s),
   `verify.sh` to compare a host's repos with the manifest, the release
   zips and tarballs, and a copy of Claude's project memory.
+
+## 44. Recovery on the new host
+
+* **User:** "inspect the current directory, dont change anything we are
+  recovering from a lockdown and need to compare whith what is already
+  on this host"; later "BBCZ80, option a, show me the merge first" and
+  "ok, merge, and add entry 44".
+* **Host:** vibe-u26; the repos are in
+  `/net/192.168.122.1/home/mboot/share-local/DEV/github.com/maarten-boot/68k/`
+  (not `~/vibe`), the kit in `lockdown-2026-10-22/` beside them. Kit
+  checksums and all three bundles verified.
+* **Compared with MANIFEST.txt:**
+  * BBCZ80: `master` and `mboot/edit-wrap` the same. `mboot/conversation-log`
+    had diverged: this host had "sync" (b9c213d) and "cleanup" (0113871),
+    already on origin, with the content of entries 36–42 but not their
+    history; `mboot/lockdown` was missing.
+  * r68k `rosco-minix-duart`: 1 behind (2d92829).
+  * minix-st-2.0.4 `rosco-m68k`: 54 newer commits here, the 2 lockdown
+    commits (107f0d0, 3b61801) not here. Left alone: another session is
+    working in that tree.
+  * rosco-emulator: the same. RunCPM: no clone; fetch from GitHub when
+    needed.
+* **Done:**
+  * r68k fast-forwarded to 2d92829 from the bundle (not pushed).
+  * Global git identity set (Maarten Boot, GitHub noreply address); the
+    two host commits above are authored "Your Name" and stay as pushed.
+  * BBCZ80: `mboot/lockdown` restored from the bundle and merged into
+    `mboot/conversation-log` (45393c5). The only conflict was this log
+    (entry 43 taken from the lockdown); `src68k/test/bas/a01asm.exp` is
+    tracked again; `.gitignore` keeps `.claude/worktrees/`. Not pushed.
+* **Open:** Claude project memory from the kit not installed yet (paths
+  still name `/home/mboot/vibe`); an uncommitted edit in rosco-emulator
+  `src/osd/modules/debugger/none.cpp`; the minix commits; build outputs
+  to rebuild here.
