@@ -1061,3 +1061,11 @@ Mid-turn:
   * all ok, and bascheck host/hostwin 24/24 each.
 * **New zip:** `/home/mboot/vibe/bbc68k-windows-2026-10-22b.zip`
   (sha256 ec66f752…).
+
+## 38. Status check
+
+* **User:** "status ?"
+* Nothing in progress: the cursor-key fix is committed (c5ae923), the
+  tree is clean, and the new zip awaits the user's Windows test. A stale
+  background waiter (its pgrep matched its own command line) was stopped;
+  the last demo container test had passed.
