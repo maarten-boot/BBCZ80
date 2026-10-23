@@ -204,9 +204,15 @@ see a key that is held down, so the realistic version is:
 The Agon (and the Acorn layer, `src/ACORN.Z80:92` GETIMS) returns the date and
 time. Ours says "Sorry", as the CP/M Z80 does.
 
-* **PC builds:** the host clock is right there.
-* **rosco_m68k:** the board has no RTC, so "Sorry" stays there.
+* **Minix only** (corrected 2026-10-23, from the user): the rosco_m68k has
+  no RTC, and only Minix has a date and time call (`time()`, set at boot
+  from the date prompt in `/etc/rc`). So `TIME$` belongs in the Minix path
+  of `osl.c`.
+* **Bare BASIC and the PC programs** keep "Sorry". The PC programs run
+  the same bare BASIC, so they have no clock either.
 * **Format:** `Wed,23 Oct 2026.10:45:00`, as Russell's other versions.
+* **Status:** waits for the minix inspection, so it can be tested under
+  Minix.
 
 ### 3.5 AUTO with a step over 255
 

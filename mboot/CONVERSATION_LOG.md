@@ -1647,3 +1647,19 @@ Mid-turn:
   in the scratchpad (`make r68k`, the known ROM) and ran Minix on it
   (`R68K=...`): "Mistake at line 4030" again in the full session, so the
   in-progress emulator is not the cause. Next: bisect the tests before it.
+
+## 60. Pending list; TIME$ is for Minix only
+
+* **User:** "wait until minix incpection has finished but keep mentioning
+  it for future actions to be done"; "TIME$ the rosco has no RTC and only
+  the minix version has the concept of a date time call"; "yes fix that".
+* **Waiting for the minix inspection** (the other session): the Minix
+  test failures (c_l5b_recovery only in the full session; c_l1_core and
+  x02bigarr need more than Minix's 65 KB), and TIME$ below. Claude's
+  project memory has a pending-actions note, to be mentioned in every
+  status answer until done: those Minix items, a PR to master, issue #1's
+  confirmation, the next zip (README: INKEY(-256), text programs,
+  bbc68k NAME, AUTO Silly), TIME$, and the optional review items.
+* **AGON_REVIEW.md 3.4 corrected:** TIME$ only in the Minix version
+  (time(), set at boot by /etc/rc); bare BASIC and the PC programs, which
+  run bare BASIC, have no clock and keep "Sorry".
