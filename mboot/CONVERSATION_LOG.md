@@ -1265,3 +1265,45 @@ Mid-turn:
 * **Not fixed:** the user asked for a note only. Claude project memory
   has `issue1-opt-fn-nested-asm.md` with the repro and these findings.
   Nothing posted on the issue.
+
+## 47. GitHub issue #1 traced and fixed (assembler macros)
+
+* **User:** "ok status?"; "yes, start the issue #1 trace"; "yes,
+  implement the fix"; "yes, commit it and add entry 47; after that do a
+  crosscheck".
+* **Status:** all repos as at entry 46; the issue had one comment, the
+  user's "Investigating" post with the entry 46 findings.
+* **Trace:** no rebuild needed. A probe assembled in BASIC
+  (`[move.l sp,d0:rts]`, called with `USR`) showed the stack depth at
+  each point: the line after the FN's inner `]` ran twice, the second
+  time at top-level depth, so the `=` found no FN. Varying the inner
+  block (`[]`, `[nop:]`, `[OPT 0:]`) showed that only an inner assembler
+  *expression* breaks it, and the outer listing showed the inner's
+  source text.
+* **Cause:** `EXPRA`/`EXPRV` in `asmb.s` copied the operand to a global
+  buffer (`abuf`) and kept a4/a5 in globals (`eend`, `esva5`). The FN's
+  own `OPT 2` overwrote them, the outer block's text pointer came back
+  inside the FN body, read the FN's `]` as its own, and ran on in the
+  FN at top level.
+* **Fix (b5e639e):**
+  * `EXPRX` (EXPRA and EXPRV): the operand copy is on the stack, and so
+    are the assembler state `asmsp..asmend` and CURLIN while BASIC runs.
+  * ASSEM re-reads P% after each statement, as the Z80 does: a macro's
+    code stays and P% ends after it.
+  * Restoring CURLIN fixes the line number of an error after a macro
+    (`Syntax error at line 20`, as the Z80; it had none before).
+  * New test `test/bas/a02macro` (the issue program, two macros in one
+    block, recursion 5 deep, an operand across a nested macro, the error
+    line); `ASSEMBLER.md` gets a Macros section (its example run);
+    `asmcheck.py` gets `BBC_EMU=host`.
+  * `.gitignore`: `!src68k/test/bas/*.exp`, since the global `*.exp`
+    (linker files) also hid the test expectations.
+* **Checked against the Z80 (RunCPM):** a macro in a non-OPT operand
+  (`LD HL,FNk(5)`) gives stray bytes there too; the inner `]` setting
+  OPT 3 is Z80 behaviour, kept.
+* **Tests (Linux PC build):** bascheck 25 of 25, asmcheck 162 of 162.
+  Not run: Minix (the minix tree's rootfs has no `/bin/sh` now; the
+  other session's work, left alone), bare, the Windows exe (no MinGW on
+  vibe-u26, so `bbc68k.exe` is the old one).
+* **Host setup:** `../r68k/firmware/rosco_m68k.rom` copied from
+  `build/r68kprof` (gitignored build output) so `mkhost.py` runs.
