@@ -1692,3 +1692,84 @@ Mid-turn:
   windows-exe.yml --ref mboot/conversation-log`. The first run builds ACK
   and pulls the 2.5 GB toolchain image (about 10-15 min); later runs use
   the ACK cache. Downloading an artifact needs a GitHub login.
+
+## 62. The tester's CALL question; merged to master; the Action's first run
+
+* **User:** a question from the tester (R.T. Russell), pasted: his test
+  program for CALL's parameter table, `[OPT 2:move.l a0,^table:rts:]`
+  then `table AND= &FFFFFF : IF table AND 255 STOP` and
+  `IF ?table<>5 OR ?(table+1)<>4 STOP`, stops; "What have I done
+  wrong here"; then "pr to master done, build on gh now running";
+  "yes please" (entry 62).
+* **The answer (his program run as written: STOP at line 40):**
+  1. `table` is a real (5-byte float); `move.l a0,^table` writes the
+     pointer's 4 bytes big-endian into it, so table is garbage (&110500
+     here). ^table is odd (&546D9): on a real 68000/68010 a move.l there is
+     an address error; r68k lets it through.
+  2. The table is in BUFFER, which is not page-aligned on the 68k, so
+     `IF table AND 255 STOP` stops; the address is 32-bit.
+  3. Entries are 5 bytes: type at 1+5n, 4-byte LE address at 2+5n (the
+     Z80: 3-byte entries).
+  Two fixed versions, both run: `table%=USR(code)` after the CALL with the
+  stub `move.l a0,d0:rts` (USR's a0 is the same buffer), or the stub
+  storing a0 into table% byte by byte; all five parameters checked
+  (types 4, 5, 129, 128, 0; addresses = ^C%, ^D, ^E$, S%, S%). Given to
+  the user to forward.
+* **For r68k:** a move.l to an odd address does not fault in r68k (a real
+  68010 raises an address error), so code can pass the emulator and crash
+  on the board. To tell the r68k session.
+* **Merged:** PR #3 ("further steps") into master: 605ce43, with
+  everything up to f478027.
+* **The Action's run 1** (https://github.com/maarten-boot/BBCZ80/actions/runs/40014133127):
+  success on master 605ce43, 19:47-19:51 UTC (4.5 min with the first ACK
+  build; the cache is now saved). Artifact bbc68k-windows, 660 KB, until
+  2027-01-21; its README version line says run 1, commit 605ce43.
+
+## 63. The run 1 artifact checked and handed over
+
+* **User:** "build suceeded we have a artifact at :
+  https://github.com/maarten-boot/BBCZ80/actions/runs/40014133127";
+  "i added a tmp/ and put the artifact in.also added the tmp to
+  gitignore"; "yep handed over to Mr Russel. r68k has been informed.
+  pushed".
+* **Checked** (`tmp/bbc68k-windows.zip`, unpacked in the scratchpad):
+  sha256 3f1a0824... equals GitHub's artifact digest; README line
+  "Version 2026-10-23 19:47 (commit 605ce43, GitHub Actions run 1)"; the
+  exe (sha256 3dac4eaa...) imports only KERNEL32, msvcrt, WS2_32. Put in
+  place of the local build for the run: bascheck hostwin 45/45 and
+  hostcheck windows all ok (the local build was restored after).
+* **Handed over** by the user to R.T. Russell: that artifact. The r68k
+  session has been told about the odd-address move.l (no address error
+  in r68k).
+* **.gitignore:** `tmp/` (the user's, for downloads such as artifacts).
+
+## 64. r68k main; Russell's correction (variants)
+
+* **User:** "yep the lated r68k main branch has the fix now"; the
+  tester's feedback, pasted: "No, Claude has tripped up here. It's not
+  true that 'table' is a *real* variable, actually it's a *variant*
+  variable and it's perfectly legitimate to store a 32-bit integer in a
+  variant. It's a pity that you can't teach (current) AIs. ;-)"; "yes
+  the r68k should now have the new fix in the main branch".
+* **r68k main 23f4e66** (all of rosco-minix-duart since 2d92829, with
+  24958aa: odd word/long accesses raise an address error, as a 68010):
+  exported to the scratchpad, ROM built in the rosco container (unchanged,
+  2c85982c), binary built. The Windows build failed on SIGBUS/SIGHUP:
+  fixed with src68k/host/compat/signal.h. All suites pass on it (host,
+  hostwin, bare on the new r68k binary 45/45, asmcheck, hostcheck,
+  editcheck, ttycheck); the clean-container dry run passes.
+* **3429d32:** the workflow pinned to r68k main, signal.h, bascheck R68K for
+  the bare runner.
+* **The correction:** Russell is right: `table` (no suffix) is a variant,
+  and a 32-bit integer in it is fine. The real causes in his test: the
+  68000 stores big-endian while BASIC reads its variables little-endian
+  (table = &110500 was the address with its bytes reversed); ^table is odd,
+  so move.l there is an address error (r68k main now stops with "address
+  error: write at 000546A9", exit 135); and BUFFER is not page-aligned, so
+  `IF table AND 255 STOP` stops. A corrected version keeping the variant
+  (table=0, then a byte-wise LE store) runs: table = &51162, count 5, type
+  4. The corrected reply was given to the user. Claude's memory notes that
+  unsuffixed variables are variants.
+* **Idea noted:** an address or bus error in user machine code now ends
+  the whole program on r68k main (and halts a board); bare BASIC could
+  catch vectors 2/3 and raise a BASIC error. To discuss.
