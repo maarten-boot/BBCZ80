@@ -1626,3 +1626,24 @@ Mid-turn:
   bare 44/44; x01inkey under Minix ok.
 * **For the next zip:** its README says "INKEY(-n) is always FALSE"; add
   that INKEY(-256) returns &44.
+
+## 59. CALL table example; the Minix c_l5b failure is not r68k
+
+* **User:** "you can continue"; mid-turn "can you make a xample how we
+  would access the CALL table mentioned in issue 1?"; "can you commit
+  that ?".
+* **State:** everything pushed (30b1f54). GitHub: issue 1 has R.T.
+  Russell asking for a fixed bbc68k.exe and the user's Google Drive link
+  (11:29); no confirmation yet. New issue 3 "further steps" (the user:
+  "compare to Agon implementation", which is the review of entries
+  52-56). r68k is being changed live (58a5016 "ROM read-only unless -w").
+* **d8ed81f:** test `x04calltable`: `CALL double, A%, X, B%, C%` reads the
+  table at a0 (count, then type + 4-byte LE address each), skips
+  non-integers and doubles each integer in place (42, 1.5, -100,
+  2000000). ASSEMBLER.md points to it. Passes on host, hostwin, bare and
+  Minix. Found while writing it: a ':' in a ';' comment ends the
+  statement (ASSEMBLER.md already says so).
+* **Minix c_l5b_recovery:** rebuilt r68k from a clean export of 2d92829
+  in the scratchpad (`make r68k`, the known ROM) and ran Minix on it
+  (`R68K=...`): "Mistake at line 4030" again in the full session, so the
+  in-progress emulator is not the cause. Next: bisect the tests before it.
