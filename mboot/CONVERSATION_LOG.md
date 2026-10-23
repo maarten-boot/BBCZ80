@@ -1346,3 +1346,29 @@ Mid-turn:
   Minix and bare runs of the new test; the 2 minix lockdown commits;
   `ASSEMBLER.md` could say that `dc.b` checks the range (the Z80 `DEFB`
   keeps the low byte).
+
+## 49. A fresh Windows exe
+
+* **User:** "reverify i pushed"; "ok can you build me a fresh standalone
+  windows .exe"; mid-turn "installing mingw and wine"; "add entry 49
+  now".
+* **Push verified:** `mboot/conversation-log` on GitHub at a1daff4
+  (entry 48); `master` still 410e7fb.
+* **Build:** vibe-u26 had no MinGW and Claude's shell has no sudo, so
+  the exe was cross-compiled in a throwaway Docker image `bbc68k-mingw`
+  (ubuntu:24.04 with g++-mingw-w64-x86-64-posix, GCC 13, plus gcc for
+  musashi's m68kmake, python3, git, patch, make), running
+  `tools/mkhost.py --windows` as uid 1000 on the tree mounted at its own
+  path. Bare BBC BASIC rebuilt first (`mkbare.py`, `--demo`) from the
+  current source (b5e639e + 42fe3fa).
+* **Result:** `build/host/windows/bbc68k.exe`, 1768960 bytes, PE32+
+  x86-64 console; it imports only KERNEL32, msvcrt and WS2_32
+  (standalone). The only compiler warning is EXCEPTION_ILLEGAL_INSTRUCTION
+  defined twice (MinGW headers), harmless.
+* **Tests (Wine, installed by the user meanwhile):**
+  `BBC_EMU=hostwin bascheck` 25 of 25 (with `a02macro`), `hostcheck.py`
+  all ok for both PC programs (files, folders, paths refused outside the
+  folder, `*DIR`, the Windows console keys). Not tried on real Windows.
+* **Host setup now:** MinGW-w64 and Wine installed on vibe-u26, so
+  `make host` / `make hostcheck` work here directly. The Docker image
+  `bbc68k-mingw` is no longer needed and can be removed.
