@@ -1,0 +1,50 @@
+BBC BASIC V / Z80 TEST HARNESS - LEVEL 3B
+------------------------------------------
+
+BYTE FILE I/O
+-------------
+PASS OPENOUT byte file
+PASS EXT# after 16 BPUT
+PASS OPENIN byte file
+PASS byte file sum
+PASS EOF# after byte reads
+
+PRINT# / INPUT# SEQUENTIAL I/O
+------------------------------
+PASS OPENOUT seq file
+PASS OPENIN seq file
+PASS INPUT# integer positive
+PASS INPUT# integer negative
+PASS INPUT# string one
+PASS INPUT# string two
+PASS EOF# after seq reads
+
+EOF# / EXT# / PTR#
+------------------
+PASS OPENOUT pos file
+PASS EXT# pos file
+PASS OPENIN pos file
+PASS PTR# initial
+PASS first BGET#
+PASS PTR# after one byte
+PASS PTR# seek to 5
+PASS BGET# after seek
+PASS BGET# final byte
+PASS EOF# final byte
+
+OPENUP
+------
+PASS OPENUP returns valid handle
+PASS OPENUP initial PTR#
+PASS OPENUP initial EXT#
+PASS OPENUP byte 1 unchanged
+PASS OPENUP byte overwritten
+PASS OPENUP byte 3 unchanged
+PASS OPENUP extend EXT#
+PASS OPENUP appended byte
+
+------------------------------------------
+TOTAL TESTS : 30
+PASSED      : 30
+FAILED      : 0
+------------------------------------------

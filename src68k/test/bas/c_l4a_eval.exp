@@ -1,0 +1,63 @@
+BBC BASIC V / Z80 TEST HARNESS - LEVEL 4A
+------------------------------------------
+
+OPERATOR PRECEDENCE
+-------------------
+PASS mul before add
+PASS brackets override
+PASS unary minus precedence
+PASS nested brackets
+PASS DIV before add
+PASS MOD before add
+PASS shift after add
+PASS AND precedence
+PASS OR precedence
+PASS EOR precedence
+PASS relational TRUE
+PASS relational FALSE
+PASS boolean expression
+PASS boolean expression false
+
+EVAL NUMERIC
+------------
+PASS EVAL simple
+PASS EVAL brackets
+PASS EVAL variables
+PASS EVAL DIV MOD
+PASS EVAL hex
+PASS EVAL binary
+PASS EVAL real
+PASS EVAL EXP/LN
+PASS EVAL comparison true
+PASS EVAL comparison false
+
+EVAL STRINGS
+------------
+PASS EVAL string literal
+PASS EVAL string concat
+PASS EVAL string variables
+PASS EVAL LEFT$
+PASS EVAL MID$
+PASS EVAL LEN string
+PASS EVAL generated string expr
+
+GENERATED EXPRESSIONS
+---------------------
+PASS generated sum 1..10
+PASS generated nested multiply
+PASS generated long flat expr
+PASS generated fixed complex
+
+NESTED FUNCTIONS
+----------------
+PASS nested FN direct
+PASS FN inside expression
+PASS EVAL FN call
+PASS recursive expression FN
+PASS nested recursive FN
+
+------------------------------------------
+TOTAL TESTS : 40
+PASSED      : 40
+FAILED      : 0
+------------------------------------------

@@ -1,0 +1,44 @@
+BBC BASIC V / Z80 TEST HARNESS - LEVEL 5D
+------------------------------------------
+
+NESTED PARENTHESES
+------------------
+PASS EVAL 16 nested parentheses
+PASS EVAL nested parens with ops
+PASS direct nested parentheses
+
+LONG FLAT EXPRESSIONS
+---------------------
+PASS EVAL 64-term addition
+PASS EVAL 16 chained multiply
+PASS EVAL 20 chained subtract
+
+STRING PARSER EXPRESSIONS
+-------------------------
+PASS EVAL string concat length
+PASS EVAL string concat prefix
+PASS EVAL nested string functions
+PASS EVAL string LEN expression
+
+NESTED FUNCTION EXPRESSIONS
+---------------------------
+PASS EVAL 12 nested FNinc
+PASS EVAL 8 nested FNdbl
+PASS direct nested FN mix
+
+MANY STATEMENTS ON ONE LINE
+---------------------------
+PASS many statements one line sum
+PASS FOR on one line
+
+PARSER ERROR RECOVERY
+---------------------
+PASS 20 bad EVALs trapped
+PASS EVAL works after bad EVALs
+PASS direct expression after bad EVALs
+
+------------------------------------------
+TOTAL TESTS : 18
+PASSED      : 18
+FAILED      : 0
+------------------------------------------

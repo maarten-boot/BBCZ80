@@ -1,0 +1,44 @@
+BBC BASIC V / Z80 TEST HARNESS - LEVEL 5A
+------------------------------------------
+
+STRING LENGTH LIMITS
+--------------------
+PASS string length 254
+PASS string length 255
+PASS string length 255 first
+PASS string length 255 last
+PASS split/rejoin 255 string
+PASS string length 256 trapped
+
+ARRAY BOUNDARY TESTS
+--------------------
+PASS integer array index 0
+PASS integer array index 255
+PASS real array index 0
+PASS real array index 127
+PASS string array index 0
+PASS string array index 31
+
+LOCAL ARRAY BOUNDARY TESTS
+--------------------------
+PASS local integer array boundary
+PASS local real array boundary
+PASS local string array boundary
+
+RECURSION DEPTH SANITY
+----------------------
+PASS recursive sum 25
+PASS recursive depth 40 marker
+PASS mutual recursion depth 30
+
+POST-LIMIT RUNTIME SANITY
+-------------------------
+PASS FOR sanity after limit tests
+PASS string sanity after limit tests
+PASS EVAL sanity after limit tests
+
+------------------------------------------
+TOTAL TESTS : 21
+PASSED      : 21
+FAILED      : 0
+------------------------------------------
