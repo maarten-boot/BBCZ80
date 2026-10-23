@@ -1724,3 +1724,21 @@ Mid-turn:
   success on master 605ce43, 19:47-19:51 UTC (4.5 min with the first ACK
   build; the cache is now saved). Artifact bbc68k-windows, 660 KB, until
   2027-01-21; its README version line says run 1, commit 605ce43.
+
+## 63. The run 1 artifact checked and handed over
+
+* **User:** "build suceeded we have a artifact at :
+  https://github.com/maarten-boot/BBCZ80/actions/runs/40014133127";
+  "i added a tmp/ and put the artifact in.also added the tmp to
+  gitignore"; "yep handed over to Mr Russel. r68k has been informed.
+  pushed".
+* **Checked** (`tmp/bbc68k-windows.zip`, unpacked in the scratchpad):
+  sha256 3f1a0824... equals GitHub's artifact digest; README line
+  "Version 2026-10-23 19:47 (commit 605ce43, GitHub Actions run 1)"; the
+  exe (sha256 3dac4eaa...) imports only KERNEL32, msvcrt, WS2_32. Put in
+  place of the local build for the run: bascheck hostwin 45/45 and
+  hostcheck windows all ok (the local build was restored after).
+* **Handed over** by the user to R.T. Russell: that artifact. The r68k
+  session has been told about the odd-address move.l (no address error
+  in r68k).
+* **.gitignore:** `tmp/` (the user's, for downloads such as artifacts).
