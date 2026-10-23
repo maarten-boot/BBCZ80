@@ -1088,7 +1088,7 @@ SUMLEN:	add.l	#1,a4			! Skip LEN
 	bpl	MISMAT			! Type mismatch
 	bsr	ARRLEN
 	clr.l	d0
-	clr.w	d7
+	clr.l	d7
 1:	move.b	(a3),d7
 	add.l	d7,d0
 	add.l	#6,a3
@@ -1888,7 +1888,8 @@ LETARR:	bclr	#14,d5			! Lose array marker
 	bne	3b
 	move.l	d0,d2			! elements
 	move.l	sp,a3			! temporary space
-	move.l	a0,-(sp)		! where sp must go back to
+	pea	4(a0)			! where sp must go back to (the
+					!  temporary space ended at the count)
 	bsr	EXPRA
 	move.l	(sp)+,sp		! Update stack pointer
 	bra	XEQ

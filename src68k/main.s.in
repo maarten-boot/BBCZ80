@@ -597,8 +597,8 @@ DEL:	movem.l	a2-a3,-(sp)
 ! CLEAN - CHECK FOR BAD PROGRAM, FIND END OF TEXT AND WRITE FF FF.
 LOAD0:	move.l	PAGE,a2
 	move.l	sp,d5
-	sub.l	#256,d5
-	sub.l	a2,d5			! FIND AVAILABLE SPACE
+	sub.l	#1024,d5		! (Z80: 256; OSLOAD's C code needs
+	sub.l	a2,d5			!  more stack) FIND AVAILABLE SPACE
 	lea	ACCS,a3
 	bsr	OSLOAD			! LOAD
 	bcs	CLEAN

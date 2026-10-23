@@ -730,6 +730,12 @@ int os_load(char *name, char *addr, long max)
 	fd = openfile(fname, 1);
 	if (fd < 0)
 		oserror(214, "File not found");
+	/* no room: read nothing (the data would run into this stack) */
+	if (lseek(fd, 0L, SEEK_END) > max) {
+		close(fd);
+		return 0;
+	}
+	lseek(fd, 0L, SEEK_SET);
 	for (;;) {
 		long chunk = max - total;
 		if (chunk <= 0) {
