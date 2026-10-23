@@ -1325,3 +1325,24 @@ Mid-turn:
     Out of range on the 68k, while the Z80 `DEFB 999` keeps the low byte
     (as before; ASSEMBLER.md does not say so).
   * After the fix: bascheck 25 of 25, asmcheck 162 of 162 (host).
+
+## 48. Push verified; draft reply for issue #1
+
+* **User:** "reverify i pushed"; "add entry 48 now".
+* **Verified on GitHub (https ls-remote):** `mboot/conversation-log` at
+  28e6b1e, the same as here (b5e639e, f2e44f2, 42fe3fa, 28e6b1e are
+  up). `master` unchanged at 410e7fb, so the fix is not on master yet.
+* **Draft reply for issue #1** given to the user to paste (not posted
+  by Claude): fixed on `mboot/conversation-log` (b5e639e, 42fe3fa); the
+  cause (one global copy of the operand text, overwritten by the
+  macro's own assembler); the fix (operand copy and assembler state on
+  the stack, P% re-read as in the Z80, the error line after a macro);
+  checked against BBCBASIC.COM under RunCPM; the test `a02macro` and the
+  Macros section of `ASSEMBLER.md`. Suggested to drop the "fixed on
+  branch" wording if the issue should close only when master has it.
+* **Claude project memory:** the issue note now says fixed, committed
+  and pushed.
+* **Still open:** merge to master; the Windows exe (no MinGW here),
+  Minix and bare runs of the new test; the 2 minix lockdown commits;
+  `ASSEMBLER.md` could say that `dc.b` checks the range (the Z80 `DEFB`
+  keeps the low byte).
