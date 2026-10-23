@@ -961,7 +961,9 @@ COPYX:	clr.w	d2			! depth
 	sub.b	#'a'-'A',d1
 7:	move.b	d1,(a1)+
 	move.b	d1,d5
-	bra	4b
+	cmp.l	cxend,a1		! (a DEF token is 3 bytes here)
+	bcs	4b
+	bra	ASMBAD
 6:	move.b	d4,(a1)+
 	move.b	d4,d5
 	add.l	#1,a4

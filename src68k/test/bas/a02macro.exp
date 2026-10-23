@@ -6,3 +6,6 @@ issue 1: test
 
 Syntax error at line 100
 alive
+
+Syntax error at line 10
+long $DEF.. line: alive
