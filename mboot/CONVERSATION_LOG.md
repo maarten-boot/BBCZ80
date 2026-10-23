@@ -1692,3 +1692,35 @@ Mid-turn:
   windows-exe.yml --ref mboot/conversation-log`. The first run builds ACK
   and pulls the 2.5 GB toolchain image (about 10-15 min); later runs use
   the ACK cache. Downloading an artifact needs a GitHub login.
+
+## 62. The tester's CALL question; merged to master; the Action's first run
+
+* **User:** a question from the tester (R.T. Russell), pasted: his test
+  program for CALL's parameter table, `[OPT 2:move.l a0,^table:rts:]`
+  then `table AND= &FFFFFF : IF table AND 255 STOP` and
+  `IF ?table<>5 OR ?(table+1)<>4 STOP`, stops; "What have I done
+  wrong here"; then "pr to master done, build on gh now running";
+  "yes please" (entry 62).
+* **The answer (his program run as written: STOP at line 40):**
+  1. `table` is a real (5-byte float); `move.l a0,^table` writes the
+     pointer's 4 bytes big-endian into it, so table is garbage (&110500
+     here). ^table is odd (&546D9): on a real 68000/68010 a move.l there is
+     an address error; r68k lets it through.
+  2. The table is in BUFFER, which is not page-aligned on the 68k, so
+     `IF table AND 255 STOP` stops; the address is 32-bit.
+  3. Entries are 5 bytes: type at 1+5n, 4-byte LE address at 2+5n (the
+     Z80: 3-byte entries).
+  Two fixed versions, both run: `table%=USR(code)` after the CALL with the
+  stub `move.l a0,d0:rts` (USR's a0 is the same buffer), or the stub
+  storing a0 into table% byte by byte; all five parameters checked
+  (types 4, 5, 129, 128, 0; addresses = ^C%, ^D, ^E$, S%, S%). Given to
+  the user to forward.
+* **For r68k:** a move.l to an odd address does not fault in r68k (a real
+  68010 raises an address error), so code can pass the emulator and crash
+  on the board. To tell the r68k session.
+* **Merged:** PR #3 ("further steps") into master: 605ce43, with
+  everything up to f478027.
+* **The Action's run 1** (https://github.com/maarten-boot/BBCZ80/actions/runs/40014133127):
+  success on master 605ce43, 19:47-19:51 UTC (4.5 min with the first ACK
+  build; the cache is now saved). Artifact bbc68k-windows, 660 KB, until
+  2027-01-21; its README version line says run 1, commit 605ce43.
