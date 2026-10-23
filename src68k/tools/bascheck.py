@@ -19,7 +19,7 @@ tests are split over several boots, each with at most BUDGET bytes of
 #file files.
 BBC_EMU=bare tests BBC BASIC on a bare rosco_m68k (tools/mkbare.py): an
 image per group with the #file files in its RAM store, in r68k on a pty
-(the demo's -O2 r68k if there is one); the lines are typed at the >
+($R68K, else the demo's -O2 r68k if there is one); the lines are typed at the >
 prompt, each after the prompt is back, and *BYE ends a test (BASIC starts
 again with the files kept).
 BBC_EMU=host and BBC_EMU=hostwin test BBC BASIC as a program on the PC
@@ -142,7 +142,7 @@ def run_bare(tests, secs):
         args += ['-f', p]
     os.makedirs(os.path.join(WORK, 'bareobj'), exist_ok=True)
     subprocess.run(args, check=True)
-    r68k = os.path.join(TOP, 'build', 'demo', 'bbc68k-demo', 'r68k')
+    r68k = os.environ.get('R68K') or os.path.join(TOP, 'build', 'demo', 'bbc68k-demo', 'r68k')
     if not os.path.exists(r68k):
         r68k = os.path.join(os.path.dirname(TOP), 'r68k', 'r68k')
     fd, slave = pty.openpty()

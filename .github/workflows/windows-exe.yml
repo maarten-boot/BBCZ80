@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: maarten-boot/r68k
-          ref: 2d92829043e4a68eff935b93b82c69c4d5a09f2f  # rosco-minix-duart, tested
+          ref: 23f4e665855521d596780a8b921e9853d9cc4422  # main, with address errors (tested)
           path: r68k
 
       - name: Build tools
