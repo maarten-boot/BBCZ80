@@ -271,8 +271,8 @@ int os_key(long cs)
 {
 	int c;
 
-	if (cs < 0)
-		return -1;			/* INKEY(-n): not supported */
+	if (cs < 0)		/* INKEY(-n): a held key cannot be seen here, so */
+		return 0;	/*  FALSE (as "key 0"), not -1 (time-out: TRUE) */
 	c = getkey(cs);
 	if (c == ESC)
 		setesc();

@@ -1,0 +1,3 @@
+10 IF INKEY(-99) THEN PRINT "space pressed?" ELSE PRINT "not pressed"
+20 PRINT INKEY(-1);" ";INKEY(-99)
+RUN
