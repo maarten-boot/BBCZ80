@@ -1522,3 +1522,27 @@ Mid-turn:
 * **Next:** merge mboot/arrays32 into mboot/conversation-log (user's
   call); then the Windows zip, as everything found from the Agon is
   fixed (1.1-1.5, 2). The review's section 3 features remain optional.
+
+## 55. Arrays merged; Windows zip 2026-10-23b
+
+* **User:** "restarted, continue"; chose "Merge, then zip"; mid-turn
+  "yes r68k is currently working on general improvements."; "yes" (entry
+  55).
+* **Merge:** `mboot/conversation-log` fast-forwarded to edb5eae
+  (`mboot/arrays32`: INKEY(-n), 32-bit arrays, entry 54). Not pushed:
+  6 commits ahead of origin (0e82cb0).
+* **Build:** against r68k 2d92829 from the clean export (`mkhost.py -r`):
+  r68k is being improved by another session (7 new commits up to
+  92ac263, mostly unpushed, plus uncommitted changes), left alone. The
+  ROM is the known one (md5 2c85982c...).
+* **Tests:** bascheck host, hostwin and bare 29/29; asmcheck 162/162;
+  hostcheck, fatcheck, editcheck, ttycheck all ok.
+* **Zip:** `68k/bbc68k-windows-2026-10-23b.zip` (sha256 4852a021...):
+  `bbc68k.exe` (1779712 bytes, sha256 af522d97..., built with the host's
+  MinGW now; imports only KERNEL32, msvcrt, WS2_32) and `README.txt`:
+  version 2026-10-23b (edb5eae); arrays over 64K and INKEY(-n) FALSE
+  among the differences from the Z80; "Changes since 2026-10-23" with the
+  five fixes found through the Agon.
+* **Next:** the user pushes; a later zip with the new r68k once it
+  settles; the review's section 3 features remain optional; issue #1
+  waits for R.T. Russell.
