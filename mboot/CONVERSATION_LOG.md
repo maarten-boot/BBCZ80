@@ -1575,3 +1575,41 @@ Mid-turn:
     `CALL c%,X%,Y` gave count 2, type 4, address = ^X%.
   * Written up in `src68k/ASSEMBLER.md` (Running code), with code that
     reads the first parameter's address.
+
+## 57. Text programs, start by name, AUTO check, Minix tests again
+
+* **User:** "What is next ?"; "i pushed" (verified 27a4e12); "4: minis
+  switched to ash as the default shell. Start a program from the command
+  line would also help in minix. you can also do: Delete the merged
+  mboot/arrays32 branch, Remove the bbc68k-mingw Docker image, Add the
+  dc.b range note to ASSEMBLER.md, LOAD/SAVE of text programs, An error
+  for an AUTO step over 255."; mid-turn "i see alot of temp dirsin:
+  BBCZ80/build/host/ can we clean up some"; "status?" (twice); "commit
+  and stop; going home".
+* **Housekeeping:** `mboot/arrays32` deleted (merged), Docker image
+  `bbc68k-mingw` removed; about 25 leftover test folders removed from
+  build/host and build/host/linux; hostcheck.py and ttycheck.py now
+  remove their folders (hostcheck keeps them on a failure). wt/ (old
+  key-injection experiments) kept.
+* **3f47ce5:**
+  * Text programs: LOAD/CHAIN/SAVE "x.BAS" (.TXT, .ASC). LOAD: lines
+    entered as typed (new INSLIN from CLOOP); CR/LF/CRLF; no number:
+    previous + 1. SAVE: LIST into the file (LISTO 1, WIDTH 0) via a new
+    OSWRCH channel WRCHAN in minix.s; ERROR1 closes the file. SAVE then
+    LOAD gives a byte-identical program.
+  * PC programs: `bbc68k NAME` CHAINs NAME (new host call ARG, 16); a
+    folder in NAME (a file dropped on the exe) becomes BASIC's folder.
+    Minix already passed argv[1].
+  * AUTO step over 255: Silly. ASSEMBLER.md: the dc.b range note.
+  * Tests: x03textprog; hostcheck: bbc68k NAME (linux and windows).
+  * Minix: runminix adds rootfs/ramproto (the shell moved there in the
+    minix tree) and sets PS1 to "=minix=# " ('# ' matched BASIC output
+    like PRINT#, which garbled the Minix runs); bascheck splits on it.
+* **Results:** bascheck host, hostwin, bare 44/44; asmcheck, hostcheck,
+  fatcheck, editcheck, ttycheck all ok. Minix (with the user's r68k
+  build of the in-progress r68k): 41/42 without c_l1_core and x02bigarr.
+* **Open (Minix):** (1) BASIC has 65 KB there (-S 64k), so the
+  big-array tests cannot run: a bigger -S (the user's parked decision)
+  or a skip mark for Minix. (2) c_l5b_recovery: "Mistake at line 4030"
+  only in the full Minix session; it passes alone, in pairs and on all
+  other platforms (also with 65 KB on Linux). Not found yet.
