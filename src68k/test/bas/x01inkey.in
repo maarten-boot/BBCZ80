@@ -1,3 +1,4 @@
 10 IF INKEY(-99) THEN PRINT "space pressed?" ELSE PRINT "not pressed"
 20 PRINT INKEY(-1);" ";INKEY(-99)
+30 PRINT "platform ";INKEY(-256);" &";~INKEY(-256)
 RUN

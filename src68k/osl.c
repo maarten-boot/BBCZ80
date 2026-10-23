@@ -271,6 +271,8 @@ int os_key(long cs)
 {
 	int c;
 
+	if (cs == -256)		/* INKEY(-256): the platform, &44 (68, '68k'; */
+		return 0x44;	/*  chosen by R.T. Russell) */
 	if (cs < 0)		/* INKEY(-n): a held key cannot be seen here, so */
 		return 0;	/*  FALSE (as "key 0"), not -1 (time-out: TRUE) */
 	c = getkey(cs);
