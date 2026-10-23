@@ -1372,3 +1372,38 @@ Mid-turn:
 * **Host setup now:** MinGW-w64 and Wine installed on vibe-u26, so
   `make host` / `make hostcheck` work here directly. The Docker image
   `bbc68k-mingw` is no longer needed and can be removed.
+
+## 50. Windows zip, bare tests, merge to master
+
+* **User:** "reverify i pushed; and where can i find the exe now ?";
+  "yes, make the zip with a README"; "ok status"; "r68k has been built,
+  the minix tree is currently engaged so off limits for change. we will
+  wait on the confirmation before closing the issue."; "ok merged with
+  my master"; "add entry 50 now".
+* **Push verified:** `mboot/conversation-log` at 8cdfce1 (entry 49).
+* **Zip:** `68k/bbc68k-windows-2026-10-23.zip` next to the repos (634
+  KB, sha256 ef0ad0ab…), laid out as zip c: `bbc68k-windows/bbc68k.exe`
+  (sha256 d5d9e873…, the exe tested under Wine; the user had renamed the
+  build output to `bbc68k-261023-1042.exe`, same hash) and `README.txt`
+  (zip c's, plus a version line, macros work as in the Z80, the dc.b
+  range difference, and "Changes since 2026-10-22c").
+  * Checked for the README: with OPT 2, `dc.b 999`, `dc.w 70000` and
+    `equb 999` are Out of range; with OPT 0, `dc.b 999` keeps the low
+    byte (231), as the Z80.
+* **Status:** the minix session redid the two lockdown fixes (62de4f6
+  lone ESC, f0a8cd6 sigreturn condition codes, 6b658ed test and images),
+  so the lockdown recovery is complete. Minix still boots to `rosco
+  login:` with no `/bin/sh` in its rootfs; the minix tree is engaged by
+  the other session and off limits for changes.
+* **Bare rosco_m68k (r68k built by the user):** `make barecheck` all ok:
+  `BBC_EMU=bare` bascheck 25 of 25 (with `a02macro`), fatcheck on FAT12,
+  FAT16 and FAT32 (fsck clean). The fix is now tested on Linux, Windows
+  (Wine) and bare; Minix waits for the minix tree.
+* **Merge:** the user merged `mboot/conversation-log` into master on
+  GitHub (PR #2, 4150025, a merge of 410e7fb and 8cdfce1; its tree is
+  the same as 8cdfce1). The local `master` here is still 410e7fb.
+* **Issue #1:** open, with the user's three comments; it stays open
+  until R.T. Russell confirms the fix.
+* **Still open:** Minix run of the new test; the local master
+  fast-forward (offered); remove the `bbc68k-mingw` Docker image; a
+  sentence in `ASSEMBLER.md` on the dc.b range check.
