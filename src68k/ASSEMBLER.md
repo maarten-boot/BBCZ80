@@ -154,6 +154,11 @@ FN's code went.
   move.b 3(a0),d3 : lsl.l #8,d3 : move.b 2(a0),d3 : move.l d3,a1
   ```
   The variable itself is little-endian too, like all memory BASIC sees.
+  A complete example is `test/bas/x04calltable.in`: `CALL double, A%, X,
+  B%, C%` walks the table, skips what is not an integer (type 4) and
+  doubles each integer variable in place (21, 1.5, -50, 1000000 become
+  42, 1.5, -100, 2000000). Keep `:` out of its comments: it ends the
+  statement there too.
 * Code must be at an even address. `DIM name size` blocks are word-aligned
   on this port, while the Z80 version does not align them.
 

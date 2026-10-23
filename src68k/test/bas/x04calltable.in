@@ -1,0 +1,33 @@
+10 REM CALL double, var, var...  doubles every integer variable passed
+20 REM a0 = the parameter table: [count] then per parameter
+30 REM [type][address, 4 bytes little-endian]; integers are LE too
+40 DIM code% 200
+50 FOR pass%=0 TO 2 STEP 2
+60   P%=code%
+70   [OPT pass%
+80   .double
+90   moveq #0,d1
+100   move.b (a0)+,d1           ; d1 = number of parameters
+110   bra endp
+120   .param
+130   move.b (a0)+,d2           ; d2 = its type (4 = integer)
+140   move.b 3(a0),d3 : lsl.l #8,d3 : move.b 2(a0),d3 : lsl.l #8,d3
+150   move.b 1(a0),d3 : lsl.l #8,d3 : move.b (a0),d3
+160   addq.l #4,a0              ; past the address
+170   cmp.b #4,d2
+180   bne endp                  ; not an integer, leave it
+190   move.l d3,a1              ; a1 = the variable
+200   move.b 3(a1),d0 : lsl.l #8,d0 : move.b 2(a1),d0 : lsl.l #8,d0
+210   move.b 1(a1),d0 : lsl.l #8,d0 : move.b (a1),d0
+220   add.l d0,d0               ; double it
+230   move.b d0,(a1) : lsr.l #8,d0 : move.b d0,1(a1)
+240   lsr.l #8,d0 : move.b d0,2(a1) : lsr.l #8,d0 : move.b d0,3(a1)
+250   .endp
+260   dbra d1,param             ; the next parameter
+270   rts
+280   ]
+290 NEXT
+300 A%=21 : B%=-50 : X=1.5 : C%=1000000
+310 CALL double, A%, X, B%, C%
+320 PRINT A%, X, B%, C%
+RUN
