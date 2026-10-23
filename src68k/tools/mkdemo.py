@@ -2,6 +2,7 @@
 """Make the stand-alone demo: build/demo/bbc68k-demo and its .tar.gz.
 
 	mkdemo.py [-m MINIX] [-r R68K_DIR] [--docker] [--test]
+	mkdemo.py --progs
 
 The demo (demo/README.txt) is r68k, linked statically, its firmware and a
 ROSCODE1.BIN whose RAM disk root is the Minix tree's rootfs/proto with
@@ -12,6 +13,8 @@ stored as /usr/demo/NAME.bbc, with the text as NAME.bas.  R68K_DIR is the
 r68k checkout (default ../r68k next to this repository); its tracked sources
 are built with -O2 in build/demo/r68k-src, the firmware is taken as built.
 --test boots the demo and runs each program from the menu.
+--progs only tokenises the programs into build/demo/progs (for mkbare.py
+--demo, e.g. in the GitHub Action), with nothing of Minix or r68k.
 
 --docker also builds the container image bbc68k-demo (demo/Dockerfile;
 $DOCKER, default podman) from build/demo/docker and saves it as
@@ -270,6 +273,16 @@ def run_container(tool, image, args, steps, want):
     return not steps and status == 0 and want in text
 
 
+def make_progs():
+    """build/demo/progs: the demo programs tokenised; their names"""
+    progdir = os.path.join(WORK, 'progs')
+    os.makedirs(progdir, exist_ok=True)
+    progs = sorted(f[:-4] for f in os.listdir(os.path.join(DEMO, 'progs'))
+                   if f.endswith('.bas'))
+    tokenise(progs, progdir)
+    return progs
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('-m', default=os.environ.get(
@@ -277,19 +290,19 @@ def main():
     ap.add_argument('-r', default=os.path.join(os.path.dirname(TOP), 'r68k'))
     ap.add_argument('--docker', action='store_true')
     ap.add_argument('--test', action='store_true')
+    ap.add_argument('--progs', action='store_true')
     a = ap.parse_args()
+    if a.progs:
+        make_progs()
+        return 0
     rosco = os.path.join(os.path.abspath(a.m), 'src', 'rosco')
     r68k = os.path.abspath(a.r)
     out = os.path.join(WORK, NAME)
     if os.path.exists(out):
         shutil.rmtree(out)
     os.makedirs(os.path.join(out, 'firmware'))
+    progs = make_progs()
     progdir = os.path.join(WORK, 'progs')
-    os.makedirs(progdir, exist_ok=True)
-
-    progs = sorted(f[:-4] for f in os.listdir(os.path.join(DEMO, 'progs'))
-                   if f.endswith('.bas'))
-    tokenise(progs, progdir)
     files = [('/etc/demo', 644, os.path.join(DEMO, 'etc', 'demo')),
              ('/usr/bin/bbcbasic', 755, os.path.join(SRC, 'bbcbasic')),
              # for the web page's uploads from its SD card (web/loader.js)
