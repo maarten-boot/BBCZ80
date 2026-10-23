@@ -1,0 +1,45 @@
+BBC BASIC V / Z80 TEST HARNESS - LEVEL 5G
+------------------------------------------
+
+DATA POINTER STATE
+------------------
+PASS DATA pointer after PROC READ A
+PASS DATA pointer after PROC READ B
+PASS DATA pointer PROC item
+PASS DATA pointer after PROC READ string
+PASS RESTORE before PROC string
+PASS READ after PROC string
+
+ERROR INSIDE FN/PROC STATE
+--------------------------
+PASS FN recovers after trapped error
+PASS PROC locals after nested error
+PASS bad EVAL trapped before FN sanity
+PASS FN works after trapped EVAL
+
+GOSUB / RETURN STATE
+--------------------
+PASS 20 GOSUB increments
+PASS ON GOSUB state sequence
+
+DIM / REDIM EDGE STATE
+----------------------
+PASS repeated local DIM state
+PASS DIM after string churn state
+
+CONTROL-FLOW ERROR TRAPS
+------------------------
+PASS control-flow misuse trapped
+PASS runtime survives control errors
+
+POST-EDGE SANITY
+----------------
+PASS FOR sanity after state edges
+PASS string sanity after state edges
+PASS DATA sanity after state edges
+
+------------------------------------------
+TOTAL TESTS : 19
+PASSED      : 19
+FAILED      : 0
+------------------------------------------

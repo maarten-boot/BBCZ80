@@ -1,0 +1,41 @@
+BBC BASIC V / Z80 TEST HARNESS - LEVEL 4C
+------------------------------------------
+
+BASIC LOCAL ARRAY DIM
+---------------------
+PASS local real array first
+PASS local real array last
+PASS local integer array first
+PASS local integer array last
+
+MULTIPLE LOCAL ARRAYS
+---------------------
+PASS many locals real a
+PASS many locals real b
+PASS many locals integer c
+PASS many locals integer d
+
+REPEATED LOCAL ARRAY ALLOCATION
+-------------------------------
+PASS 200 repeated local DIM calls
+
+NESTED LOCAL ARRAYS
+-------------------
+PASS nested local arrays preserved
+
+LOCAL ARRAYS INSIDE FUNCTIONS
+-----------------------------
+PASS FN local integer array sum
+PASS FN local real array value
+PASS FN local string array value
+
+GLOBAL DIM AFTER LOCAL ARRAYS
+-----------------------------
+PASS global real DIM after locals
+PASS global integer DIM after locals
+
+------------------------------------------
+TOTAL TESTS : 15
+PASSED      : 15
+FAILED      : 0
+------------------------------------------

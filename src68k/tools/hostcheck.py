@@ -12,10 +12,13 @@ binary file of 100000 bytes, a gap past the end, *MKDIR, *CD, paths,
 folder refused, *DIR), then the folder checked from here, byte by byte.
 For Windows also the console keys: host/keytest.cpp (built here with
 MinGW) puts key events, cursor keys too, into bbc68k.exe's console.
+Then "bbc68k NAME" for each: the program CHAINed at the start, with a
+folder in NAME that folder as BASIC's, and File not found for none.
 """
 
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -81,6 +84,9 @@ def run(kind):
     check('*DIR lists the folder', 'Files:' in out and 'there.txt' in out and 'BIG.BIN' in out)
     if failed:
         print(out[-1500:])
+        print('(the files are kept in %s)' % base)
+    else:
+        shutil.rmtree(base)
     return failed
 
 
@@ -114,12 +120,48 @@ def keys_windows():
                       b'XPRINT99' in plain and b'\n99\n' not in plain)):
         print('%s  %s' % ('ok  ' if ok else 'FAIL', name))
         failed += not ok
+    if p.poll() is None:
+        p.kill()
+        p.wait()
+    shutil.rmtree(d, ignore_errors=True)
+    return failed
+
+
+def autorun(kind):
+    """bbc68k NAME: CHAIN it at the start (no demo menu); with a folder in
+    the name, that folder is BASIC's"""
+    exe = os.path.join(TOP, 'build', 'host', kind, 'bbc68k.exe' if kind == 'windows' else 'bbc68k')
+    pre = ['wine'] if kind == 'windows' else []
+    base = tempfile.mkdtemp(dir=os.path.join(TOP, 'build', 'host'))
+    sub = os.path.join(base, 'sub')
+    os.mkdir(sub)
+    with open(os.path.join(sub, 'mark.txt'), 'wb') as f:
+        f.write(b'in sub\n')
+    prog = ['NEW', '10 F%=OPENIN "mark.txt"', '20 PRINT "started by name, mark: ";F%<>0',
+            'SAVE "hi"', '*BYE']
+    subprocess.run(pre + [exe], input=('\r' + '\r'.join(prog) + '\r').encode(), cwd=sub,
+                   capture_output=True, timeout=120)
+    def go(arg, cwd):
+        return subprocess.run(pre + [exe, arg], input=b'*BYE\r', cwd=cwd, capture_output=True,
+                              timeout=120).stdout.decode('latin-1')
+    failed = 0
+    for name, ok in (('%s: bbc68k hi (in its folder)' % kind,
+                      'started by name, mark: -1' in go('hi', sub)),
+                     ('%s: bbc68k sub/hi.BBC (its folder becomes BASIC\'s)' % kind,
+                      'started by name, mark: -1' in go('sub/hi.BBC', base)),
+                     ('%s: bbc68k nothere: File not found, then the prompt' % kind,
+                      'File not found' in go('nothere', base))):
+        print('%s  %s' % ('ok  ' if ok else 'FAIL', name))
+        failed += not ok
+    if not failed:
+        shutil.rmtree(base)
     return failed
 
 
 def main():
     kinds = sys.argv[1:] or ['linux', 'windows']
     failed = sum(run(k) for k in kinds)
+    failed += sum(autorun(k) for k in kinds)
     if 'windows' in kinds:
         failed += keys_windows()
     print('all ok' if not failed else '%d failed' % failed)

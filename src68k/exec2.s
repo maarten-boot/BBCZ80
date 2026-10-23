@@ -39,7 +39,7 @@
 	.define	STOREN, STORE4, STORE5, STACCS, STORES, CHECK, RESLOC, TERMQ
 	.define	SPAN, EQUALS, FORMAT, SPACES, PTEXT, FETCHS, LINES, DSRCH
 	.define	NSCAN, NSCAN1, WSRCH, QUOTE, CHANEL, CHNL, LOCCHK, X14OR5
-	.define	MUL16, TABIT
+	.define	MUL32, TABIT
 
 	.extern	END
 	.extern	ERROR, CLOOP, CRLF, OUTCHR, EXTERR, NXT, NLIST, PUTCSR
@@ -1114,9 +1114,12 @@ MISQUO:	move.b	#9,d4
 ! X14OR5 - multiply by the element size of a type
 !   Inputs:  d2.l = number of elements, d4.b = type
 !            (1 -> 1, 5 -> 5, string (bit 7) -> 6, else 4)
-!   Outputs: d2.l = d2 * size, carry set if > &FFFF
+!   Outputs: d2.l = d2 * size, carry set if d2 is over &FFFFFFF (the Z80:
+!            if the product is over &FFFF; DIM3 checks the memory)
 !   Destroys: nothing else
-X14OR5:	cmp.b	#1,d4
+X14OR5:	cmp.l	#0x0FFFFFFF,d2
+	bhi	4f
+	cmp.b	#1,d4
 	beq	3f
 	move.l	d2,-(sp)
 	add.l	d2,d2
@@ -1130,23 +1133,38 @@ X14OR5:	cmp.b	#1,d4
 	bne	2f
 	add.l	(sp),d2			! * 5
 2:	add.l	#4,sp
-3:	cmp.l	#0xFFFF,d2
-	bhi	4f
-	move.w	#0,ccr
+3:	move.w	#0,ccr
 	rts
 4:	move.w	#CC_C,ccr
 	rts
 
-! MUL16 - 16-bit multiply
-!   Inputs:  d0.w = number to be multiplied, d5.w = multiplier
-!   Outputs: d0.l = d0 * d5 (low 16 bits), carry set if overflow
-MUL16:	and.l	#0xFFFF,d0
-	mulu	d5,d0
-	cmp.l	#0xFFFF,d0
-	bhi	1f
+! MUL32 - 32-bit unsigned multiply (arrays; the Z80 has MUL16)
+!   Inputs:  d0.l = number to be multiplied, d5.l = multiplier
+!   Outputs: d0.l = d0 * d5, carry set if it does not fit in 32 bits
+!   Destroys: nothing else
+MUL32:	movem.l	d6-d7,-(sp)
+	move.l	d0,d6
+	swap	d6			! d6.w = high word of d0
+	move.l	d5,d7
+	swap	d7			! d7.w = high word of d5
+	tst.w	d6
+	beq	1f
+	tst.w	d7
+	bne	9f			! both over 16 bits: too big
+	mulu	d5,d6			! high(d0) * low(d5)
+	bra	2f
+1:	mulu	d0,d7			! low(d0) * high(d5)
+	move.l	d7,d6
+2:	cmp.l	#0xFFFF,d6
+	bhi	9f
+	swap	d6			! the cross product << 16
+	mulu	d5,d0			! low(d0) * low(d5)
+	add.l	d6,d0
+	bcs	9f
+	movem.l	(sp)+,d6-d7
 	move.w	#0,ccr
 	rts
-1:	and.l	#0xFFFF,d0
+9:	movem.l	(sp)+,d6-d7
 	move.w	#CC_C,ccr
 	rts
 
@@ -1221,13 +1239,11 @@ DIM1:	add.l	#1,a4
 	tst.l	d0
 	bmi	BADDIM
 	add.l	#1,d0
-	move.b	d0,1(a5)		! SAVE SIZE (LE)
-	move.w	d0,d7
-	lsr.w	#8,d7
-	move.b	d7,2(a5)
-	add.l	#2,a5
-	move.w	d2,d5
-	bsr	MUL16			! d0 = size * elements
+	lea	1(a5),a0
+	bsr	STLE4			! SAVE SIZE (4 bytes LE; the Z80: 2)
+	add.l	#4,a5
+	move.l	d2,d5
+	bsr	MUL32			! d0 = size * elements
 	bcs	NOROOM			! TOO LARGE
 	move.l	d0,d2
 	add.b	#1,d3			! DIMENSION COUNTER

@@ -1,0 +1,74 @@
+BBC BASIC V / Z80 TEST HARNESS - LEVEL 4B
+------------------------------------------
+
+BASIC REAL ARITHMETIC
+---------------------
+PASS 0.5 + 0.25
+PASS 0.1 + 0.2 approx
+PASS 10 / 4
+PASS 1 / 3 * 3
+PASS SQR(2)^2
+PASS SQR(3)^2
+PASS large multiply/divide
+PASS small multiply/divide
+
+TRANSCENDENTAL FUNCTIONS
+------------------------
+PASS SIN(0)
+PASS COS(0)
+PASS SIN(PI/2)
+PASS COS(PI)
+PASS SIN(PI)
+PASS TAN(PI/4)
+PASS ATN(1)
+PASS EXP(0)
+PASS LN(EXP(3))
+PASS EXP(LN(12.5))
+
+INVERSE TRIG / ANGLE CONVERSION
+-------------------------------
+PASS ACS(1)
+PASS ACS(0)
+PASS ACS(-1)
+PASS ASN(0)
+PASS ASN(1)
+PASS ASN(-1)
+PASS DEG(PI)
+PASS DEG(PI/2)
+PASS RAD(180)
+PASS RAD(90)
+PASS RAD(DEG(1))
+PASS DEG(RAD(45))
+
+ROUNDING / INT / SGN
+--------------------
+PASS INT 1.999
+PASS INT 2.000
+PASS INT -1.001
+PASS INT -1.000
+PASS SGN tiny positive
+PASS SGN tiny negative
+PASS SGN zero
+PASS ABS tiny
+
+PRECISION BOUNDARIES
+--------------------
+PASS (1E6+1)-1E6
+PASS (1E7+1)-1E7
+PASS 1E-20 * 1E20
+PASS 1E20 / 1E10
+PASS positive tiny nonzero
+PASS negative tiny below zero
+
+ACCUMULATION
+------------
+PASS sum 0.1 x100
+PASS compound growth 1.01^50
+PASS growth then shrink
+PASS sum 1 x1000
+
+------------------------------------------
+TOTAL TESTS : 48
+PASSED      : 48
+FAILED      : 0
+------------------------------------------

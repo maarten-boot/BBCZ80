@@ -1,0 +1,29 @@
+The c_*.in tests are the BBC BASIC V conformance suite of the Agon port
+(tests/conformance/l*.bas in https://github.com/AgonPlatform/agon-bbc-basic,
+by Jeroen Venema, at commit 2998edd of https://github.com/maarten-boot/agon-bbc-basic),
+under the zlib licence below.
+
+Altered for this port: line 50 "MODE 0" (an Agon screen mode) is a REM, and
+RUN is added at the end. The programs check themselves and print PASSED and
+FAILED counts; the .exp files are the 68k output with "FAILED : 0" (the CP/M
+Z80 cannot run them all: arrays over 64K, CP/M's 128-byte file records).
+
+Copyright (c) 2024, Richard T. Russell, http://www.rtrussell.co.uk/
+
+This software is provided 'as-is', without any express or implied
+warranty.  In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software.  If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source distribution.

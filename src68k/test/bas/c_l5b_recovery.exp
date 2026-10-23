@@ -1,0 +1,45 @@
+BBC BASIC V / Z80 TEST HARNESS - LEVEL 5B
+------------------------------------------
+
+REPEATED ERROR RECOVERY
+-----------------------
+PASS 100 repeated divide-by-zero traps
+PASS 100 repeated bad EVAL traps
+
+ERRORS INSIDE LOOPS
+-------------------
+PASS FOR loop continues after trapped errors
+PASS FOR loop trapped error count
+PASS REPEAT loop continues after errors
+PASS REPEAT loop trapped error count
+PASS WHILE loop continues after errors
+PASS WHILE loop trapped error count
+
+ERRORS WITH LOCAL VARIABLES
+---------------------------
+PASS LOCAL scalars restored after errors
+
+ERRORS WITH LOCAL ARRAYS
+------------------------
+PASS LOCAL arrays survive trapped errors
+
+ERRORS WITH FILES OPEN
+----------------------
+PASS OPENOUT before trapped error
+PASS OPENIN after trapped error
+PASS file byte before error
+PASS file byte before error 2
+PASS file byte after error
+PASS EOF after file error test
+
+POST-ERROR RUNTIME SANITY
+-------------------------
+PASS FOR sanity after many errors
+PASS string sanity after errors
+PASS FN sanity after errors
+
+------------------------------------------
+TOTAL TESTS : 19
+PASSED      : 19
+FAILED      : 0
+------------------------------------------

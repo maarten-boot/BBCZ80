@@ -271,8 +271,10 @@ int os_key(long cs)
 {
 	int c;
 
-	if (cs < 0)
-		return -1;			/* INKEY(-n): not supported */
+	if (cs == -256)		/* INKEY(-256): the platform, &44 (68, '68k'; */
+		return 0x44;	/*  chosen by R.T. Russell) */
+	if (cs < 0)		/* INKEY(-n): a held key cannot be seen here, so */
+		return 0;	/*  FALSE (as "key 0"), not -1 (time-out: TRUE) */
 	c = getkey(cs);
 	if (c == ESC)
 		setesc();
@@ -730,6 +732,12 @@ int os_load(char *name, char *addr, long max)
 	fd = openfile(fname, 1);
 	if (fd < 0)
 		oserror(214, "File not found");
+	/* no room: read nothing (the data would run into this stack) */
+	if (lseek(fd, 0L, SEEK_END) > max) {
+		close(fd);
+		return 0;
+	}
+	lseek(fd, 0L, SEEK_SET);
 	for (;;) {
 		long chunk = max - total;
 		if (chunk <= 0) {

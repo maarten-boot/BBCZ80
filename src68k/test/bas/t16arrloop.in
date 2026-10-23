@@ -1,0 +1,14 @@
+10 DIM a%(3),s$(2)
+20 FOR I%=1 TO 3:a%()=I%:NEXT:PRINT "for ";SUM(a%())
+30 REPEAT:a%()=a%()+1:UNTIL a%(0)>5:PRINT "repeat ";a%(0)
+40 W%=0:WHILE W%<2:a%()=W%,W%+1:W%+=1:ENDWHILE:PRINT "while ";a%(0);a%(1)
+50 PROCp:PRINT "proc ";a%(2)
+60 PRINT "fn ";FNf
+70 s$()="ab","cde","":PRINT "sumlen ";SUMLEN(s$())
+80 PROCq(s$())
+90 FOR J%=1 TO 2:PROCp:NEXT:PRINT "proc in for ";J%
+95 END
+100 DEF PROCp:LOCAL l%():DIM l%(3):l%()=9:a%()=l%():ENDPROC
+110 DEF FNf:LOCAL b%():DIM b%(1):b%()=3,4:=SUM(b%())
+120 DEF PROCq(t$()):PRINT "sumlen arg ";SUMLEN(t$()):ENDPROC
+RUN

@@ -1,0 +1,52 @@
+BBC BASIC V / Z80 TEST HARNESS - LEVEL 3A
+------------------------------------------
+
+LOOP STRESS
+-----------
+PASS FOR sum 1..200
+PASS nested FOR sum
+PASS REPEAT 250 iterations
+PASS WHILE 300 iterations
+PASS 100 GOSUB/RETURN cycles
+
+PROC / FN / STACK STRESS
+------------------------
+PASS recursive factorial 10
+PASS recursive fibonacci 12
+PASS 100 PROC calls with return
+PASS nested PROC chain
+
+STRING STRESS
+-------------
+PASS string build length 200
+PASS string build left
+PASS string build right
+PASS mixed string length 50
+PASS mixed string prefix
+PASS mixed string middle
+PASS repeated MID$ assignment
+
+ARRAY STRESS
+------------
+PASS array sum 0..49
+PASS array doubled first
+PASS array doubled middle
+PASS array doubled last
+PASS 20 reused array fills
+
+MEMORY INDIRECTION STRESS
+-------------------------
+PASS 128 byte write/read sum
+PASS word stress first
+PASS word stress last
+
+ERROR RECOVERY STRESS
+---------------------
+PASS 25 trapped div zero errors
+PASS normal execution after errors
+
+------------------------------------------
+TOTAL TESTS : 26
+PASSED      : 26
+FAILED      : 0
+------------------------------------------

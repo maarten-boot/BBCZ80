@@ -129,13 +129,36 @@ FN's code went.
 | Error | Cause |
 |---|---|
 | Syntax error | An unknown mnemonic, or an operand that the instruction does not allow |
-| Out of range (1) | A branch, displacement or immediate value that does not fit |
+| Out of range (1) | A branch, displacement or immediate value that does not fit; also a `dc.b`/`dc.w`/`equb`/`equw` value too big for its size (`dc.b 999`), where the Z80's `DEFB 999` keeps the low byte. With OPT bit 1 clear the low bits are kept, as on the Z80 |
 | Multiple label (3) | A label that is already set, on the first pass (OPT bit 1 clear) |
 
 ## Running code
 
 * `CALL addr` and `USR(addr)` enter the code with d0-d7 = A%-H% and a0 =
   the CALL parameter block. USR returns d0.
+* **The parameter block** of `CALL addr,var,var...` is in BASIC's string
+  input buffer, as in the Z80 version (which passes it in IX). Its address
+  is not fixed (it is not at a set distance below PAGE, nor page-aligned),
+  so code must take it from a0:
+
+  | Offset | Contents |
+  |---|---|
+  | 0 | the number of parameters |
+  | 1 + 5n | parameter n's type: 0 byte (`?`), 4 integer (`X%`, `!`), 5 real, 128 a `$addr` string, 129 a string variable |
+  | 2 + 5n | its address, 4 bytes little-endian (the Z80: 2 bytes) |
+
+  The addresses are at odd offsets, so read them a byte at a time. The
+  address of the first parameter:
+  ```
+  move.b 5(a0),d3 : lsl.l #8,d3 : move.b 4(a0),d3 : lsl.l #8,d3
+  move.b 3(a0),d3 : lsl.l #8,d3 : move.b 2(a0),d3 : move.l d3,a1
+  ```
+  The variable itself is little-endian too, like all memory BASIC sees.
+  A complete example is `test/bas/x04calltable.in`: `CALL double, A%, X,
+  B%, C%` walks the table, skips what is not an integer (type 4) and
+  doubles each integer variable in place (21, 1.5, -50, 1000000 become
+  42, 1.5, -100, 2000000). Keep `:` out of its comments: it ends the
+  statement there too.
 * Code must be at an even address. `DIM name size` blocks are word-aligned
   on this port, while the Z80 version does not align them.
 

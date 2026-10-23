@@ -1,0 +1,96 @@
+BBC BASIC for the 68000 - Windows program
+=========================================
+@VERSION@
+
+R.T. Russell's BBC BASIC (Z80) v5, ported to 68000 assembly language,
+running on an emulated rosco_m68k (68010) inside this one program.
+
+Put bbc68k.exe in a folder with your BBC BASIC files and start it there
+(double-click it, or run it from a Command Prompt or PowerShell in that
+folder).  BBC BASIC starts at once with a menu of demo programs; Return
+at the menu gives the > prompt.  Windows 10 or 11, 64-bit.
+
+    bbc68k.exe myprog       CHAINs myprog instead (as does dropping a
+                            .BBC or .BAS file on bbc68k.exe); with a folder
+                            in the name, that folder is BASIC's
+
+Files
+-----
+BBC BASIC's files are the files of the folder it was started in:
+    LOAD "FORTEST"   CHAIN "prog"   SAVE "myprog"   (as myprog.BBC)
+    SAVE "myprog.bas"  LOAD "listing.txt"  (.BAS, .TXT, .ASC: plain text)
+    F%=OPENIN "data.txt"   F%=OPENOUT "results.txt"
+    *DIR   *CD sub   *MKDIR sub   *RMDIR sub   *ERA name   *REN new=old
+    *SPOOL out.txt ... *SPOOL      *EXEC listing.bas
+Long names and subfolders work; a name is matched without regard to
+case.  The demo programs (menu, mandel, sieve, hanoi, life, asm, queens)
+are built in: CHAIN "menu".
+
+Keys
+----
+    Esc             BBC BASIC's Escape: stops a running program
+    cursor keys     edit the line being typed
+    Ctrl-S/Ctrl-Q   stop and start the output
+    Ctrl-]          quits (so does *BYE)
+
+Scripts
+-------
+    bbc68k.exe < test.txt > out.txt
+types test.txt in (its first line goes to the demo menu: start it with
+an empty line) and ends when the input is used up and BASIC is waiting.
+
+Known differences from the Z80 version
+--------------------------------------
+* String descriptors are 6 bytes, not 4 (pointers are 32 bits): the test
+  program ARRAYTST.BBC stops at line 160 unless its lines 160, 1360,
+  3170 and 3800 use the real size (DIM T$(1):DESC%=^T$(1)-^T$(0)).
+* The inline assembler is for the 68000 (Motorola syntax), not the Z80.
+  Macros (OPT FNname(...), an FN that assembles code) work as in the
+  Z80 version.
+* With OPT 2 (report errors), dc.b/dc.w and the other data directives
+  check the range: dc.b 999 is "Out of range", where the Z80's DEFB 999
+  keeps the low byte. With OPT 0 both keep it.
+* Arrays can be larger than 64K elements (DIM A%(70000), B%(300,300));
+  the Z80 version wraps them at 64K. Each dimension takes 4 bytes in the
+  array's header (the Z80: 2), which matters only to programs that read
+  that header through ^A%().
+* INKEY(-n) (a held key) is always FALSE: the console cannot see it.
+  INKEY(-256) is &44 (68), the number of this version.
+* AUTO with a step over 255 gives "Silly" (the Z80 version keeps the low
+  byte of the step).
+* No graphics or sound; BBC Micro (Acorn) .bbc files are not understood.
+
+Changes since 2026-10-23b
+-------------------------
+* LOAD, CHAIN and SAVE of a .BAS, .TXT or .ASC file read and write the
+  program as plain text (lines without a number get the previous + 1).
+* bbc68k.exe NAME starts with that program (also by drag and drop).
+* INKEY(-256) is &44 (68), as suggested by R.T. Russell.
+* AUTO with a step over 255 gives "Silly".
+
+Changes since 2026-10-23
+------------------------
+Found with the tests and issues of the Agon (eZ80) BBC BASIC:
+* A whole-array assignment (a%()=...) inside a FOR, REPEAT or WHILE loop,
+  a PROC or a FN broke the loop or PROC ("Not in a FOR loop").
+* SUMLEN returned a wrong (very large) value.
+* LOAD or CHAIN of a program too large for memory hung; it now says
+  "No room".
+* INKEY(-n) returned TRUE ("pressed") for every key.
+* Arrays larger than 64K elements (see above); array access is also
+  faster.
+
+Changes since 2026-10-22c
+-------------------------
+* Assembler macros: [OPT FN1("test") with an FN that assembles code of
+  its own gave "Not in a FN" (GitHub issue #1). The macro's code now
+  stays at P%, and P% ends after it.
+* An error in an assembler statement after a macro reports its line.
+* A very long $hex operand can no longer overrun the assembler's buffer.
+
+The emulator runs as fast as the PC allows (some 20 times a real 10 MHz
+rosco_m68k).
+
+Licences: BBC BASIC (c) R.T. Russell (zlib licence); r68k and the
+rosco_m68k firmware (c) Ross Bamford and contributors (MIT); Musashi
+68000 core (c) Karl Stenerud (MIT).

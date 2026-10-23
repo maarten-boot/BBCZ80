@@ -69,6 +69,7 @@ extern "C" {
     void r68k_key(int c);
     int r68k_pending();
     void r68k_hostfs_init();
+    void r68k_hostfs_arg(const char *name);
     void r68k_hostfs_end();
 }
 
@@ -335,8 +336,20 @@ static unsigned int ram_size()
     return (unsigned int) n;
 }
 
-int main()
+int main(int argc, char **argv)
 {
+    // bbc68k PROG: CHAIN it at the start (instead of the demo menu); with a
+    // folder in the name (a file dropped on the program) that folder
+    // becomes BASIC's
+    std::string autorun;
+    if (argc > 1) {
+        std::filesystem::path a(argv[1]);
+        std::error_code e;
+        if (a.has_parent_path())
+            std::filesystem::current_path(a.parent_path(), e);
+        autorun = a.filename().string();
+    }
+
     // the ROM: AddressDecoder reads it from a file
     std::error_code ec;
     auto rom = std::filesystem::temp_directory_path(ec) /
@@ -355,6 +368,8 @@ int main()
     });
     __mem->setDuart(__duart);
     r68k_hostfs_init();
+    if (!autorun.empty())
+        r68k_hostfs_arg(autorun.c_str());
 
     setup_console();
     std::thread(reader).detach();

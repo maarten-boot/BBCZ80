@@ -1,0 +1,45 @@
+# The Windows program, bbc68k.exe (bare BBC BASIC in an emulated rosco_m68k),
+# built and tested by src68k/tools/ci-windows.sh, as an artifact.  Started by
+# hand: Actions > Windows program > Run workflow.
+name: Windows program
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: BBCZ80
+      - uses: actions/checkout@v4
+        with:
+          repository: maarten-boot/minix-st-2.0.4
+          ref: feea47f05b8614ba5952b03c7c66f7170ce45ab0  # rosco-m68k, 2026-10-23
+          path: minix-st-2.0.4
+      - uses: actions/checkout@v4
+        with:
+          repository: maarten-boot/r68k
+          ref: 2d92829043e4a68eff935b93b82c69c4d5a09f2f  # rosco-minix-duart, tested
+          path: r68k
+
+      - name: Build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flex bison ninja-build lua5.4 lua-posix zip \
+            g++-mingw-w64-x86-64-posix gcc-mingw-w64-x86-64-posix
+
+      - name: ACK cache
+        uses: actions/cache@v4
+        with:
+          path: minix-st-2.0.4/src/rosco/ack/ack
+          key: ack-${{ hashFiles('minix-st-2.0.4/src/rosco/ack/build-ack.sh', 'minix-st-2.0.4/src/rosco/ack/ack-minix68k.patch') }}
+
+      - name: Build and test
+        run: BBCZ80/src68k/tools/ci-windows.sh "Version $(date -u '+%Y-%m-%d %H:%M') (commit ${GITHUB_SHA::7}, GitHub Actions run ${{ github.run_number }})"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bbc68k-windows
+          path: BBCZ80/build/dist/bbc68k-windows/

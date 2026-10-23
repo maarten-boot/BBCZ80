@@ -232,3 +232,16 @@ instruction as a zero-distance branch and emits a **`nop`**, also for
 `bsr`.  The Z80 idiom `CALL LABEL / LABEL:` (push a frame marker and fall
 through) must therefore be written `pea LABEL` (followed by `LABEL:`).
 `tools`-side check: no `bsr X` may be directly followed by the label `X`.
+
+## 10. Array descriptors (32-bit, unlike the Z80)
+
+An array variable holds a pointer (4 bytes LE) to its descriptor: 1 byte
+with the number of dimensions, then **4 bytes LE per dimension** (bound
++ 1), then the elements (5 bytes a number, 4 an integer, 1 a byte, 6 a
+string descriptor). The Z80 has 2 bytes per dimension, so its arrays are
+limited to 64K (and wrap silently); here a dimension can be up to
+&7FFFFFFE and an array up to &FFFFFFF elements, limited by memory
+(DIM space / No room). Programs that read a descriptor through `^A()`
+see the wider layout. MUL32 (exec2.s) does the 32-bit products; GETV3
+skips it for the first dimension. AGON_REVIEW.md (mboot/) has the
+background (Agon issue 33).

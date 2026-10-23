@@ -55,7 +55,7 @@ extern "C" {
 
 static constexpr std::uint32_t HOST_MAGIC = 0x42424348;	// "BBCH"
 enum { PROBE = 1, OPEN, CLOSE, READ, WRITE, SEEK, SIZE, UNLINK, RENAME,
-       MKDIR, RMDIR, CHDIR, EXISTS, DIRENT, EXIT };
+       MKDIR, RMDIR, CHDIR, EXISTS, DIRENT, EXIT, ARG };
 
 // Minix errno and open flags
 enum { M_ENOENT = 2, M_EIO = 5, M_EBADF = 9, M_EACCES = 13, M_EEXIST = 17,
@@ -65,6 +65,7 @@ static constexpr int M_O_ACCMODE = 3, M_O_RDONLY = 0, M_O_CREAT = 0100,
                      M_O_TRUNC = 01000;
 
 static fs::path root, cwd;		// cwd: relative to root
+static std::string autorun;		// the program named on the command line
 static constexpr int NFILE = 16;
 static std::FILE *files[NFILE];
 static long pos[NFILE];
@@ -327,6 +328,12 @@ static long host_call(int op, std::uint32_t a1, std::uint32_t a2, std::uint32_t 
     case EXIT:
         r68k_host_exit((int) a1);
         return 0;
+    case ARG:				// the program to CHAIN at the start
+        if (autorun.empty() || autorun.size() + 1 > a2)
+            return 0;
+        for (std::size_t i = 0; i <= autorun.size(); i++)
+            m68k_write_memory_8(a1 + (std::uint32_t) i, (unsigned char) autorun.c_str()[i]);
+        return (long) autorun.size();
     }
     return -M_EINVAL;
 }
@@ -337,6 +344,11 @@ extern "C" void r68k_hostfs_end()
     for (int k = 0; k < NFILE; k++)
         if (files[k])
             close_handle(k);
+}
+
+extern "C" void r68k_hostfs_arg(const char *name)
+{
+    autorun = name;
 }
 
 extern "C" void r68k_hostfs_init()

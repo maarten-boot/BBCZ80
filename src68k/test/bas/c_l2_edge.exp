@@ -1,0 +1,118 @@
+BBC BASIC V / Z80 TEST HARNESS - LEVEL 2
+----------------------------------------
+
+NUMERIC EDGE CASES
+------------------
+PASS 0.1+0.2 approx
+PASS 1E-30 * 1E30
+PASS 1E20 / 1E10
+PASS INT near integer low
+PASS INT near integer neg
+PASS round trip integer
+PASS compound += integer
+PASS compound *= integer
+PASS compound DIV=
+PASS compound MOD=
+PASS compound AND=
+PASS compound OR=
+PASS compound EOR=
+PASS shift right positive
+PASS comparison chaining
+
+STRING EDGE CASES
+-----------------
+PASS LEN empty
+PASS concat empty left
+PASS concat empty right
+PASS INSTR empty needle
+PASS INSTR empty haystack
+PASS MID$ replace middle
+PASS LEFT$ short assign
+PASS MID$ tail assign
+PASS STRING$ length
+PASS STRING$ content
+PASS ASC first byte
+
+FLOW / TOKENISER EDGE CASES
+---------------------------
+PASS variable near keyword ON
+PASS variable near keyword IF
+PASS IF THEN minimal spaces
+PASS FOR compact spacing
+PASS UNTIL compact spacing
+PASS nested EXIT FOR inner only
+
+FOR / NEXT STEP
+---------------
+
+CASE / OF / WHEN / OTHERWISE
+----------------------------
+PASS CASE numeric match
+PASS CASE multiple WHEN values
+PASS CASE OTHERWISE
+PASS CASE string match
+PASS CASE TRUE conditional match
+PASS CASE multi-line WHEN block
+PASS CASE first match wins
+PASS nested CASE outer
+PASS nested CASE inner
+PASS CASE OF expression
+PASS CASE OF FN expression
+PASS CASE OF string FN expression
+PASS CASE OF boolean expression
+PASS GOTO forward
+PASS GOTO backward loop
+PASS IF THEN GOTO
+PASS ON GOTO
+PASS ON GOTO ELSE
+PASS manual GOTO loop exit
+
+LET keyword
+-----------
+PASS LET integer assignment
+PASS LET integer expression
+PASS LET variable expression
+PASS LET string assignment
+PASS LET string concat
+PASS LET array assignment
+PASS LET array expression
+PASS LET FN expression
+
+ARRAY EDGE CASES
+----------------
+PASS partial init keep old last
+PASS partial init keep old last2
+PASS single init all 0
+PASS single init all 4
+PASS array += elem0
+PASS array += elem4
+PASS array+array elem0
+PASS array+array elem4
+PASS MOD array rms vector
+PASS SUM string array
+PASS SUMLEN string array
+
+SWAP keyword
+------------
+PASS SWAP integer A
+PASS SWAP integer B
+PASS SWAP string A
+PASS SWAP string B
+PASS SWAP integer array 0
+PASS SWAP integer array 3
+PASS SWAP string array 0
+PASS SWAP string array 2
+PASS SWAP scalar array scalar
+PASS SWAP scalar array element
+
+ERROR REPORTING EDGE CASES
+--------------------------
+PASS ERR div zero
+PASS ERL div zero
+PASS REPORT$ non-empty
+
+----------------------------------------
+TOTAL TESTS : 83
+PASSED      : 83
+FAILED      : 0
+----------------------------------------

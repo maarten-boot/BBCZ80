@@ -12,7 +12,8 @@
 ! name as outputs, but NOT the condition codes unless stated):
 !   OSINIT   -> a3 = PAGE, a2 = HIMEM, CCR Z clear if auto-run (name in ACCS)
 !   OSRDCH   -> d4.b = character
-!   OSWRCH   d4.b = character
+!   OSWRCH   d4.b = character (68k: to channel WRCHAN instead if it is
+!            not 0: SAVE of a text program)
 !   OSLINE   a3 = buffer (256) -> buffer CR terminated, d4.b = 0;
 !            ESCape -> ESCAPE
 !   OSKEY    d7.l = time limit (centiseconds) -> CCR C set and d4.b =
@@ -52,7 +53,7 @@
 	.define	_main, OSINIT, OSRDCH, OSWRCH, OSLINE, OSKEY, OSLOAD, OSSAVE
 	.define	OSOPEN, OSSHUT, OSBGET, OSBPUT, OSSTAT, GETEXT, GETPTR
 	.define	PUTPTR, OSCLI, PROMPT, RESET, TRAP, LTRAP, OSCALL, GETIME
-	.define	PUTIME, CLRSCN, PUTCSR, GETCSR, BYE, _oserror
+	.define	PUTIME, CLRSCN, PUTCSR, GETCSR, BYE, _oserror, WRCHAN
 	.extern	START, EXTERR, ESCAPE, _end
 	.extern	_os_init, _os_rdch, _os_wrch, _os_line, _os_key, _os_load
 	.extern	_os_save, _os_open, _os_shut, _os_bget, _os_bput, _os_eof
@@ -103,12 +104,19 @@ OSRDCH:	movem.l	d0-d2/a0-a1,-(sp)
 	movem.l	(sp)+,d0-d2/a0-a1
 	rts
 
-OSWRCH:	movem.l	d0-d2/a0-a1,-(sp)
+OSWRCH:	tst.b	WRCHAN
+	bne	1f
+	movem.l	d0-d2/a0-a1,-(sp)
 	clr.w	-(sp)
 	move.b	d4,1(sp)
 	jsr	_os_wrch
 	add.l	#2,sp
 	movem.l	(sp)+,d0-d2/a0-a1
+	rts
+1:	move.w	d6,-(sp)		! to a file
+	move.b	WRCHAN,d6
+	bsr	OSBPUT
+	move.w	(sp)+,d6
 	rts
 
 PROMPT:	move.w	d4,-(sp)
@@ -317,6 +325,8 @@ trpcnt:	.data1	20
 	.align	2
 
 	.sect	.bss
+WRCHAN:	.space	1		! OSWRCH to this channel if not 0
+	.align	2
 argc:	.space	2
 argv:	.space	4
 initsp:	.space	4

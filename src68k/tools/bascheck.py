@@ -122,7 +122,7 @@ def run68k(tests, secs):
     text = out.decode('latin-1').replace('\r', '')
     res = {}
     for i, t in enumerate(tests):
-        m = re.search(r'\n==T%d==\n(.*?)(?=\n# |\Z)' % i, text, re.S)
+        m = re.search(r'\n==T%d==\n(.*?)(?==minix=# |\Z)' % i, text, re.S)
         res[t] = m.group(1) if m else ('(no output)\n' +
                                        '\n'.join(text.split('\n')[-12:]))
     return res

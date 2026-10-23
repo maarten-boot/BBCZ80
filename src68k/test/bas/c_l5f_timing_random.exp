@@ -1,0 +1,43 @@
+BBC BASIC V / Z80 TEST HARNESS - LEVEL 5F
+------------------------------------------
+
+RND REPEATABILITY
+-----------------
+PASS RND repeat first
+PASS RND repeat second
+PASS RND(1) repeat
+
+RND RANGE TESTS
+---------------
+PASS RND(10) range 1..10
+PASS RND(100) range 1..100
+
+RND BASIC DISTRIBUTION
+----------------------
+PASS RND distribution low nonzero
+PASS RND distribution high nonzero
+PASS RND distribution sees 1
+PASS RND distribution sees 10
+
+TIME BASIC BEHAVIOUR
+--------------------
+PASS TIME nondecreasing immediate
+PASS TIME eventually changes
+PASS TIME changed forward
+
+TIME WITH WORKLOAD
+------------------
+PASS workload sum sanity
+PASS TIME nondecreasing after workload
+
+POST TIME/RND SANITY
+--------------------
+PASS FOR sanity after TIME/RND
+PASS EVAL sanity after TIME/RND
+PASS FN sanity after TIME/RND
+
+------------------------------------------
+TOTAL TESTS : 17
+PASSED      : 17
+FAILED      : 0
+------------------------------------------

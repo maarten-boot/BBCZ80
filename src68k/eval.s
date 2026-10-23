@@ -37,7 +37,7 @@
 	.define	LDLE4, STLE4, LDDESC, STDESC
 
 	.extern	EXTERR
-	.extern	MUL16, ERROR, SYNTAX, CHANEL, CHNL, STOREN, STORE4, STORE5
+	.extern	MUL32, ERROR, SYNTAX, CHANEL, CHNL, STOREN, STORE4, STORE5
 	.extern	STACCS, CHECK, USR, VAR, FN, XEQ, NXT, X14OR5, MODIFY, MODIFS
 	.extern	TERMQ, GETVAR, LEXAN2, RANGE, GETTOP
 	.extern	STAVAR, PAGE, LOMEM, HIMEM, RANDOM, COUNT, LISTON, PC, ERL
@@ -569,14 +569,17 @@ ARRLEN:	clr.w	d1
 	move.b	(a3)+,d1		! Number of dimensions
 	beq	ARRAY
 	move.l	#1,d2
-ARLOOP:	clr.w	d5
+ARLOOP:	move.b	3(a3),d5
+	lsl.w	#8,d5
+	move.b	2(a3),d5
+	swap	d5
 	move.b	1(a3),d5
 	lsl.w	#8,d5
-	move.b	(a3),d5			! size of this dimension
-	add.l	#2,a3
+	move.b	(a3),d5			! size of this dimension (4 bytes LE)
+	add.l	#4,a3
 	move.l	d0,-(sp)
-	move.w	d2,d0
-	bsr	MUL16
+	move.l	d2,d0
+	bsr	MUL32			! (fits: DIM checked it)
 	move.l	d0,d2
 	move.l	(sp)+,d0
 	sub.w	#1,d1
@@ -781,12 +784,10 @@ DIMF1:	move.l	(sp)+,a3
 	beq	DIMF2
 	and.w	#0xFF,d2
 	sub.w	#1,d2
+	lsl.w	#2,d2			! 4 bytes a dimension
 	add.w	d2,a3
-	add.w	d2,a3
-	clr.l	d0
-	move.b	1(a3),d0
-	lsl.w	#8,d0
-	move.b	(a3),d0
+	move.l	a3,a0
+	bsr	LDLE4
 	sub.l	#1,d0
 DIMF2:	bra	COUNT1
 
@@ -1088,7 +1089,7 @@ SUMLEN:	add.l	#1,a4			! Skip LEN
 	bpl	MISMAT			! Type mismatch
 	bsr	ARRLEN
 	clr.l	d0
-	clr.w	d7
+	clr.l	d7
 1:	move.b	(a3),d7
 	add.l	d7,d0
 	add.l	#6,a3
@@ -1888,7 +1889,8 @@ LETARR:	bclr	#14,d5			! Lose array marker
 	bne	3b
 	move.l	d0,d2			! elements
 	move.l	sp,a3			! temporary space
-	move.l	a0,-(sp)		! where sp must go back to
+	pea	4(a0)			! where sp must go back to (the
+					!  temporary space ended at the count)
 	bsr	EXPRA
 	move.l	(sp)+,sp		! Update stack pointer
 	bra	XEQ
@@ -2016,7 +2018,10 @@ ITEMA2:	movem.l	d2/d5/a3/a5,-(sp)
 	rts
 
 ! Process string array item (just copy descriptors):
-ITEMA3:	mulu	#6,d2
+ITEMA3:	move.l	d2,d7
+	add.l	d2,d2
+	add.l	d7,d2
+	add.l	d2,d2			! * 6 (32-bit)
 1:	move.b	(a5)+,(a3)+
 	sub.l	#1,d2
 	bne	1b
@@ -2081,11 +2086,9 @@ ARRDOT:	add.l	#1,a4			! Bump past dot
 	and.w	#0x0F,d4
 	move.w	d4,dotsiz		! element size
 	move.l	a5,dots1		! src1 data
-	clr.l	d7			! K = last dimension of src1
-	move.b	-1(a5),d7
-	lsl.w	#8,d7
-	move.b	-2(a5),d7
-	move.l	d7,dotk
+	lea	-4(a5),a0		! K = last dimension of src1
+	bsr	LDLE4
+	move.l	d0,dotk
 	bsr	GETARR			! src2: a3 = block
 	move.b	(a3),d6			! its number of dimensions
 	bsr	ARRLEN
@@ -2093,9 +2096,9 @@ ARRDOT:	add.l	#1,a4			! Bump past dot
 	move.l	#1,d7			! C2
 	cmp.b	#1,d6
 	beq	1f
-	move.b	-1(a3),d7
-	lsl.w	#8,d7
-	move.b	-2(a3),d7
+	lea	-4(a3),a0
+	bsr	LDLE4
+	move.l	d0,d7
 1:	move.l	d7,dotc2
 	clr.l	dotrow
 	clr.l	dotcol
@@ -2108,17 +2111,17 @@ INNER:	move.l	dotkk,d7
 	bcc	5f
 	movem.l	d0-d1,-(sp)		! Save accumulator
 	move.l	dotrow,d2		! src1(row, k)
-	mulu	dotk+2,d2
-	add.l	dotkk,d2
-	mulu	dotsiz,d2
+	move.l	dotk,d5
+	move.l	dotkk,d6
+	bsr	DOTIX
 	move.l	dots1,a5
 	add.l	d2,a5
 	move.b	dottyp,d4
 	bsr	LOADN
 	move.l	dotkk,d2		! src2(k, col)
-	mulu	dotc2+2,d2
-	add.l	dotcol,d2
-	mulu	dotsiz,d2
+	move.l	dotc2,d5
+	move.l	dotcol,d6
+	bsr	DOTIX
 	move.l	dots2,a5
 	add.l	d2,a5
 	move.b	dottyp,d4
@@ -2149,6 +2152,19 @@ INNER:	move.l	dotkk,d7
 6:	sub.l	#1,dotn
 	bra	OUTER
 9:	rts
+
+! DOTIX - ARRDOT's element offset: d2 = (d2 * d5 + d6) * element size,
+!   32-bit (fits: smaller than the array).  d0, d1 kept.
+DOTIX:	move.l	d0,-(sp)
+	move.l	d2,d0
+	bsr	MUL32
+	add.l	d6,d0
+	clr.l	d5
+	move.w	dotsiz,d5
+	bsr	MUL32
+	move.l	d0,d2
+	move.l	(sp)+,d0
+	rts
 
 	.sect	.bss
 	.align	4

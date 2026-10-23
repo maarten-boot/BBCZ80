@@ -1,0 +1,36 @@
+BBC BASIC V / Z80 TEST HARNESS - LEVEL 5E
+------------------------------------------
+
+STRING CHURN
+------------
+PASS 200 string churn cycles
+
+LOCAL ARRAY CHURN
+-----------------
+PASS 100 local integer array churn cycles
+PASS 60 local string array churn cycles
+
+MIXED ARRAY CHURN
+-----------------
+PASS 50 mixed array churn cycles
+
+NESTED LOCAL CHURN
+------------------
+PASS 75 nested local churn cycles
+
+TEMPORARY EXPRESSION CHURN
+--------------------------
+PASS 150 temp expr churn cycles
+
+POST-CHURN SANITY
+-----------------
+PASS FOR sanity after churn
+PASS string sanity after churn
+PASS FN sanity after churn
+PASS EVAL sanity after churn
+
+------------------------------------------
+TOTAL TESTS : 10
+PASSED      : 10
+FAILED      : 0
+------------------------------------------

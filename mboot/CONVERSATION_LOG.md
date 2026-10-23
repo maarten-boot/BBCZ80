@@ -1372,3 +1372,323 @@ Mid-turn:
 * **Host setup now:** MinGW-w64 and Wine installed on vibe-u26, so
   `make host` / `make hostcheck` work here directly. The Docker image
   `bbc68k-mingw` is no longer needed and can be removed.
+
+## 50. Windows zip, bare tests, merge to master
+
+* **User:** "reverify i pushed; and where can i find the exe now ?";
+  "yes, make the zip with a README"; "ok status"; "r68k has been built,
+  the minix tree is currently engaged so off limits for change. we will
+  wait on the confirmation before closing the issue."; "ok merged with
+  my master"; "add entry 50 now".
+* **Push verified:** `mboot/conversation-log` at 8cdfce1 (entry 49).
+* **Zip:** `68k/bbc68k-windows-2026-10-23.zip` next to the repos (634
+  KB, sha256 ef0ad0ab…), laid out as zip c: `bbc68k-windows/bbc68k.exe`
+  (sha256 d5d9e873…, the exe tested under Wine; the user had renamed the
+  build output to `bbc68k-261023-1042.exe`, same hash) and `README.txt`
+  (zip c's, plus a version line, macros work as in the Z80, the dc.b
+  range difference, and "Changes since 2026-10-22c").
+  * Checked for the README: with OPT 2, `dc.b 999`, `dc.w 70000` and
+    `equb 999` are Out of range; with OPT 0, `dc.b 999` keeps the low
+    byte (231), as the Z80.
+* **Status:** the minix session redid the two lockdown fixes (62de4f6
+  lone ESC, f0a8cd6 sigreturn condition codes, 6b658ed test and images),
+  so the lockdown recovery is complete. Minix still boots to `rosco
+  login:` with no `/bin/sh` in its rootfs; the minix tree is engaged by
+  the other session and off limits for changes.
+* **Bare rosco_m68k (r68k built by the user):** `make barecheck` all ok:
+  `BBC_EMU=bare` bascheck 25 of 25 (with `a02macro`), fatcheck on FAT12,
+  FAT16 and FAT32 (fsck clean). The fix is now tested on Linux, Windows
+  (Wine) and bare; Minix waits for the minix tree.
+* **Merge:** the user merged `mboot/conversation-log` into master on
+  GitHub (PR #2, 4150025, a merge of 410e7fb and 8cdfce1; its tree is
+  the same as 8cdfce1). The local `master` here is still 410e7fb.
+* **Issue #1:** open, with the user's three comments; it stays open
+  until R.T. Russell confirms the fix.
+* **Still open:** Minix run of the new test; the local master
+  fast-forward (offered); remove the `bbc68k-mingw` Docker image; a
+  sentence in `ASSEMBLER.md` on the dc.b range check.
+
+## 51. Status after the merge
+
+* **User:** "reverify i pushed"; "ok status"; "add entry 51 now; then
+  look at https://github.com/maarten-boot/agon-bbc-basic ... see if you
+  can find improvements suggestions from that implementation. Dont
+  change the current code in this tree just write additional
+  suggestions and plans with references where needed."
+* **Push verified:** `mboot/conversation-log` at 92eb386 (entry 50);
+  GitHub master at 4150025 (PR #2, closed), without entry 50.
+* **Status:** issue #1 open with the user's 3 comments, no reply from
+  R.T. Russell yet; the fix tested on Linux, Windows (Wine) and bare,
+  Minix waits for the minix tree (6b658ed, 3 files being changed by
+  the other session). r68k has one uncommitted `.gitignore` line
+  (`tmp/`), not Claude's. rosco-emulator and ack clean.
+* **Next (this turn):** a study of the Agon (eZ80, 24-bit) BBC BASIC for
+  ideas for this port, written as a separate plan; no code changes.
+
+## 52. Review of the Agon (eZ80) BBC BASIC
+
+* **User:** "add entry 51 now; then look at
+  https://github.com/maarten-boot/agon-bbc-basic ... Dont change the
+  current code in this tree just write additional suggestions and plans
+  with references where needed."; "ok status"; "pushed; yes on the other
+  2" (commit the review as entry 52, start on bugs 1-3).
+* **Result:** `mboot/AGON_REVIEW.md`. The Agon widened the same Z80 code
+  to 24 bits, so its issues (10 of 40 filed by R.T. Russell) are a test
+  set for this port. rtrussell/BBCZ80 is still at 410e7fb, our base.
+* **Method:** the repro of each core Agon issue run on the Linux build
+  and on the Z80 (RunCPM); the Agon conformance suite (496 tests) on both;
+  the Agon's width fixes (AUTO, SAVE/LOAD length, huge programs, LOCAL
+  DIM, FNEND) checked against our source, a 228003-byte program saved and
+  loaded; its 24-bit array work mapped onto our source. Three agents did
+  parts of this; every bug below was reproduced by Claude.
+* **68k bugs (the Z80 is fine):**
+  1. `LETARR` (eval.s:1860) leaves sp 4 bytes low: a whole-array
+     assignment inside FOR/REPEAT/WHILE/PROC/FN breaks the loop end
+     ("Not in a FOR loop"). t05arr only does it at top level.
+  2. `SUMLEN` (eval.s:1091) `clr.w d7` before `add.l d7,d0`: garbage in
+     the upper word.
+  3. LOAD/CHAIN of a file too big for memory hangs: `os_load` (osl.c:723)
+     runs on the stack that LOAD0 (main.s:1102) lets the file fill up to
+     sp-256. The Z80 says "No room".
+  4. `INKEY(-n)` returns TRUE (osl.c:275).
+* **Inherited, worse here:** 16-bit array limits (DIM A%(70000) wraps to
+  4465 elements), `DIM()` gives -1 for a wrapped array (eval.s:790), SUM
+  over a 0-element array hangs. A plan for 32-bit arrays is in the review.
+* **Not needed:** none of the ~25 Agon core fixes was missing here (table
+  in the review).
+
+## 53. Agon review bugs 1-3 fixed
+
+* **User:** "pushed; yes on the other 2"; "yes commit but new windows
+  only after we fix all detected from agon".
+* **Push verified:** 0e82cb0 (entry 51). Entry 52 (9992ff2) commits
+  `mboot/AGON_REVIEW.md`.
+* **Fixes (ba1f4da)**, from the review's 1.1-1.3:
+  1. `LETARR` (eval.s): sp restored to `4(a0)`, past the slot of the
+     element count, as the Z80's `LD SP,HL : POP BC`.
+  2. `SUMLEN` (eval.s): `clr.l d7`.
+  3. LOAD/CHAIN of a too-big file: `os_load` (osl.c) checks the size with
+     `lseek(SEEK_END)` first (every platform's lseek has it); LOAD0
+     (`main.s.in`, main.s is generated by mkmain.py) keeps 1024 bytes
+     for OSLOAD's C stack. A 4 MB file gives No room; with HIMEM just
+     above the file size the result is No room up to 1024 bytes of room
+     and a correct load from 1028, never a hang or Bad program.
+* **Tests:** `t16arrloop` (whole-array assignment in FOR, REPEAT,
+  WHILE, PROC, FN; SUMLEN, also of a PROC argument) and `t17loadroom`
+  (LOAD with HIMEM lowered), Z80 refs made with
+  `RUNCPM=build/cpm/RunCPM`. bascheck host, hostwin and bare 27 of 27;
+  asmcheck 162/162; fatcheck, hostcheck, editcheck, ttycheck all ok.
+  Agon conformance: l2_edge 83/0 (it aborted before), l1_core fails only
+  the large-array tests (16-bit, as the Z80).
+* **Build note:** ../r68k has someone else's 5 uncommitted changes; the
+  PC programs were built from a clean export of r68k 2d92829
+  (`mkhost.py -r`), with the known ROM.
+* **Plan:** no new Windows zip until everything found from the Agon is
+  fixed (user). Still open from the review: 1.4 (DIM wrap, -1), 1.5
+  (INKEY(-n)), 2 (32-bit arrays), and the features in 3.
+
+## 54. INKEY(-n) and 32-bit arrays (branch mboot/arrays32)
+
+* **User:** "ok proceed"; mid-turn "afterwards lets taka break so i can
+  restart the terminal app." and "if need be: the rosco has support for
+  additional memory so tests that d not fit in 1M may fit in 5M (the
+  increments are usualy in steps of +4M)".
+* **On mboot/conversation-log, 6697fac:** `INKEY(-n)` is FALSE (os_key
+  returns key 0, not the time-out -1 that INKEY turns into TRUE); test
+  `x01inkey` (68k-only .exp: the CP/M Z80 waits there). `INKEY(-256)`
+  left as is: a platform number to agree with R.T. Russell. Review 1.5.
+* **New branch mboot/arrays32, 6209329** (review 1.4 and 2): array
+  descriptors with 4 bytes LE per dimension (CONVENTIONS.md section 10);
+  MUL32 replaces MUL16; DIM, ARRLEN, DIMFUN, GETV3, X14OR5, ITEMA3 and
+  ARRDOT (new DOTIX) are 32-bit.
+  * Verified on the Linux build: DIM A%(70000) has 70001 distinct
+    elements, B%(300,300), DIM(C%(65535),1)=65535 with SUM no longer
+    hanging, whole-array =, +=, SUM, SUMLEN, copies over 70001 elements
+    (string arrays too), Bad subscript for 70001 and -1, the dot product
+    with K > 65535 (140002/140022) and a 2x2 one.
+  * Speed (Linux build, same loops on the old and new build): array
+    reads 1-D 345/310 -> 248/237, 2-D 398/349 -> 305/308, writes
+    308/266 -> 243/245 centiseconds: GETV3 skips the multiply for the
+    first dimension.
+  * Test `x02bigarr` (68k-only .exp), sized for bare's 1.3 MB free with
+    CLEAR between parts; the 70000-element string-array copy needs three
+    400 KB blocks and was left out (checked by hand on Linux). With the
+    rosco's +4 MB expansion (user) a big-memory variant could run on
+    bare later.
+  * bascheck host, hostwin, bare 29/29; asmcheck 162/162; hostcheck and
+    fatcheck all ok.
+* **Programs built** from a clean export of r68k 2d92829 (`mkhost.py
+  -r`), since ../r68k has someone else's uncommitted changes.
+* **Next:** merge mboot/arrays32 into mboot/conversation-log (user's
+  call); then the Windows zip, as everything found from the Agon is
+  fixed (1.1-1.5, 2). The review's section 3 features remain optional.
+
+## 55. Arrays merged; Windows zip 2026-10-23b
+
+* **User:** "restarted, continue"; chose "Merge, then zip"; mid-turn
+  "yes r68k is currently working on general improvements."; "yes" (entry
+  55).
+* **Merge:** `mboot/conversation-log` fast-forwarded to edb5eae
+  (`mboot/arrays32`: INKEY(-n), 32-bit arrays, entry 54). Not pushed:
+  6 commits ahead of origin (0e82cb0).
+* **Build:** against r68k 2d92829 from the clean export (`mkhost.py -r`):
+  r68k is being improved by another session (7 new commits up to
+  92ac263, mostly unpushed, plus uncommitted changes), left alone. The
+  ROM is the known one (md5 2c85982c...).
+* **Tests:** bascheck host, hostwin and bare 29/29; asmcheck 162/162;
+  hostcheck, fatcheck, editcheck, ttycheck all ok.
+* **Zip:** `68k/bbc68k-windows-2026-10-23b.zip` (sha256 4852a021...):
+  `bbc68k.exe` (1779712 bytes, sha256 af522d97..., built with the host's
+  MinGW now; imports only KERNEL32, msvcrt, WS2_32) and `README.txt`:
+  version 2026-10-23b (edb5eae); arrays over 64K and INKEY(-n) FALSE
+  among the differences from the Z80; "Changes since 2026-10-23" with the
+  five fixes found through the Agon.
+* **Next:** the user pushes; a later zip with the new r68k once it
+  settles; the review's section 3 features remain optional; issue #1
+  waits for R.T. Russell.
+
+## 56. Conformance suite as tests; where CALL's parameter block is
+
+* **User:** "pushed" (verified: 3d0f6c9); "ok continue"; a pasted
+  question: "Where does bbc68k put the parameter table created by the
+  CALL statement? ... either has to be at a known address (in the Z80
+  version it's at PAGE-&200 I think) or at an address passed in one of
+  the CPU registers."; "yes" (commit tests and the ASSEMBLER.md text);
+  "yes please" (entry 56).
+* **Review 3.6 done (51e572a):** the 14 levels of the Agon conformance
+  suite as `test/bas/c_*.in` (557 checks), "MODE 0" made a REM and RUN
+  added; `test/bas/CONFORMANCE.txt` keeps the origin (Jeroen Venema) and
+  R.T. Russell's zlib notice (copying and altering allowed if marked).
+  Every level reports "FAILED : 0" on the 68k now (l1_core's large
+  arrays too), the same output on two runs; the .exp files are the 68k
+  output. bascheck host, hostwin, bare 43/43.
+* **The CALL answer (from the code, measured):**
+  * The block is in BASIC's string input buffer BUFFER (exec.s:1263), and
+    CALL and USR enter the code with **a0 = the block** (d0-d7 = A%-H%).
+    The Z80 does the same through IX (`LD IX,BUFFER` in USR1,
+    src/EXEC.Z80:2098), so code finds it from the register there too.
+  * It is not at a fixed address: BUFFER &50EAE with PAGE &54300 on the
+    Linux build, &4E446 with PAGE &51900 on bare; not page-aligned.
+  * Layout: count; then per parameter a type byte and a 4-byte LE address
+    (the Z80: 2 bytes), at odd offsets, so read byte-wise. Types checked:
+    0 byte (?), 4 integer, 5 real, 128 $addr string, 129 string variable.
+    `CALL c%,X%,Y` gave count 2, type 4, address = ^X%.
+  * Written up in `src68k/ASSEMBLER.md` (Running code), with code that
+    reads the first parameter's address.
+
+## 57. Text programs, start by name, AUTO check, Minix tests again
+
+* **User:** "What is next ?"; "i pushed" (verified 27a4e12); "4: minis
+  switched to ash as the default shell. Start a program from the command
+  line would also help in minix. you can also do: Delete the merged
+  mboot/arrays32 branch, Remove the bbc68k-mingw Docker image, Add the
+  dc.b range note to ASSEMBLER.md, LOAD/SAVE of text programs, An error
+  for an AUTO step over 255."; mid-turn "i see alot of temp dirsin:
+  BBCZ80/build/host/ can we clean up some"; "status?" (twice); "commit
+  and stop; going home".
+* **Housekeeping:** `mboot/arrays32` deleted (merged), Docker image
+  `bbc68k-mingw` removed; about 25 leftover test folders removed from
+  build/host and build/host/linux; hostcheck.py and ttycheck.py now
+  remove their folders (hostcheck keeps them on a failure). wt/ (old
+  key-injection experiments) kept.
+* **3f47ce5:**
+  * Text programs: LOAD/CHAIN/SAVE "x.BAS" (.TXT, .ASC). LOAD: lines
+    entered as typed (new INSLIN from CLOOP); CR/LF/CRLF; no number:
+    previous + 1. SAVE: LIST into the file (LISTO 1, WIDTH 0) via a new
+    OSWRCH channel WRCHAN in minix.s; ERROR1 closes the file. SAVE then
+    LOAD gives a byte-identical program.
+  * PC programs: `bbc68k NAME` CHAINs NAME (new host call ARG, 16); a
+    folder in NAME (a file dropped on the exe) becomes BASIC's folder.
+    Minix already passed argv[1].
+  * AUTO step over 255: Silly. ASSEMBLER.md: the dc.b range note.
+  * Tests: x03textprog; hostcheck: bbc68k NAME (linux and windows).
+  * Minix: runminix adds rootfs/ramproto (the shell moved there in the
+    minix tree) and sets PS1 to "=minix=# " ('# ' matched BASIC output
+    like PRINT#, which garbled the Minix runs); bascheck splits on it.
+* **Results:** bascheck host, hostwin, bare 44/44; asmcheck, hostcheck,
+  fatcheck, editcheck, ttycheck all ok. Minix (with the user's r68k
+  build of the in-progress r68k): 41/42 without c_l1_core and x02bigarr.
+* **Open (Minix):** (1) BASIC has 65 KB there (-S 64k), so the
+  big-array tests cannot run: a bigger -S (the user's parked decision)
+  or a skip mark for Minix. (2) c_l5b_recovery: "Mistake at line 4030"
+  only in the full Minix session; it passes alone, in pairs and on all
+  other platforms (also with 65 KB on Linux). Not found yet.
+
+## 58. INKEY(-256) = &44
+
+* **User:** "ok pushed, we will add one small thing regarding the INKEY
+  question , mr Russel suggested to use 44(hex) as it translates to
+  68(decimal)".
+* **Push verified:** 20145b5 (entry 57).
+* **6eeedce:** `os_key` (osl.c) returns &44 for INKEY(-256), so INKEY(-256)
+  = 68 on all platforms; other negative arguments stay FALSE. Test
+  `x01inkey` extended ("platform 68 &44"). bascheck host, hostwin and
+  bare 44/44; x01inkey under Minix ok.
+* **For the next zip:** its README says "INKEY(-n) is always FALSE"; add
+  that INKEY(-256) returns &44.
+
+## 59. CALL table example; the Minix c_l5b failure is not r68k
+
+* **User:** "you can continue"; mid-turn "can you make a xample how we
+  would access the CALL table mentioned in issue 1?"; "can you commit
+  that ?".
+* **State:** everything pushed (30b1f54). GitHub: issue 1 has R.T.
+  Russell asking for a fixed bbc68k.exe and the user's Google Drive link
+  (11:29); no confirmation yet. New issue 3 "further steps" (the user:
+  "compare to Agon implementation", which is the review of entries
+  52-56). r68k is being changed live (58a5016 "ROM read-only unless -w").
+* **d8ed81f:** test `x04calltable`: `CALL double, A%, X, B%, C%` reads the
+  table at a0 (count, then type + 4-byte LE address each), skips
+  non-integers and doubles each integer in place (42, 1.5, -100,
+  2000000). ASSEMBLER.md points to it. Passes on host, hostwin, bare and
+  Minix. Found while writing it: a ':' in a ';' comment ends the
+  statement (ASSEMBLER.md already says so).
+* **Minix c_l5b_recovery:** rebuilt r68k from a clean export of 2d92829
+  in the scratchpad (`make r68k`, the known ROM) and ran Minix on it
+  (`R68K=...`): "Mistake at line 4030" again in the full session, so the
+  in-progress emulator is not the cause. Next: bisect the tests before it.
+
+## 60. Pending list; TIME$ is for Minix only
+
+* **User:** "wait until minix incpection has finished but keep mentioning
+  it for future actions to be done"; "TIME$ the rosco has no RTC and only
+  the minix version has the concept of a date time call"; "yes fix that".
+* **Waiting for the minix inspection** (the other session): the Minix
+  test failures (c_l5b_recovery only in the full session; c_l1_core and
+  x02bigarr need more than Minix's 65 KB), and TIME$ below. Claude's
+  project memory has a pending-actions note, to be mentioned in every
+  status answer until done: those Minix items, a PR to master, issue #1's
+  confirmation, the next zip (README: INKEY(-256), text programs,
+  bbc68k NAME, AUTO Silly), TIME$, and the optional review items.
+* **AGON_REVIEW.md 3.4 corrected:** TIME$ only in the Minix version
+  (time(), set at boot by /etc/rc); bare BASIC and the PC programs, which
+  run bare BASIC, have no clock and keep "Sorry".
+
+## 61. A GitHub Action for the Windows program
+
+* **User:** "could we add a gh action to produce one artifact: the bbc
+  basic in a bare bone rosco-m68k for windows , could that be built on my
+  github account ?"; "manual and as artifact while we are testing the
+  accuracy with the owner of the basic"; "can you make that to include the
+  buid time ..."; "utc is fine it is just to make human communication and
+  referencing the exact version easier. please commit".
+* **21a4171:** `.github/workflows/windows-exe.yml` (workflow_dispatch,
+  ubuntu-24.04, artifact `bbc68k-windows`) running
+  `src68k/tools/ci-windows.sh`; README of the zip now in
+  `src68k/host/README-windows.txt` with @VERSION@; `mkdemo.py --progs`.
+* **What the build needs** (all public on GitHub): minix-st-2.0.4 (pinned
+  feea47f) for ACK (build-ack.sh clones davidgiven/ack at a fixed rev,
+  patches it) and the Minix C library ACK compiles; r68k (pinned
+  2d92829); the ROM through the roscopeco/rosco_m68k image; RunCPM
+  (pinned 12fc57a) to tokenise the demo programs with the Z80 BASIC.
+* **Dry run** in a clean ubuntu:24.04 image (`bbc68k-ci`, the runner's
+  packages) on fresh clones: everything built, bascheck 45/45 and asmcheck
+  162/162 on the Linux program, the ROM identical to the known one, the
+  exe Windows-DLL-only and running under Wine. On this host the container
+  needed the host's CA store: the network intercepts TLS (a ReversingLabs
+  forward-trust CA); GitHub's runners do not.
+* **To run it:** push; the "Run workflow" button appears once the file is
+  on master (the default branch); before that `gh workflow run
+  windows-exe.yml --ref mboot/conversation-log`. The first run builds ACK
+  and pulls the 2.5 GB toolchain image (about 10-15 min); later runs use
+  the ACK cache. Downloading an artifact needs a GitHub login.

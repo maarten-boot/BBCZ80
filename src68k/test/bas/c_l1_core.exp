@@ -1,0 +1,152 @@
+BBC BASIC V / Z80 TEST HARNESS
+--------------------------------
+
+NUMERIC EXPRESSIONS
+-------------------
+PASS precedence 7+5*3
+PASS brackets (7+5)*3
+PASS DIV
+PASS MOD
+PASS integer assignment
+PASS hex literal
+PASS binary literal
+PASS TRUE
+PASS FALSE
+PASS NOT FALSE
+PASS AND
+PASS OR
+PASS EOR
+PASS shift left
+PASS shift right
+PASS ABS
+PASS INT positive
+PASS INT negative
+PASS SGN negative
+PASS SGN zero
+PASS SGN positive
+PASS SQR
+PASS SIN(pi/2)
+PASS COS(0)
+PASS EXP(LN(5))
+
+CONVERSIONS
+-----------
+
+VAL
+---
+PASS VAL integer
+PASS VAL negative integer
+PASS VAL real
+PASS VAL negative real
+PASS VAL leading spaces
+PASS VAL trailing spaces
+PASS VAL STR$ roundtrip
+PASS VAL exponent
+PASS VAL zero
+
+STRINGS
+-------
+PASS LEN
+PASS LEFT$
+PASS RIGHT$
+PASS MID$ fixed
+PASS MID$ to end
+PASS INSTR found
+PASS INSTR missing
+PASS ASC
+PASS CHR$
+PASS VAL decimal
+PASS LEFT$ assignment
+PASS concatenation
+
+FLOW CONTROL
+------------
+PASS FOR/NEXT sum 1..10
+PASS FOR STEP -2
+PASS REPEAT/UNTIL
+PASS WHILE/ENDWHILE
+PASS EXIT FOR
+PASS EXIT REPEAT
+PASS EXIT WHILE
+PASS ON GOSUB
+PASS IF THEN ELSE single-line
+PASS IF THEN ENDIF multi-line
+
+PROCEDURES AND FUNCTIONS
+------------------------
+PASS PROC parameter writeback
+PASS FN square
+PASS recursive FN factorial
+PASS FN reverse
+
+DATA / READ / RESTORE
+---------------------
+PASS READ item 1
+PASS READ item 2
+PASS READ item 3
+PASS RESTORE to line
+
+ARRAYS
+------
+PASS array dimensions
+PASS array size
+PASS array element 0
+PASS array element 2
+PASS SUM integer array
+PASS single-value array init 0
+PASS single-value array init 2
+PASS whole-array add 0
+PASS whole-array add 1
+PASS whole-array add 2
+PASS array MOD function
+PASS SUM string array
+PASS SUMLEN string array
+PASS String array assignment 1
+PASS String array assignment 2
+PASS String array assignment 3
+PASS String array assignment 4
+PASS 2D array dimensions
+PASS 2D array size 1
+PASS 2D array size 2
+PASS Array multiplication SUM zero type 1
+PASS Array multiplication MOD zero type 1
+PASS Array multiplication SUM zero type 2
+PASS Array multiplication MOD zero type 2
+PASS Array multiplication SUM zero type 3
+PASS Array multiplication MOD zero type 3
+PASS Array vector multiplication type 1
+PASS Array vector multiplication type 2
+PASS Array vector multiplication type 3
+
+MEMORY / INDIRECTION
+--------------------
+PASS ? unary read
+PASS ? dyadic read
+PASS ! read back
+PASS ! byte 0
+PASS ! byte 1
+PASS ! byte 2
+PASS ! byte 3
+PASS | read back
+PASS $ read back
+
+ERROR HANDLING
+--------------
+PASS ON ERROR LOCAL catches div/0
+
+LARGE ARRAYS
+------------
+PASS large array upper bound
+PASS large array element 0
+PASS large array element 65536
+PASS large array element 70000
+PASS large array 2d origin
+PASS large array 2d value
+PASS large array 2d dim1
+PASS large array 2d dim2
+
+--------------------------------
+TOTAL TESTS : 111
+PASSED      : 111
+FAILED      : 0
+--------------------------------
