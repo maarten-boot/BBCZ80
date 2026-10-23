@@ -21,7 +21,7 @@
 	.sect	.data
 	.sect	.bss
 
-	.extern	XEQ, RUN0, CHAIN0, TERMQ, MUL16, X14OR5, SPACES, ESCAPE
+	.extern	XEQ, RUN0, CHAIN0, TERMQ, MUL32, X14OR5, SPACES, ESCAPE
 	.extern	CHECK, SEARCH
 	.extern	OSWRCH, OSLINE, OSINIT, OSLOAD, OSSAVE, OSBGET, OSBPUT
 	.extern	OSSHUT, OSSTAT, PROMPT, LTRAP, OSCLI, RESET
@@ -946,21 +946,25 @@ GETVAR:	move.b	(a4),d4
 GETV3:	movem.l	d1-d2/a3,-(sp)
 	bsr	EXPRI			! SUBSCRIPT -> d0
 	movem.l	(sp)+,d1-d2/a3
-	clr.w	d5
-	move.b	1(a3),d5		! dimension size (LE)
+	move.b	3(a3),d5		! dimension size (4 bytes LE)
+	lsl.w	#8,d5
+	move.b	2(a3),d5
+	swap	d5
+	move.b	1(a3),d5
 	lsl.w	#8,d5
 	move.b	(a3),d5
-	add.l	#2,a3
-	move.l	d0,-(sp)		! subscript
-	move.w	d2,d0
-	bsr	MUL16			! d0.w = acc * size
-	move.l	(sp)+,d7
-	add.w	d7,d0
-	move.w	d0,d2			! new accumulator
-	cmp.w	d5,d7			! subscript >= size?
-	bcs	1f
+	add.l	#4,a3
+	cmp.l	d5,d0			! subscript >= size? (unsigned:
+	bcs	3f			!  a negative one too)
 	move.b	#15,d4
 	bra	ERROR3			! "Subscript"
+3:	tst.l	d2
+	beq	4f			! (acc 0, the first dimension: no MUL)
+	move.l	d0,d7
+	move.l	d2,d0
+	bsr	MUL32			! acc * size (fits: DIM checked it)
+	add.l	d7,d0
+4:	move.l	d0,d2			! new accumulator
 1:	sub.w	#1,d1			! DIMENSION COUNTER
 	beq	2f
 	movem.l	d1-d2/a3,-(sp)
@@ -971,7 +975,6 @@ GETV3:	movem.l	d1-d2/a3,-(sp)
 	bsr	BRAKET			! CLOSING BRACKET
 	movem.l	(sp)+,d2/a3
 	move.w	(sp)+,d3		! RESTORE TYPE
-	and.l	#0xFFFF,d2
 	move.b	d3,d4
 	bsr	X14OR5			! d2 = d2 * element size
 	add.l	d2,a3			! element address
