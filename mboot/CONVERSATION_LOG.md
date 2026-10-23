@@ -1486,3 +1486,39 @@ Mid-turn:
 * **Plan:** no new Windows zip until everything found from the Agon is
   fixed (user). Still open from the review: 1.4 (DIM wrap, -1), 1.5
   (INKEY(-n)), 2 (32-bit arrays), and the features in 3.
+
+## 54. INKEY(-n) and 32-bit arrays (branch mboot/arrays32)
+
+* **User:** "ok proceed"; mid-turn "afterwards lets taka break so i can
+  restart the terminal app." and "if need be: the rosco has support for
+  additional memory so tests that d not fit in 1M may fit in 5M (the
+  increments are usualy in steps of +4M)".
+* **On mboot/conversation-log, 6697fac:** `INKEY(-n)` is FALSE (os_key
+  returns key 0, not the time-out -1 that INKEY turns into TRUE); test
+  `x01inkey` (68k-only .exp: the CP/M Z80 waits there). `INKEY(-256)`
+  left as is: a platform number to agree with R.T. Russell. Review 1.5.
+* **New branch mboot/arrays32, 6209329** (review 1.4 and 2): array
+  descriptors with 4 bytes LE per dimension (CONVENTIONS.md section 10);
+  MUL32 replaces MUL16; DIM, ARRLEN, DIMFUN, GETV3, X14OR5, ITEMA3 and
+  ARRDOT (new DOTIX) are 32-bit.
+  * Verified on the Linux build: DIM A%(70000) has 70001 distinct
+    elements, B%(300,300), DIM(C%(65535),1)=65535 with SUM no longer
+    hanging, whole-array =, +=, SUM, SUMLEN, copies over 70001 elements
+    (string arrays too), Bad subscript for 70001 and -1, the dot product
+    with K > 65535 (140002/140022) and a 2x2 one.
+  * Speed (Linux build, same loops on the old and new build): array
+    reads 1-D 345/310 -> 248/237, 2-D 398/349 -> 305/308, writes
+    308/266 -> 243/245 centiseconds: GETV3 skips the multiply for the
+    first dimension.
+  * Test `x02bigarr` (68k-only .exp), sized for bare's 1.3 MB free with
+    CLEAR between parts; the 70000-element string-array copy needs three
+    400 KB blocks and was left out (checked by hand on Linux). With the
+    rosco's +4 MB expansion (user) a big-memory variant could run on
+    bare later.
+  * bascheck host, hostwin, bare 29/29; asmcheck 162/162; hostcheck and
+    fatcheck all ok.
+* **Programs built** from a clean export of r68k 2d92829 (`mkhost.py
+  -r`), since ../r68k has someone else's uncommitted changes.
+* **Next:** merge mboot/arrays32 into mboot/conversation-log (user's
+  call); then the Windows zip, as everything found from the Agon is
+  fixed (1.1-1.5, 2). The review's section 3 features remain optional.
