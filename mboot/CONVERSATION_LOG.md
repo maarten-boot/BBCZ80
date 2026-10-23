@@ -1407,3 +1407,20 @@ Mid-turn:
 * **Still open:** Minix run of the new test; the local master
   fast-forward (offered); remove the `bbc68k-mingw` Docker image; a
   sentence in `ASSEMBLER.md` on the dc.b range check.
+
+## 51. Status after the merge
+
+* **User:** "reverify i pushed"; "ok status"; "add entry 51 now; then
+  look at https://github.com/maarten-boot/agon-bbc-basic ... see if you
+  can find improvements suggestions from that implementation. Dont
+  change the current code in this tree just write additional
+  suggestions and plans with references where needed."
+* **Push verified:** `mboot/conversation-log` at 92eb386 (entry 50);
+  GitHub master at 4150025 (PR #2, closed), without entry 50.
+* **Status:** issue #1 open with the user's 3 comments, no reply from
+  R.T. Russell yet; the fix tested on Linux, Windows (Wine) and bare,
+  Minix waits for the minix tree (6b658ed, 3 files being changed by
+  the other session). r68k has one uncommitted `.gitignore` line
+  (`tmp/`), not Claude's. rosco-emulator and ack clean.
+* **Next (this turn):** a study of the Agon (eZ80, 24-bit) BBC BASIC for
+  ideas for this port, written as a separate plan; no code changes.
