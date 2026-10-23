@@ -1424,3 +1424,35 @@ Mid-turn:
   (`tmp/`), not Claude's. rosco-emulator and ack clean.
 * **Next (this turn):** a study of the Agon (eZ80, 24-bit) BBC BASIC for
   ideas for this port, written as a separate plan; no code changes.
+
+## 52. Review of the Agon (eZ80) BBC BASIC
+
+* **User:** "add entry 51 now; then look at
+  https://github.com/maarten-boot/agon-bbc-basic ... Dont change the
+  current code in this tree just write additional suggestions and plans
+  with references where needed."; "ok status"; "pushed; yes on the other
+  2" (commit the review as entry 52, start on bugs 1-3).
+* **Result:** `mboot/AGON_REVIEW.md`. The Agon widened the same Z80 code
+  to 24 bits, so its issues (10 of 40 filed by R.T. Russell) are a test
+  set for this port. rtrussell/BBCZ80 is still at 410e7fb, our base.
+* **Method:** the repro of each core Agon issue run on the Linux build
+  and on the Z80 (RunCPM); the Agon conformance suite (496 tests) on both;
+  the Agon's width fixes (AUTO, SAVE/LOAD length, huge programs, LOCAL
+  DIM, FNEND) checked against our source, a 228003-byte program saved and
+  loaded; its 24-bit array work mapped onto our source. Three agents did
+  parts of this; every bug below was reproduced by Claude.
+* **68k bugs (the Z80 is fine):**
+  1. `LETARR` (eval.s:1860) leaves sp 4 bytes low: a whole-array
+     assignment inside FOR/REPEAT/WHILE/PROC/FN breaks the loop end
+     ("Not in a FOR loop"). t05arr only does it at top level.
+  2. `SUMLEN` (eval.s:1091) `clr.w d7` before `add.l d7,d0`: garbage in
+     the upper word.
+  3. LOAD/CHAIN of a file too big for memory hangs: `os_load` (osl.c:723)
+     runs on the stack that LOAD0 (main.s:1102) lets the file fill up to
+     sp-256. The Z80 says "No room".
+  4. `INKEY(-n)` returns TRUE (osl.c:275).
+* **Inherited, worse here:** 16-bit array limits (DIM A%(70000) wraps to
+  4465 elements), `DIM()` gives -1 for a wrapped array (eval.s:790), SUM
+  over a 0-element array hangs. A plan for 32-bit arrays is in the review.
+* **Not needed:** none of the ~25 Agon core fixes was missing here (table
+  in the review).
