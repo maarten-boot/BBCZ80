@@ -1742,3 +1742,34 @@ Mid-turn:
   session has been told about the odd-address move.l (no address error
   in r68k).
 * **.gitignore:** `tmp/` (the user's, for downloads such as artifacts).
+
+## 64. r68k main; Russell's correction (variants)
+
+* **User:** "yep the lated r68k main branch has the fix now"; the
+  tester's feedback, pasted: "No, Claude has tripped up here. It's not
+  true that 'table' is a *real* variable, actually it's a *variant*
+  variable and it's perfectly legitimate to store a 32-bit integer in a
+  variant. It's a pity that you can't teach (current) AIs. ;-)"; "yes
+  the r68k should now have the new fix in the main branch".
+* **r68k main 23f4e66** (all of rosco-minix-duart since 2d92829, with
+  24958aa: odd word/long accesses raise an address error, as a 68010):
+  exported to the scratchpad, ROM built in the rosco container (unchanged,
+  2c85982c), binary built. The Windows build failed on SIGBUS/SIGHUP:
+  fixed with src68k/host/compat/signal.h. All suites pass on it (host,
+  hostwin, bare on the new r68k binary 45/45, asmcheck, hostcheck,
+  editcheck, ttycheck); the clean-container dry run passes.
+* **3429d32:** the workflow pinned to r68k main, signal.h, bascheck R68K for
+  the bare runner.
+* **The correction:** Russell is right: `table` (no suffix) is a variant,
+  and a 32-bit integer in it is fine. The real causes in his test: the
+  68000 stores big-endian while BASIC reads its variables little-endian
+  (table = &110500 was the address with its bytes reversed); ^table is odd,
+  so move.l there is an address error (r68k main now stops with "address
+  error: write at 000546A9", exit 135); and BUFFER is not page-aligned, so
+  `IF table AND 255 STOP` stops. A corrected version keeping the variant
+  (table=0, then a byte-wise LE store) runs: table = &51162, count 5, type
+  4. The corrected reply was given to the user. Claude's memory notes that
+  unsuffixed variables are variants.
+* **Idea noted:** an address or bus error in user machine code now ends
+  the whole program on r68k main (and halts a board); bare BASIC could
+  catch vectors 2/3 and raise a BASIC error. To discuss.
