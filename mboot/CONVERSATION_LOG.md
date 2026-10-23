@@ -1613,3 +1613,16 @@ Mid-turn:
   or a skip mark for Minix. (2) c_l5b_recovery: "Mistake at line 4030"
   only in the full Minix session; it passes alone, in pairs and on all
   other platforms (also with 65 KB on Linux). Not found yet.
+
+## 58. INKEY(-256) = &44
+
+* **User:** "ok pushed, we will add one small thing regarding the INKEY
+  question , mr Russel suggested to use 44(hex) as it translates to
+  68(decimal)".
+* **Push verified:** 20145b5 (entry 57).
+* **6eeedce:** `os_key` (osl.c) returns &44 for INKEY(-256), so INKEY(-256)
+  = 68 on all platforms; other negative arguments stay FALSE. Test
+  `x01inkey` extended ("platform 68 &44"). bascheck host, hostwin and
+  bare 44/44; x01inkey under Minix ok.
+* **For the next zip:** its README says "INKEY(-n) is always FALSE"; add
+  that INKEY(-256) returns &44.
