@@ -4,7 +4,8 @@
 	asmcheck.py [-k]
 
 Each instruction below is assembled by BASIC ([OPT 2: ... ] in bbcbasic
-under Minix in r68k, tools/runminix.py) and by the ACK assembler (acc -c,
+under Minix in r68k, tools/runminix.py; BBC_EMU=host: the PC program
+build/host/linux/bbc68k, tools/mkhost.py) and by the ACK assembler (acc -c,
 the text section of the object file); the bytes must be the same.  An
 entry is "motorola" or ("motorola", "ack form") where ACK spells it
 differently (it has no ADDI/ADDQ/CMPA... mnemonics: it picks the form
@@ -23,6 +24,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # BBC_EMU=mame: the MAME rosco-emulator (runmame.py) instead of r68k
 MAME = os.environ.get('BBC_EMU') == 'mame'
 RUNNER = 'runmame.py' if MAME else 'runminix.py'
+HOST = os.environ.get('BBC_EMU') == 'host'
 SRC = os.path.dirname(HERE)
 TOP = os.path.dirname(SRC)
 MINIX = os.environ.get('MINIX', os.path.join(os.path.dirname(TOP),
@@ -156,11 +158,19 @@ def main():
     prog = os.path.join(WORK, 'asm.in')
     with open(prog, 'w') as f:
         f.write(basic_prog(items))
-    out = subprocess.run(
-        [sys.executable, os.path.join(HERE, RUNNER), '-t', '120',
-         '-f', '/usr/bin/bbcbasic=' + os.path.join(SRC, 'bbcbasic'),
-         '-f', '/usr/asm.in=' + prog, 'bbcbasic < /usr/asm.in'],
-        capture_output=True).stdout.decode('latin-1').replace('\r', '')
+    if HOST:
+        # a Return for the demo menu, NEW, the lines (*BYE is the last)
+        inp = '\rNEW\r' + open(prog).read().replace('\n', '\r')
+        out = subprocess.run(
+            [os.path.join(TOP, 'build', 'host', 'linux', 'bbc68k')],
+            input=inp.encode('latin-1'), cwd=WORK, capture_output=True,
+            timeout=120).stdout.decode('latin-1').replace('\r', '')
+    else:
+        out = subprocess.run(
+            [sys.executable, os.path.join(HERE, RUNNER), '-t', '120',
+             '-f', '/usr/bin/bbcbasic=' + os.path.join(SRC, 'bbcbasic'),
+             '-f', '/usr/asm.in=' + prog, 'bbcbasic < /usr/asm.in'],
+            capture_output=True).stdout.decode('latin-1').replace('\r', '')
     if a.k:
         with open(os.path.join(WORK, 'asm.out'), 'w') as f:
             f.write(out)

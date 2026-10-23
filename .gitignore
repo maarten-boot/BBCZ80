@@ -61,3 +61,5 @@ __pycache__/
 src68k/bbcbasic
 src68k/main.s
 .claude/worktrees/
+# the hand-written expected outputs of the BASIC tests (not linker .exp)
+!src68k/test/bas/*.exp

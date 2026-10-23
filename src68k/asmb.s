@@ -34,6 +34,7 @@
 
 	.extern	EXPRI, EXPR, VAR, STOREN, ERROR, OUT, CRLF, TABIT
 	.extern	LDLE4, STLE4, LISTON, COUNT, PC, OC, ACCS, KEYWDS, KEYWDL
+	.extern	CURLIN
 
 CR	= 0x0D
 BSLASH	= 0x5C
@@ -99,6 +100,8 @@ C_EQU	= 31
 C_ALIGN	= 32
 C_OPT	= 33
 
+ABUFSZ	= 256			! EXPRX: the copy of an expression
+
 	.sect	.text
 
 ! ASSEM - assemble statements up to ']' or the end of the line.
@@ -138,7 +141,9 @@ ASSEM:	bsr	SKIPSP
 	bra	2b
 3:	move.l	a5,d6
 	sub.l	asmdst,d6		! number of bytes
-	move.l	asmpc,d0
+	lea	PC,a0			! P% again: a macro (an FN in an
+	bsr	LDLE4			!  operand) may have moved it
+	move.l	d0,asmpc		! (listed, as the Z80)
 	add.l	d6,d0
 	lea	PC,a0
 	bsr	STLE4			! UPDATE PC
@@ -812,36 +817,56 @@ IDCH:	cmp.b	#'0',d1
 ! EXPRA - evaluate the integer expression at a4 (it ends at a ',', a
 !   terminator, a closing ')', a '(' that starts a register group or a
 !   .W/.L suffix); a4 past it.  Output: d0.l.  Preserves a5.
-EXPRA:	bsr	COPYX
-	move.l	a4,eend
-	move.l	a5,esva5
-	lea	abuf,a4
-	bsr	EXPRI
-	bsr	SKIPSP
-	cmp.b	#CR,d4
-	bne	ASMBAD
-	move.l	eend,a4
-	move.l	esva5,a5
-	rts
+EXPRA:	pea	EXPRI
+	bra	EXPRX
 
 ! EXPRV - as EXPRA, any type: d6.b = type (bit 7: string in ACCS, a2 =
 !   its end), else the number in d0/d1
-EXPRV:	bsr	COPYX
+EXPRV:	pea	EXPR
+
+! EXPRX - EXPRA/EXPRV with the evaluator on the stack.  An FN in the
+!   expression can assemble too (a macro: [OPT FNm(...)), so the copy of
+!   the expression is on the stack, and so is the assembler's state
+!   (asmsp..asmend) while BASIC runs.  CURLIN is kept too: FNEND leaves
+!   it at the call in the copy, where an error would have no line.
+EXPRX:	lea	-ABUFSZ(sp),sp		! the copy
+	move.l	sp,a1
+	lea	ABUFSZ-6(sp),a0
+	move.l	a0,cxend
+	bsr	COPYX
 	move.l	a4,eend
 	move.l	a5,esva5
-	lea	abuf,a4
-	bsr	EXPR
+	move.l	sp,a4			! the copy
+	move.l	ABUFSZ(sp),a2		! the evaluator
+	move.l	#asmend,d7
+	sub.l	#asmsp,d7
+	lsr.w	#1,d7
+	sub.w	#1,d7
+	lea	asmend,a0
+1:	move.w	-(a0),-(sp)		! save the state
+	dbra	d7,1b
+	move.l	CURLIN,-(sp)
+	jsr	(a2)
+	move.l	(sp)+,CURLIN
 	bsr	SKIPSP
+	move.l	#asmend,d7
+	sub.l	#asmsp,d7
+	lsr.w	#1,d7
+	sub.w	#1,d7
+	lea	asmsp,a1
+1:	move.w	(sp)+,(a1)+		! restore it
+	dbra	d7,1b
 	cmp.b	#CR,d4
 	bne	ASMBAD
 	move.l	eend,a4
 	move.l	esva5,a5
+	lea	ABUFSZ+4(sp),sp
 	rts
 
-! COPYX - copy the expression at a4 to abuf (CR terminated), a4 to its
-!   end.  $hex becomes &hex, and hex digits are made upper case.
-COPYX:	lea	abuf,a1
-	clr.w	d2			! depth
+! COPYX - copy the expression at a4 to a1 (CR terminated, up to cxend),
+!   a4 to its end.  $hex becomes &hex, and hex digits are made upper
+!   case.
+COPYX:	clr.w	d2			! depth
 	clr.b	d3			! in quotes
 	move.b	#' ',d5			! previous character
 1:	move.b	(a4),d4
@@ -940,7 +965,7 @@ COPYX:	lea	abuf,a1
 6:	move.b	d4,(a1)+
 	move.b	d4,d5
 	add.l	#1,a4
-	cmp.l	#abuf+250,a1
+	cmp.l	cxend,a1
 	bcs	1b
 	bra	ASMBAD
 9:	move.b	#CR,(a1)
@@ -2400,4 +2425,5 @@ msize:	.space	1		! 0, 1 B, 2 W, 4 L, 8 S
 nops:	.space	1
 dcsize:	.space	1
 	.align	2
-abuf:	.space	256		! expression copy
+asmend:				! (the state EXPRX keeps: asmsp..here)
+cxend:	.space	4		! COPYX: the end of its buffer

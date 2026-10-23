@@ -100,6 +100,30 @@ These are the bits of the Z80 version:
   value of P% (for the first pass) and range errors are not reported.
 * **Bit 2:** store the code at O% while P% gives the addresses.
 
+## Macros
+
+As in the Z80 version, an FN can assemble code of its own: called as
+`OPT FNname(...)`, it works as a macro. The code goes at P%, and the FN
+returns the OPT value to go on with:
+
+```
+20 [OPT pass%
+30 OPT FNsave("hello")
+40 rts
+50 ]
+...
+100 DEF FNsave(s$)
+110 [OPT pass%
+120 dc.b s$,0
+130 ]
+140 =pass%
+```
+
+The `]` in the FN sets OPT to 3, as any `]` does, so the FN's result is
+what puts OPT back. An FN that assembles code is for `OPT` only. In another
+operand (`dc.b`, `move.l #FN...`) the statement's own bytes go where the
+FN's code went.
+
 ## Errors
 
 | Error | Cause |
