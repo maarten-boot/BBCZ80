@@ -17,9 +17,12 @@ AS	= $(ACK)/acc
 LD	= $(ACK)/acc-minix
 
 TESTS	= test/hello test/utiltest test/mathtest test/osmon
-OSOBJ	= minix.o osl.o data.o hook.o
+OSOBJ	= minix.o osl.o hook.o
 
-BASOBJ	= main.o exec.o exec2.o eval.o asmb.o math.o $(OSOBJ)
+# data.o first: its .bss (ACCS, BUFFER, STAVAR) then starts at the start of
+# the .bss, which the linker aligns; it only word-aligns each object's part,
+# whatever .align says, and @%-Z% must be 4-byte aligned (GitHub issue 4)
+BASOBJ	= data.o main.o exec.o exec2.o eval.o asmb.o math.o $(OSOBJ)
 
 all:	$(TESTS) bbcbasic
 
@@ -36,8 +39,8 @@ main.s:	main.s.in tools/mkmain.py ../src/MAIN.Z80
 osl.o:	osl.c
 	$(LD) -c -o $@ osl.c
 
-test/osmon:	test/osmon.o $(OSOBJ)
-	$(LD) -S 64k -o $@ test/osmon.o $(OSOBJ)
+test/osmon:	test/osmon.o data.o $(OSOBJ)
+	$(LD) -S 64k -o $@ data.o test/osmon.o $(OSOBJ)
 
 test/hello:	test/hello.o
 	$(LD) -o $@ test/hello.o

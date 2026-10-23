@@ -24,7 +24,8 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.dirname(HERE)
 TOP = os.path.dirname(SRC)
-OBJS = 'main.o exec.o exec2.o eval.o asmb.o math.o minix.o data.o hook.o'.split()
+# data.o first, as in the Makefile: STAVAR 4-byte aligned (issue 4)
+OBJS = 'data.o main.o exec.o exec2.o eval.o asmb.o math.o minix.o hook.o'.split()
 LOAD = 0x40000
 
 
