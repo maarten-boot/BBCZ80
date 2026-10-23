@@ -33,20 +33,27 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 TOP = os.path.dirname(os.path.dirname(HERE))
 PROMPT = b'# '
+# after login the prompt is set to this: BASIC prints '# ' too (PRINT#)
+SHPROMPT = '=minix=# '
 
 
 def make_root(rosco, work, extra):
-    """Write work/root.img: rootfs/proto with absolute host paths, plus the
-    extra files."""
+    """Write work/root.img: rootfs/proto (and rootfs/ramproto, which has
+    /bin/sh since the minix tree of 2026-10-23, as its boot image root) with
+    absolute host paths, plus the extra files."""
     boot = os.path.join(rosco, 'boot')
     lines = []
-    with open(os.path.join(rosco, 'rootfs', 'proto')) as f:
-        for line in f:
-            w = line.split()
-            if len(w) == 4 and w[0] == 'f' and not os.path.isabs(w[3]):
-                w[3] = os.path.normpath(os.path.join(boot, w[3]))
-                line = ' '.join(w) + '\n'
-            lines.append(line)
+    for name in ('proto', 'ramproto'):
+        proto = os.path.join(rosco, 'rootfs', name)
+        if not os.path.exists(proto):
+            continue
+        with open(proto) as f:
+            for line in f:
+                w = line.split()
+                if len(w) == 4 and w[0] == 'f' and not os.path.isabs(w[3]):
+                    w[3] = os.path.normpath(os.path.join(boot, w[3]))
+                    line = ' '.join(w) + '\n'
+                lines.append(line)
     have = {l.split()[1] for l in lines if l.split() and l.split()[0] == 'd'}
     for path, host in extra:
         parts = path.strip('/').split('/')[:-1]
@@ -139,6 +146,10 @@ def main():
         if not con.expect(PROMPT, 30):
             print('\nrunminix: no shell prompt', file=sys.stderr)
             return 1
+        con.send("PS1='=minix''=# '\r")	# (its echo is not the prompt)
+        if not con.expect(SHPROMPT.encode(), 30):
+            print('\nrunminix: PS1 not taken', file=sys.stderr)
+            return 1
         for c in a.cmd:
             m = re.match(r'@(.*?)@(.*)$', c, re.S)
             if m:
@@ -153,7 +164,7 @@ def main():
                 ok = con.expect(m.group(1).encode('latin-1'), a.t, True)
             else:
                 con.send(c + '\r')
-                ok = con.expect(PROMPT, a.t)
+                ok = con.expect(SHPROMPT.encode(), a.t)
             if not ok:
                 print('\nrunminix: timeout on: %s' % c, file=sys.stderr)
                 return 1

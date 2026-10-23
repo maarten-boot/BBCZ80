@@ -24,7 +24,7 @@
 	.extern	XEQ, RUN0, CHAIN0, TERMQ, MUL32, X14OR5, SPACES, ESCAPE
 	.extern	CHECK, SEARCH
 	.extern	OSWRCH, OSLINE, OSINIT, OSLOAD, OSSAVE, OSBGET, OSBPUT
-	.extern	OSSHUT, OSSTAT, PROMPT, LTRAP, OSCLI, RESET
+	.extern	OSSHUT, OSSTAT, PROMPT, LTRAP, OSCLI, RESET, OSOPEN, WRCHAN
 	.extern	COMMA, BRAKET, ZERO, ITEMI, EXPRI, EXPRS, DECODE, LOADN, SFIX
 	.extern	PAGE, ACCS, BUFFER, LOMEM, HIMEM, COUNT, WIDTH, FREE, STAVAR
 	.extern	DYNVAR, ERRTXT, ERR, ERL, CURLIN, ERRTRP, ONERSP, FNPTR, PROPTR
@@ -159,7 +159,14 @@ NOTCMD:	tst.l	d0
 	lea	BUFFER,a4		! FOR XEQ
 	tst.l	d0
 	beq	XEQ			! DIRECT MODE
-	move.l	d5,-(sp)
+	bsr	INSLIN
+	bra	CLOOP
+
+! INSLIN - put the tokenised line at BUFFER into the program (68k: a
+!   routine, for CLOOP and LOAD of a text file; the Z80 has it in CLOOP)
+!   Inputs:  d0.l = line number, d5.l = length of the tokenised text
+!            (0: only delete the line)
+INSLIN:	move.l	d5,-(sp)
 	move.l	d0,-(sp)
 	bsr	FINDL
 	bne	1f
@@ -167,7 +174,7 @@ NOTCMD:	tst.l	d0
 1:	move.l	(sp)+,d0		! line number
 	move.l	(sp)+,d5		! length
 	tst.b	d5
-	beq	CLOOP			! DELETE LINE ONLY
+	beq	6f			! DELETE LINE ONLY
 	add.w	#4,d5			! LENGTH INCLUSIVE
 	move.l	a3,-(sp)		! insertion point
 	bsr	GETTOP			! a3 = top
@@ -194,7 +201,7 @@ NOTCMD:	tst.l	d0
 	sub.w	#1,d5
 	bne	5b
 	bsr	CLEAN
-	bra	CLOOP
+6:	rts
 
 	.sect	.rom
 
@@ -431,6 +438,8 @@ RENUM6:	movem.l	(sp)+,d6/a1/a3
 ! AUTO start
 ! AUTO ,increment
 AUTO:	bsr	PAIR
+	cmp.l	#255,d5			! (INCREM is a byte: the Z80 kept
+	bhi	SILLY			!  the low byte of the step)
 	move.l	d0,AUTONO
 	move.b	d5,INCREM
 	bra	CLOOP
@@ -469,6 +478,8 @@ OLD:	move.l	PAGE,a3
 ! SAVE filename
 SAVE:	bsr	EXPRS			! FILENAME
 	move.b	#CR,(a2)
+	bsr	TXTNAM
+	beq	SAVETX			! (68k) .BAS/.TXT/.ASC: as text
 	bsr	GETTOP
 	move.l	a3,d5
 	move.l	PAGE,a2
@@ -493,7 +504,15 @@ ERROR:	lea	ERRWDS,a3
 ! EXTERR - d4.b = error number, (sp) = message (jsr EXTERR; .asciz ...)
 EXTERR:	move.l	(sp)+,a3
 	move.b	d4,d1
-ERROR1:	move.l	a3,ERRTXT
+ERROR1:	move.b	txtch,d7		! (68k) in a text LOAD or SAVE: close
+	beq	1f			!  the file, output to the screen
+	clr.b	txtch
+	clr.b	WRCHAN
+	move.w	d6,-(sp)
+	move.b	d7,d6
+	bsr	OSSHUT
+	move.w	(sp)+,d6
+1:	move.l	a3,ERRTXT
 	move.l	ONERSP,d7
 	move.l	HIMEM,sp		! MUST SET SP BEFORE 'CALL'
 	tst.l	d7
@@ -595,7 +614,11 @@ DEL:	movem.l	a2-a3,-(sp)
 ! LOAD0 - LOAD A DISK FILE THEN CLEAN.
 !   Inputs: Filename in ACCS (term CR)
 ! CLEAN - CHECK FOR BAD PROGRAM, FIND END OF TEXT AND WRITE FF FF.
-LOAD0:	move.l	PAGE,a2
+LOAD0:	bsr	TXTNAM
+	bne	1f
+	bsr	LOADTX			! (68k) .BAS/.TXT/.ASC: as text
+	bra	CLEAN
+1:	move.l	PAGE,a2
 	move.l	sp,d5
 	sub.l	#1024,d5		! (Z80: 256; OSLOAD's C code needs
 	sub.l	a2,d5			!  more stack) FIND AVAILABLE SPACE
@@ -609,6 +632,148 @@ CLEAN:	bsr	GETTOP
 	move.b	#-1,-1(a3)		! WRITE &FFFF
 	move.b	#-1,-2(a3)
 	bra	CLEAR
+
+! Plain-text programs (68k; as the Agon port): LOAD, CHAIN and SAVE of a
+! name ending in .BAS, .TXT or .ASC read and write the program as text.
+
+! TXTNAM - Z if the name at ACCS (CR terminated) ends in .BAS, .TXT or
+!   .ASC, in any case.  Destroys: d0, a0
+TXTNAM:	lea	ACCS,a0
+1:	cmp.b	#CR,(a0)+
+	bne	1b
+	sub.l	#5,a0			! the '.' of ".XYZ", CR
+	cmp.l	#ACCS,a0
+	bcs	8f
+	cmp.b	#'.',(a0)+
+	bne	8f
+	clr.l	d0
+	move.b	(a0)+,d0
+	lsl.l	#8,d0
+	move.b	(a0)+,d0
+	lsl.l	#8,d0
+	move.b	(a0)+,d0
+	and.l	#0xDFDFDF,d0		! upper case
+	cmp.l	#0x424153,d0		! BAS
+	beq	9f
+	cmp.l	#0x545854,d0		! TXT
+	beq	9f
+	cmp.l	#0x415343,d0		! ASC
+	beq	9f
+8:	move.w	#0,ccr			! NZ
+	rts
+9:	move.w	#CC_Z,ccr
+	rts
+
+! LOADTX - LOAD0 of a text program: each line is entered as if typed
+!   (CR, LF or CR LF line ends; a line without a number gets the previous
+!   number + 1; other control characters, a tab as a space)
+LOADTX:	move.b	#1,d4			! OPENIN
+	lea	ACCS,a3
+	bsr	OSOPEN
+	tst.b	d4
+	bne	1f
+	move.b	#214,d4
+	jsr	EXTERR
+	.asciz	"File not found"
+	.align	2
+1:	move.b	d4,txtch
+	bsr	NEWIT
+	clr.l	txtno
+LDTX1:	lea	ACCS,a3			! a line
+LDTX2:	move.b	txtch,d6
+	bsr	OSSTAT
+	beq	LDTX4			! end of file
+	bsr	OSBGET
+	cmp.b	#LF,d4
+	beq	LDTX4
+	cmp.b	#CR,d4
+	beq	LDTX4
+	cmp.b	#9,d4			! tab
+	bne	1f
+	move.b	#' ',d4
+1:	cmp.b	#' ',d4
+	bcs	LDTX2
+	cmp.l	#ACCS+250,a3
+	bcc	LDTXBD			! too long for a line
+	move.b	d4,(a3)+
+	bra	LDTX2
+LDTX4:	move.b	#CR,(a3)
+	cmp.l	#ACCS,a3
+	beq	LDTX6			! empty line
+	lea	ACCS,a4
+	bsr	LINNUM			! d0 = the number, 0 if none
+	tst.l	d0
+	bne	1f
+	move.l	txtno,d0
+	add.l	#1,d0
+	cmp.l	#0xFFFF,d0
+	bhi	TOOBIG
+1:	move.l	d0,txtno
+	bsr	NXT
+	lea	BUFFER,a2
+	move.b	#1,d5			! LEFT MODE
+	move.l	d0,-(sp)
+	bsr	LEXAN2			! LEXICAL ANALYSIS
+	move.l	(sp)+,d0
+	move.b	d4,(a2)			! TERMINATOR
+	move.l	a2,d5
+	sub.l	#BUFFER,d5		! LINE LENGTH
+	clr.b	1(a2)
+	bsr	INSLIN
+LDTX6:	move.b	txtch,d6
+	bsr	OSSTAT
+	bne	LDTX1			! more lines
+	clr.b	txtch
+	bsr	OSSHUT
+	rts
+LDTXBD:	move.b	txtch,d6		! (BAD does not pass ERROR1)
+	clr.b	txtch
+	bsr	OSSHUT
+	bra	BAD
+
+! SAVETX - SAVE as text: the program LISTed into the file (LISTO 1: a
+!   space after the number, no indentation; no WIDTH; lines end in CR LF)
+SAVETX:	clr.b	d4			! OPENOUT
+	lea	ACCS,a3
+	bsr	OSOPEN
+	tst.b	d4
+	bne	1f
+	move.b	#192,d4
+	jsr	EXTERR
+	.asciz	"Can't create file"
+	.align	2
+1:	move.b	d4,txtch
+	move.b	LISTON,-(sp)
+	move.b	WIDTH,-(sp)
+	and.b	#0xF0,LISTON
+	or.b	#1,LISTON		! LISTO 1
+	clr.b	WIDTH
+	clr.b	COUNT
+	clr.b	indent
+	move.b	txtch,WRCHAN		! OSWRCH to the file
+	move.l	PAGE,a3
+SVTX1:	tst.b	(a3)
+	beq	SVTX9
+	clr.l	d0
+	move.b	2(a3),d0
+	lsl.w	#8,d0
+	move.b	1(a3),d0		! line number
+	move.l	a3,-(sp)
+	add.l	#3,a3
+	bsr	LISTIT
+	move.l	(sp)+,a3
+	clr.l	d7
+	move.b	(a3),d7
+	add.l	d7,a3			! next line
+	bra	SVTX1
+SVTX9:	clr.b	WRCHAN
+	move.b	(sp)+,WIDTH
+	move.b	(sp)+,LISTON
+	clr.b	COUNT
+	move.b	txtch,d6
+	clr.b	txtch
+	bsr	OSSHUT
+	bra	WARM
 
 ! GETTOP - find the top of the program
 !   Outputs: a3 = address after the 00 FF FF at the end
@@ -1238,7 +1403,7 @@ PAIR1:	move.l	d0,-(sp)
 	move.l	(sp)+,d0
 	tst.l	d5
 	bne	2f
-	clr.b	d4
+SILLY:	clr.b	d4
 	jsr	EXTERR
 	.asciz	"Silly"
 	.align	2
@@ -1464,3 +1629,6 @@ NXT1:	add.l	#1,a4
 
 	.sect	.bss
 indent:	.space	2			! LIST indentation count
+txtno:	.space	4			! LOADTX: the last line number
+txtch:	.space	1			! the text LOAD/SAVE channel, 0 if none
+	.align	2

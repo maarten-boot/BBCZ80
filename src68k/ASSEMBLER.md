@@ -129,7 +129,7 @@ FN's code went.
 | Error | Cause |
 |---|---|
 | Syntax error | An unknown mnemonic, or an operand that the instruction does not allow |
-| Out of range (1) | A branch, displacement or immediate value that does not fit |
+| Out of range (1) | A branch, displacement or immediate value that does not fit; also a `dc.b`/`dc.w`/`equb`/`equw` value too big for its size (`dc.b 999`), where the Z80's `DEFB 999` keeps the low byte. With OPT bit 1 clear the low bits are kept, as on the Z80 |
 | Multiple label (3) | A label that is already set, on the first pass (OPT bit 1 clear) |
 
 ## Running code

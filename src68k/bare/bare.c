@@ -587,6 +587,7 @@ void fat_list(void (*emit)(char *, long, int));
 #define H_EXISTS 13
 #define H_DIRENT 14
 #define H_EXIT	15
+#define H_ARG	16
 
 static int sd;			/* the card has a FAT file system */
 static int sdflags[8];		/* open flags of the card's files */
@@ -967,6 +968,11 @@ long bare_init(int cold)
 		vbr0()[4] = old;
 	}
 	sd = host ? 0 : fat_mount();
+	if (host) {			/* a program named on the PC's command line */
+		static char arg[128];
+		if (bare_host(H_ARG, (long) arg, (long) sizeof(arg), 0L) > 0)
+			bare_autorun = arg;
+	}
 
 	/* the console as found: like a Minix tty, osl.c changes it */
 	memset(&tio, 0, sizeof(tio));

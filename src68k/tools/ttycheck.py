@@ -25,6 +25,7 @@ import os
 import pty
 import re
 import select
+import shutil
 import subprocess
 import sys
 import time
@@ -101,6 +102,8 @@ class Tty:
     def close(self):
         self.p.kill()
         self.p.wait()
+        if getattr(self, 'dir', None):
+            shutil.rmtree(self.dir, ignore_errors=True)
 
 
 def main():
