@@ -1546,3 +1546,32 @@ Mid-turn:
 * **Next:** the user pushes; a later zip with the new r68k once it
   settles; the review's section 3 features remain optional; issue #1
   waits for R.T. Russell.
+
+## 56. Conformance suite as tests; where CALL's parameter block is
+
+* **User:** "pushed" (verified: 3d0f6c9); "ok continue"; a pasted
+  question: "Where does bbc68k put the parameter table created by the
+  CALL statement? ... either has to be at a known address (in the Z80
+  version it's at PAGE-&200 I think) or at an address passed in one of
+  the CPU registers."; "yes" (commit tests and the ASSEMBLER.md text);
+  "yes please" (entry 56).
+* **Review 3.6 done (51e572a):** the 14 levels of the Agon conformance
+  suite as `test/bas/c_*.in` (557 checks), "MODE 0" made a REM and RUN
+  added; `test/bas/CONFORMANCE.txt` keeps the origin (Jeroen Venema) and
+  R.T. Russell's zlib notice (copying and altering allowed if marked).
+  Every level reports "FAILED : 0" on the 68k now (l1_core's large
+  arrays too), the same output on two runs; the .exp files are the 68k
+  output. bascheck host, hostwin, bare 43/43.
+* **The CALL answer (from the code, measured):**
+  * The block is in BASIC's string input buffer BUFFER (exec.s:1263), and
+    CALL and USR enter the code with **a0 = the block** (d0-d7 = A%-H%).
+    The Z80 does the same through IX (`LD IX,BUFFER` in USR1,
+    src/EXEC.Z80:2098), so code finds it from the register there too.
+  * It is not at a fixed address: BUFFER &50EAE with PAGE &54300 on the
+    Linux build, &4E446 with PAGE &51900 on bare; not page-aligned.
+  * Layout: count; then per parameter a type byte and a 4-byte LE address
+    (the Z80: 2 bytes), at odd offsets, so read byte-wise. Types checked:
+    0 byte (?), 4 integer, 5 real, 128 $addr string, 129 string variable.
+    `CALL c%,X%,Y` gave count 2, type 4, address = ^X%.
+  * Written up in `src68k/ASSEMBLER.md` (Running code), with code that
+    reads the first parameter's address.
