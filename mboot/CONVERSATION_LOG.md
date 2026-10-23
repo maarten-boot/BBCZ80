@@ -1307,3 +1307,21 @@ Mid-turn:
   vibe-u26, so `bbc68k.exe` is the old one).
 * **Host setup:** `../r68k/firmware/rosco_m68k.rom` copied from
   `build/r68kprof` (gitignored build output) so `mkhost.py` runs.
+* **Crosscheck (same turn, after f2e44f2):**
+  * An independent review of b5e639e (a fresh agent given the commit,
+    not the reasoning) found the stack offsets, the state block (120
+    bytes, 60 words), the registers, the error paths and the P% re-read
+    correct, and one defect: COPYX's `$hex` path wrote a DEF token as 3
+    bytes and went back without the bound check. Typed input cannot
+    reach it (the 255-character line limit); a stored line can. Built
+    in memory (225 X's poked into DEF tokens), it hung the old build:
+    the overflow now lands on the evaluator address. Fixed in 42fe3fa
+    (bound check in the hex loop), the case added to `a02macro`.
+  * Differential against the Z80 (RunCPM, the same program with
+    DEFB/DEFM against dc.b): issue program, two macros among data,
+    recursion 6 deep with data before and after, two passes with a label
+    set in a macro, OPT 4 with O%, and a syntax error inside the macro:
+    the same output. One difference unrelated to macros: `dc.b 999` is
+    Out of range on the 68k, while the Z80 `DEFB 999` keeps the low byte
+    (as before; ASSEMBLER.md does not say so).
+  * After the fix: bascheck 25 of 25, asmcheck 162 of 162 (host).
