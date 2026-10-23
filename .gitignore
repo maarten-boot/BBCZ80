@@ -47,3 +47,19 @@ build/
 *~
 #*
 .#*
+
+# 68000 port: build output
+build/
+src68k/*.o
+src68k/test/*.o
+src68k/test/hello
+src68k/test/utiltest
+src68k/test/cpu020
+src68k/test/mathtest
+src68k/test/osmon
+__pycache__/
+src68k/bbcbasic
+src68k/main.s
+.claude/worktrees/
+# the hand-written expected outputs of the BASIC tests (not linker .exp)
+!src68k/test/bas/*.exp

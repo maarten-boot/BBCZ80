@@ -1,0 +1,23 @@
+expect login:	600
+send root
+expect # 	120
+send bbcbasic
+expect >	60
+send *sh
+expect # 	60
+send echo in the subshell; pwd
+expect # 	60
+send cd /usr; pwd
+expect # 	60
+send exit
+expect >	60
+send *pwd
+expect >	60
+send INPUT "name";N$:PRINT "hi ";N$
+expect ?	60
+send rosco
+expect >	60
+send *BYE
+expect # 	60
+send echo done
+expect done	30

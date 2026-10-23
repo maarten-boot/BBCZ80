@@ -1,0 +1,11 @@
+issue 1: test
+        11: 4E 71 41 42 4E 71 43 44 45 4E 75
+         7: 05 04 03 02 01 4E 75
+00003000 20 3C 00 00 00 0F  move.l #FNk(5),d0
+00003006 01                 dc.b FNb
+
+Syntax error at line 100
+alive
+
+Syntax error at line 10
+long $DEF.. line: alive

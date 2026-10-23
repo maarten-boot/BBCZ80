@@ -1,0 +1,209 @@
+From 107f0d014f93a50f39129d83ac1d23cefb5e386d Mon Sep 17 00:00:00 2001
+From: mboot <mboot@deb-gui-usa.rl.lan>
+Date: Wed, 21 Oct 2026 05:23:45 -0400
+Subject: [PATCH] rosco_m68k: pass a lone ESC on after a timeout
+
+cons_debug_key() held an ESC back until the next character (PF key
+recognition), so a lone ESC (BBC BASIC's Escape, vi) arrived only at the
+next keypress.  kb_timer() now times it out after 3 ticks and rs_read()
+passes it on through cons_esc_timeout(), after the characters already
+received, so ESC O P..S still work.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ ROSCO_M68K_CONVERSATION_LOG.md | 23 +++++++++++++++
+ ROSCO_M68K_PORT_SPEC.md        |  2 +-
+ src/kernel/rosco.h             |  1 +
+ src/kernel/roscons.c           | 53 +++++++++++++++++++++++++++++++---
+ src/kernel/roscrs232.c         |  4 ++-
+ 5 files changed, 77 insertions(+), 6 deletions(-)
+
+diff --git a/ROSCO_M68K_CONVERSATION_LOG.md b/ROSCO_M68K_CONVERSATION_LOG.md
+index 3900a5a..b159db6 100644
+--- a/ROSCO_M68K_CONVERSATION_LOG.md
++++ b/ROSCO_M68K_CONVERSATION_LOG.md
+@@ -1455,3 +1455,26 @@ Committed `4e0f2da`.
+   Backspace (erase DEL) confirmed on the real hardware.
+ 
+ Not committed yet.
++
++## Lone ESC passed on after a timeout (2026-10-21)
++
++* **Problem** (found by the BBC BASIC port): `cons_debug_key()` holds back
++  an ESC until the next character shows whether a PF key (ESC O P..S)
++  follows. A lone ESC, e.g. BBC BASIC's Escape key or vi's, therefore
++  reached the program only at the next keypress.
++* **Fix:**
++  * `cons_debug_key()` starts a countdown of ESC_TICKS = 3 clock ticks
++    (33..50 ms) for a held-back ESC or ESC O;
++  * `kb_timer()` (each tick, until now a stub) counts it down; at 0 it
++    sets `esctimeout`, marks tty 0 for events and calls
++    `force_timeout()`;
++  * `rs_read()` calls the new `cons_esc_timeout()` after the buffered
++    characters, which passes the ESC (or ESC O) on. A PF key whose
++    characters have already arrived is still recognised.
++* **Tested:**
++  * r68k: Escape stops a running BBC BASIC program at once; PF1 still
++    prints the process table; the BBC BASIC test suite (24 suites)
++    passes;
++  * MAME (CONSBAUD=115200): PF1, then Escape in a running
++    `REPEAT ... UNTIL FALSE`, gives "Escape at line 10".
++* Rebuilt: the default `boot/image.bin` (38400).
+diff --git a/ROSCO_M68K_PORT_SPEC.md b/ROSCO_M68K_PORT_SPEC.md
+index 85e1662..dc0f455 100644
+--- a/ROSCO_M68K_PORT_SPEC.md
++++ b/ROSCO_M68K_PORT_SPEC.md
+@@ -525,7 +525,7 @@ How this works without touching shared files:
+ | `src/kernel/roscompx.S` | **done (M2)** | GNU port of `stmpx.s`: vector table (DUART at IVR `0x45`, all autovectors → `rupt`), firmware gap 0x400–0x2000, bss clear, loader hand-over (`rosco_memsize`, `rosco_extra`), CPU type from `SDB_CPUINFO` (probe as fallback), unchanged `genint`/`save`/`restart`/`sys`, `kreboot` via `0xE00004`, `get_mem_size` from the loader. Still todo: `move sr` emulation in `prvtrp` (M4, for ACK binaries) |
+ | `src/kernel/roscklib.S` | **done (M2)** | `klib68k.s` in GNU syntax, plus `__mulsi3`/`__udivsi3`/`__divsi3`/`__umodsi3`/`__modsi3`, the `_send`/`_receive`/`_sendrec` trap stubs and the `sig*set` aliases |
+ | `src/kernel/roscmain.c` | **done (M2)** | From `stmain.c`: `main` (servers with size 0 are not started: kernel-only image), `initrosco()` (DUART A as the firmware sets it, channel B off, timer at HZ, IVR, kernel env), `duartint()`, IMR shadow, `trap`/`panic`/`wreboot`/`getenv`, fake tasks. Compile-time check of the proc offsets used by the assembler |
+-| `src/kernel/roscons.c` | **done (M3)** | Console glue: `scr_init` hands channel A to `roscrs232.c`; polled `putk` (TxRDY test and write under `lock()`); debug keys PF1–PF3 (process table with uptime, memory map, registers) and PF4 (test line on `/dev/tty00`); stubs for `kb_timer`, `vdu_loadfont`, `vduswitch`, `func_key` |
++| `src/kernel/roscons.c` | **done (M3)** | Console glue: `scr_init` hands channel A to `roscrs232.c`; polled `putk` (TxRDY test and write under `lock()`); debug keys PF1–PF3 (process table with uptime, memory map, registers) and PF4 (test line on `/dev/tty00`); a lone ESC held back for them is passed on after 3 ticks (`kb_timer`, `cons_esc_timeout` from `rs_read`); stubs for `vdu_loadfont`, `vduswitch`, `func_key` |
+ | `src/kernel/rosco.h` | **done (M2)** | Prototypes and variables of the rosco machine layer |
+ | `src/kernel/roscdisk.c` | **done (M5)** | Disk driver on `driver.c`, registered as `acsi_task` (`NR_ACSI_DRIVES 1`, `c0=ACSI`). `c0d0` (minors 0–4): the SD card through the firmware's EFP SD routines (`sd_efp_*` in `roscklib.S`), whole card plus the four MBR primary partitions, parsed here because `drvlib`'s `partition()` copies little-endian entries raw. `c0d1` (minor 5): the root image appended to `ROSCODE1.BIN`, in RAM. `sd_root_minor()` finds the first Minix partition for the root when there is no image |
+ | `src/kernel/roscstub.c` | **done** | `fd_timer`, `errno`, the dummy MFP for `clock.c` |
+diff --git a/src/kernel/rosco.h b/src/kernel/rosco.h
+index 1663fe2..67baf1c 100644
+--- a/src/kernel/rosco.h
++++ b/src/kernel/rosco.h
+@@ -35,6 +35,7 @@ _PROTOTYPE( void duart_imr_clr, (int bits)				);
+ 
+ /* roscons.c */
+ _PROTOTYPE( int cons_debug_key, (struct tty *tp, int c)			);
++_PROTOTYPE( void cons_esc_timeout, (struct tty *tp)			);
+ 
+ /* roscrs232.c */
+ _PROTOTYPE( void rs_cons_init, (struct tty *tp)				);
+diff --git a/src/kernel/roscons.c b/src/kernel/roscons.c
+index 8982d52..e9430f3 100644
+--- a/src/kernel/roscons.c
++++ b/src/kernel/roscons.c
+@@ -11,6 +11,7 @@
+  *   scr_init:	initialize the console tty (called from tty.c)
+  *   putk:	kernel printf() output, polled
+  *   cons_debug_key: debug key recognition for roscrs232.c
++ *   cons_esc_timeout: pass on an ESC held back too long, for roscrs232.c
+  *   out_char, flush, func_key, dump, kb_init, kb_timer, vduswitch,
+  *   vdu_loadfont: as in the ST console driver
+  *
+@@ -18,6 +19,11 @@
+  * PF1..PF3 (ESC O P, ESC O Q, ESC O R) here: process table with the
+  * uptime, memory map, registers of the billed process.  PF4 (ESC O S)
+  * sends a test line out of /dev/tty00 (DUART channel B).
++ *
++ * The ESC (or ESC O) of a possible PF key is held back.  A terminal sends
++ * the three characters of a PF key in one go, so if nothing follows within
++ * ESC_TICKS clock ticks it was a lone ESC (the Escape key of BBC BASIC,
++ * vi ...): kb_timer then wakes the TTY task and rs_read passes it on.
+  */
+ 
+ #include "kernel.h"
+@@ -30,7 +36,12 @@
+ #include "roscduart.h"
+ #include "rosco.h"
+ 
++#define ESC_TICKS	3	/* 2..3 ticks, 33..50 ms at 60 Hz */
++
+ PRIVATE int pfstate;		/* debug key recognition: 0, ESC, ESC O */
++PRIVATE int esctic;		/* ticks left to hold back ESC (kb_timer) */
++PRIVATE int esctimeout;		/* set by kb_timer: pass the ESC on */
++PRIVATE char esc[2] = { ESC, 'O' };
+ 
+ /*===========================================================================*
+  *				putk					     *
+@@ -77,17 +88,24 @@ int c;
+ {
+ /* Recognize PF1..PF3 (ESC O P/Q/R) and do the debug dumps.  Returns 1 if
+  * the character was used.  An ESC is held back until the next character
+- * shows whether a PF key follows; if not, it is passed on late.
++ * shows whether a PF key follows; if not, it is passed on late (or by
++ * cons_esc_timeout if no character follows).
+  */
+-  static char esc[2] = { ESC, 'O' };
++  if (pfstate != 0) {
++	lock();
++	esctic = 0;
++	esctimeout = 0;
++	unlock();
++  }
+ 
+   switch (pfstate) {
+   case 0:
+ 	if (c != ESC) return(0);
+ 	pfstate = 1;
++	esctic = ESC_TICKS;
+ 	return(1);
+   case 1:
+-	if (c == 'O') { pfstate = 2; return(1); }
++	if (c == 'O') { pfstate = 2; esctic = ESC_TICKS; return(1); }
+ 	pfstate = 0;
+ 	(void) in_process(tp, esc, 1);		/* the held back ESC */
+ 	return(c == ESC ? cons_debug_key(tp, c) : 0);
+@@ -115,6 +133,26 @@ int c;
+   }
+ }
+ 
++/*===========================================================================*
++ *				cons_esc_timeout			     *
++ *===========================================================================*/
++PUBLIC void cons_esc_timeout(tp)
++tty_t *tp;
++{
++/* Pass on the ESC (or ESC O) held back by cons_debug_key when kb_timer has
++ * found that no character followed in time.  Called by rs_read after the
++ * characters that did arrive, so a PF key in the buffer is still seen.
++ */
++
++  if (!esctimeout) return;
++  lock();
++  esctimeout = 0;
++  unlock();
++  if (pfstate == 0) return;
++  (void) in_process(tp, esc, pfstate);
++  pfstate = 0;
++}
++
+ /*===========================================================================*
+  *				scr_init				     *
+  *===========================================================================*/
+@@ -156,7 +194,14 @@ PUBLIC void dump()
+ 
+ PUBLIC void kb_timer()
+ {
+-/* No keyboard repeat to do. */
++/* Called by the clock interrupt at every tick.  There is no keyboard repeat
++ * to do; time out a held back ESC (see cons_debug_key).
++ */
++
++  if (esctic == 0 || --esctic != 0) return;
++  esctimeout = 1;
++  tty_table[0].tty_events = 1;
++  force_timeout();
+ }
+ 
+ PUBLIC void vduswitch(tp)
+diff --git a/src/kernel/roscrs232.c b/src/kernel/roscrs232.c
+index d8b874a..21aa9fa 100644
+--- a/src/kernel/roscrs232.c
++++ b/src/kernel/roscrs232.c
+@@ -579,7 +579,8 @@ PRIVATE void rs_read(tp)
+ tty_t *tp;			/* which tty */
+ {
+ /* Process characters from the circular input buffer.  On the console the
+- * debug keys (roscons.c) are taken out first.
++ * debug keys (roscons.c) are taken out first, and a lone ESC that they held
++ * back is passed on when it has timed out.
+  */
+ 
+   rs232_t *rs = tp->tty_priv;
+@@ -605,6 +606,7 @@ tty_t *tp;			/* which tty */
+ 	unlock();
+ 	if ((rs->itail += count) == bufend(rs->ibuf)) rs->itail = rs->ibuf;
+   }
++  if (rs->console) cons_esc_timeout(tp);
+ }
+ 
+ 
+-- 
+2.47.3
+

@@ -1,0 +1,43 @@
+expect login:	600
+send root
+expect # 	120
+send bbcbasic
+expect >	60
+send *ls /usr/bench
+expect >	60
+send *pwd
+expect >	60
+send *cd /usr/bench
+expect >	60
+send *pwd
+expect >	60
+send *ls -l b1int.in b7goto.in
+expect >	60
+send *echo hello from the shell | wc -c
+expect >	60
+send A$="ls /usr/bin | wc -l":OSCLI A$
+expect >	60
+send *date
+expect >	60
+send *nosuchcommand
+expect >	60
+send *cat /nonexistent
+expect >	60
+send *ERA /tmp/none
+expect >	60
+send PRINT "back in BASIC ";2+2
+expect >	60
+send 10 PRINT "line ";X%:X%+=1:IF X%<3 GOTO 10
+expect >	60
+send RUN
+expect >	60
+send *ls -l /usr/bin/bbcbasic
+expect >	60
+send *BYE
+expect # 	60
+send echo '*pwd' | bbcbasic
+expect # 	60
+send printf '*cd /etc\n*pwd\n*ls rc\nPRINT 6*7\n*BYE\n' | bbcbasic
+expect # 	60
+send echo done
+expect done	30

@@ -1,0 +1,5 @@
+10 REM floating point and functions
+20 ?&FFFFF0=1
+30 X=0:FOR I=1 TO 300:X=X+SIN(I)*SQR(I)+EXP(I/100)/I:NEXT
+40 ?&FFFFF0=2
+50 PRINT X

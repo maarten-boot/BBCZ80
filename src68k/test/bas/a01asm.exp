@@ -1,0 +1,27 @@
+      5050
+         7
+dlrow ,olleH
+   7006652
+        30
+        74
+        600FFFE10044
+00002000                    OPT 7
+00002000 4E 71              .lab nop
+00002002 20 3C 12 34 56 78  move.l #&12345678,d0 ; a comment
+00002008 4E 75              rts
+
+Multiple label
+
+Out of range
+
+Syntax error
+
+Out of range
+        702C
+
+Syntax error
+
+Syntax error
+
+No such variable
+pass 1 ok
