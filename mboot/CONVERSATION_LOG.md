@@ -1773,3 +1773,28 @@ Mid-turn:
 * **Idea noted:** an address or bus error in user machine code now ends
   the whole program on r68k main (and halts a board); bare BASIC could
   catch vectors 2/3 and raise a BASIC error. To discuss.
+
+## 65. Issue 4 (alignment of @%-Z%); actions pinned by hash
+
+* **User:** "marged with master" (PR #5, master 01ed7f9); "new issue:
+  https://github.com/maarten-boot/BBCZ80/issues/4"; mid-turn "update your
+  workflow to use hash pinned actions on the latest workable version
+  please we get: Node.js 20 is deprecated ..."; "and tell your upstream
+  owners this is already the third time that i have seen this happening ,
+  2 times at my repo's one time at somebody else."; "should i use feedback
+  for that ?" (yes: /feedback; a draft was queued with the details); "yes
+  commit".
+* **Issue 4** (rtrussell): "In BBC BASIC the static integer variables
+  @%-Z% should be 4-byte (dword) aligned ... PRINT ~^@% 51262".
+  * Cause (anm on the bare link): the ACK linker word-aligns each object's
+    part of .bss and ignores .align 4; eval.s's dotn (.align 4) was also
+    2-aligned. The start of .bss (begbss) is aligned.
+  * The 68000/68010 needs only even addresses for word/long, so it did not
+    fault; but BBC BASIC requires dword alignment.
+  * **37af50d:** data.o linked first; ^@% = &51168, all 27 aligned. Test
+    x05align. 46/46 host, hostwin, bare (r68k main); the dry run passes.
+    Minix still to check (its C start files have no .bss).
+* **d808086:** actions/checkout v7.0.1, actions/cache v6.1.0,
+  actions/upload-artifact v7.0.2, pinned by commit hash, all node24 (were
+  @v4 on Node 20). The first versions written from memory were outdated;
+  the user has seen that happen three times.

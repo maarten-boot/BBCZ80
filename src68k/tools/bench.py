@@ -36,8 +36,8 @@ ACK = os.path.join(MINIX, 'src', 'rosco', 'ack')
 STAGE = os.path.join(ACK, 'ack', '.obj', 'staging')
 PROF = os.path.join(TOP, 'build', 'prof')
 EMU = os.path.join(TOP, 'build', 'r68kprof', 'r68k')
-OBJS = ('main.o exec.o exec2.o eval.o asmb.o math.o minix.o osl.o data.o '
-        'hook.o').split()
+OBJS = ('data.o main.o exec.o exec2.o eval.o asmb.o math.o minix.o osl.o '
+        'hook.o').split()			# data.o first: see the Makefile
 
 
 def symbols():

@@ -26,7 +26,11 @@
 	.sect	.bss
 ! ACCS, BUFFER & STAVAR: the Z80 put them on 256-byte boundaries; the
 ! ACK linker does not keep .align 256 in .bss (seen: ACCS at 0x71888),
-! so nothing may rely on it.
+! so nothing may rely on it.  It does not keep .align 4 either: it
+! word-aligns each object's part of .bss.  STAVAR (@%-Z%) must be 4-byte
+! aligned, as in all BBC BASICs (GitHub issue 4), so data.o is linked
+! first (Makefile, mkbare.py): then ACCS is at the start of .bss, which is
+! aligned, and STAVAR = ACCS + 512.  test/bas/x05align checks it.
 	.align	4
 ACCS:
 _accs:	.space	256		! string accumulator

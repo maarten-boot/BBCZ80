@@ -1,0 +1,5 @@
+10 REM @%-Z% must be 4-byte aligned (GitHub issue 4): ACCS, BUFFER, STAVAR
+20 REM are at the start of .bss (data.o linked first)
+30 F%=0:FOR I%=0 TO 26:F%=F% OR ((^@%+4*I%) AND 3):NEXT
+40 PRINT "@%-Z% aligned: ";F%=0;" ";(^@%) AND 3;(^Z%) AND 3;(^O%) AND 3;(^P%) AND 3
+RUN
