@@ -1663,3 +1663,32 @@ Mid-turn:
 * **AGON_REVIEW.md 3.4 corrected:** TIME$ only in the Minix version
   (time(), set at boot by /etc/rc); bare BASIC and the PC programs, which
   run bare BASIC, have no clock and keep "Sorry".
+
+## 61. A GitHub Action for the Windows program
+
+* **User:** "could we add a gh action to produce one artifact: the bbc
+  basic in a bare bone rosco-m68k for windows , could that be built on my
+  github account ?"; "manual and as artifact while we are testing the
+  accuracy with the owner of the basic"; "can you make that to include the
+  buid time ..."; "utc is fine it is just to make human communication and
+  referencing the exact version easier. please commit".
+* **21a4171:** `.github/workflows/windows-exe.yml` (workflow_dispatch,
+  ubuntu-24.04, artifact `bbc68k-windows`) running
+  `src68k/tools/ci-windows.sh`; README of the zip now in
+  `src68k/host/README-windows.txt` with @VERSION@; `mkdemo.py --progs`.
+* **What the build needs** (all public on GitHub): minix-st-2.0.4 (pinned
+  feea47f) for ACK (build-ack.sh clones davidgiven/ack at a fixed rev,
+  patches it) and the Minix C library ACK compiles; r68k (pinned
+  2d92829); the ROM through the roscopeco/rosco_m68k image; RunCPM
+  (pinned 12fc57a) to tokenise the demo programs with the Z80 BASIC.
+* **Dry run** in a clean ubuntu:24.04 image (`bbc68k-ci`, the runner's
+  packages) on fresh clones: everything built, bascheck 45/45 and asmcheck
+  162/162 on the Linux program, the ROM identical to the known one, the
+  exe Windows-DLL-only and running under Wine. On this host the container
+  needed the host's CA store: the network intercepts TLS (a ReversingLabs
+  forward-trust CA); GitHub's runners do not.
+* **To run it:** push; the "Run workflow" button appears once the file is
+  on master (the default branch); before that `gh workflow run
+  windows-exe.yml --ref mboot/conversation-log`. The first run builds ACK
+  and pulls the 2.5 GB toolchain image (about 10-15 min); later runs use
+  the ACK cache. Downloading an artifact needs a GitHub login.
