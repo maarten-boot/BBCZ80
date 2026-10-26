@@ -1798,3 +1798,27 @@ Mid-turn:
   actions/upload-artifact v7.0.2, pinned by commit hash, all node24 (were
   @v4 on Node 20). The first versions written from memory were outdated;
   the user has seen that happen three times.
+
+## 66. Action run 2; how to speed it up (for tomorrow)
+
+* **User:** "pushed merged, workflow running."; about the queued bug
+  report (sent with /feedback, receipt a156e841); "status?" (twice); "yes
+  the slowness, i am looking of hosting apre built ack c compiler
+  artifact on github i guess that would speed up some."; "tomorrow".
+* **Merged:** master 55c3246 (with b38bb35: issue 4, the pinned actions).
+* **Run 2** (master 55c3246): success, 21:11-21:44 UTC; the pinned
+  actions ran. "Build tools" (apt-get, mostly MinGW) took 29.5 min (12 s
+  in run 1, a slow mirror); the ACK cache restored in 12 s; build and test
+  3 min. Artifact bbc68k-windows 671 KB (digest c1487d3d...), until
+  2027-01-21; its README should say run 2, commit 55c3246. Run 1 now shows
+  "cancelled" (attempt 3, re-run by the user); its artifact is the one
+  handed to Russell.
+* **To decide tomorrow (speed):** a prebuilt ACK only helps cache misses
+  (run 2's time was apt). Options: (1) ACK staging + lib as a release
+  file (drops flex/bison/ninja/lua from apt), (2) cache the apt packages,
+  (3) one toolchain image on ghcr.io (MinGW, python, prebuilt ACK, RunCPM;
+  the ROM prebuilt too), with no apt at all: suggested. In any case add
+  apt retries and a 60-minute job limit. Uploads to GitHub are done by the
+  user.
+* **Also open:** check run 2's exe (tmp/) before it goes to Russell with
+  the issue 4 reply; the Minix items wait for the minix inspection.

@@ -159,6 +159,25 @@ FN's code went.
   doubles each integer variable in place (21, 1.5, -50, 1000000 become
   42, 1.5, -100, 2000000). Keep `:` out of its comments: it ends the
   statement there too.
+* **Byte order.** The 68000 stores a long big-endian, but all memory BASIC
+  sees is little-endian (as in the Z80 version). A `move.l` between a
+  register and a BASIC variable or `!` data therefore gets the bytes
+  reversed. Swap them in the register with the usual three instructions:
+  ```
+  rol.w #8,d0 : swap d0 : rol.w #8,d0
+  ```
+  For example, to put the parameter block's address into T%:
+  ```
+  DIM code 15 : P%=code
+  [OPT 2 : move.l a0,d0 : rol.w #8,d0 : swap d0 : rol.w #8,d0
+  move.l d0,^T% : rts : ]
+  CALL code, C%, D
+  ```
+  Then `?T%` is 2, `T%?1` is 4 and `T%?6` is 5. A plain `move.l a0,^T%`
+  would leave T% holding the address with its bytes reversed (&68100500
+  for a block at &51068). A long move to or from `^T%` is allowed because
+  @%-Z% are 4-byte aligned; other variables and `!` data may be at odd
+  addresses, so use byte moves for those.
 * Code must be at an even address. `DIM name size` blocks are word-aligned
   on this port, while the Z80 version does not align them.
 
