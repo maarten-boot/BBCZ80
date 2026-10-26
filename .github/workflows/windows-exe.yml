@@ -1,8 +1,9 @@
-# The Windows program, bbc68k.exe (bare BBC BASIC in an emulated rosco_m68k),
-# built and tested by src68k/tools/ci-windows.sh, as an artifact.  Started by
-# hand: Actions > Windows program > Run workflow.  The actions are pinned to
+# The Windows and Linux programs, bbc68k.exe and bbc68k (bare BBC BASIC in an
+# emulated rosco_m68k), built and tested by src68k/tools/ci-windows.sh, as two
+# artifacts.  Started by hand: Actions > Windows and Linux programs > Run
+# workflow.  The actions are pinned to
 # commit hashes (their versions in the comments), all running on Node 24.
-name: Windows program
+name: Windows and Linux programs
 
 on:
   workflow_dispatch:
@@ -44,3 +45,9 @@ jobs:
         with:
           name: bbc68k-windows
           path: BBCZ80/build/dist/bbc68k-windows/
+
+      # a tar.gz inside the artifact: the artifact's zip loses the executable bit
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: bbc68k-linux
+          path: BBCZ80/build/dist/bbc68k-linux.tar.gz

@@ -1,8 +1,8 @@
 #!/bin/sh
-# ci-windows.sh - BBC BASIC as a Windows program (bbc68k.exe: bare BBC BASIC
-# in an emulated rosco_m68k), built from fresh checkouts and tested.  The
-# GitHub Action (.github/workflows/windows-exe.yml) runs it; it runs the
-# same way by hand in a clean Ubuntu.
+# ci-windows.sh - BBC BASIC as a Windows and a Linux program (bbc68k.exe and
+# bbc68k: bare BBC BASIC in an emulated rosco_m68k), built from fresh
+# checkouts and tested.  The GitHub Action (.github/workflows/windows-exe.yml)
+# runs it; it runs the same way by hand in a clean Ubuntu.
 #
 #	src68k/tools/ci-windows.sh ["VERSION LINE"]
 #
@@ -16,8 +16,9 @@
 # Needs gcc, g++, make, flex, bison, ninja, lua5.4 with lua-posix, python3,
 # git, zip, x86_64-w64-mingw32-g++-posix, and docker for the ROM (the
 # roscopeco/rosco_m68k image has m68k-elf-gcc and vasm).
-# Result: W/BBCZ80/build/dist/bbc68k-windows/ (bbc68k.exe, README.txt) and
-# its .zip.
+# Result, in W/BBCZ80/build/dist: bbc68k-windows/ (bbc68k.exe, README.txt)
+# and its .zip; bbc68k-linux/ (bbc68k, static, and README.txt) and its
+# .tar.gz, which keeps the executable bit that an artifact's zip loses.
 
 set -e
 SRC=$(cd "$(dirname "$0")/.." && pwd)
@@ -61,12 +62,18 @@ echo "== tests: the Linux program against the Z80 references"
 BBC_EMU=host python3 tools/bascheck.py -t 300
 BBC_EMU=host python3 tools/asmcheck.py
 
-echo "== the zip"
+echo "== the zip and the tar"
 dist=$TOP/build/dist
 rm -rf "$dist"
-mkdir -p "$dist/bbc68k-windows"
+for os in windows linux; do
+	mkdir -p "$dist/bbc68k-$os"
+	sed "s|@VERSION@|$VERSION|" "$SRC/host/README-$os.txt" "$SRC/host/README-common.txt" \
+		> "$dist/bbc68k-$os/README.txt"
+done
 cp "$TOP/build/host/windows/bbc68k.exe" "$dist/bbc68k-windows/"
-sed "s|@VERSION@|$VERSION|" "$SRC/host/README-windows.txt" > "$dist/bbc68k-windows/README.txt"
-(cd "$dist" && zip -q -9 -r bbc68k-windows.zip bbc68k-windows)
-ls -l "$dist/bbc68k-windows" "$dist/bbc68k-windows.zip"
-sha256sum "$dist/bbc68k-windows/bbc68k.exe" "$dist/bbc68k-windows.zip"
+cp "$TOP/build/host/linux/bbc68k" "$dist/bbc68k-linux/"
+(cd "$dist" && zip -q -9 -r bbc68k-windows.zip bbc68k-windows &&
+	tar czf bbc68k-linux.tar.gz bbc68k-linux)
+ls -l "$dist" "$dist/bbc68k-windows" "$dist/bbc68k-linux"
+sha256sum "$dist/bbc68k-windows/bbc68k.exe" "$dist/bbc68k-windows.zip" \
+	"$dist/bbc68k-linux/bbc68k" "$dist/bbc68k-linux.tar.gz"
