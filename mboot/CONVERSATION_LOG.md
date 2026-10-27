@@ -1881,3 +1881,18 @@ Mid-turn:
   23% of it. The rest is ACK's call overhead (about 30 instructions a
   byte); further only with an assembler fast path in minix.s.
 * **Tests:** 56/56 host, hostwin, bare; fatcheck, hostcheck all ok.
+
+## 70. The bare profiler kept
+
+* **User:** "commit, then keep the profiler" (e32e576: the fast path).
+* **mboot/patches/r68k-0002-cycle-profiler.patch:** made again for r68k
+  24958aa (applies cleanly); profiling also switches on the instruction
+  hook (r68k_trace_on) when R68K_PROF is set. build/r68kprof rebuilt
+  from it; the r68k needs firmware/rosco_m68k.rom copied in (bench.py
+  says so now).
+* **tools/bareprof.py:** the benchmarks plus console output and a file
+  in the RAM store and on the card, on the bare image; cycles split into
+  interpreter, C, library, with the top C and library routines.
+  build/prof/bare-e32e576.txt is the first report (file loop 69.8M
+  cycles, 25% in C).
+* **Docs:** bench.py (the build steps), bare/README.md (Tests).
