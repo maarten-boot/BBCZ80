@@ -1934,3 +1934,15 @@ Mid-turn:
 * **1 MB (the default):** HIMEM &D47F0, `?&FFFFF` reads 0, `?&100000` is
   "Address out of range": MAME's board gives a bus error past the RAM.
 * **bare/README.md:** the MAME line says so.
+
+## 73. The web page: not this time
+
+* **User:** "commit, then update the web page" (150786b: the MAME
+  check); then "no need for a web version this time, the windows and
+  linux are ok now".
+* **Started and undone:** 5 MB and bus errors for the bare page
+  (webmain.cpp, a WEB_MINIX define from mkweb.py for the Minix page);
+  not built, so reverted. Emscripten is not installed on vibe-u26; the
+  docker image emscripten/emsdk:4.0.10 was pulled for it (can be
+  removed). The page stays as it is: 2 MB, no bus errors (an address
+  error is caught by the handlers, a bus error is not raised there).
