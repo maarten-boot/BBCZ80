@@ -1,0 +1,50 @@
+REM star commands and OSCLI, from the manual (bbcwin8): the ones the Z80
+REM version has too (not *DIR: its listing is CP/M's)
+*| a comment: nothing happens
+   *  | also with spaces
+*FOOBAR
+OSCLI "FOOBAR 1"
+10 REM *SAVE and *LOAD with an address and a length
+20 DIM buf% 255,copy% 255
+30 FOR i%=0 TO 255:buf%?i%=i% EOR &5A:NEXT
+40 OSCLI "SAVE K05BIN.DAT "+STR$~buf%+" +100"
+50 OSCLI "SAVE K05TWO.DAT "+STR$~buf%+" "+STR$~(buf%+128)
+60 OSCLI "LOAD K05BIN.DAT "+STR$~copy%
+70 n%=0:FOR i%=0 TO 255:IF copy%?i%=buf%?i% n%+=1
+80 NEXT:PRINT n%
+90 FOR i%=0 TO 255:copy%?i%=0:NEXT
+100 OSCLI "LOAD K05TWO.DAT "+STR$~copy%
+110 n%=0:FOR i%=0 TO 255:IF copy%?i%=buf%?i% n%+=1
+120 NEXT:PRINT n%;copy%?127;copy%?128
+130 F%=OPENIN "K05BIN.DAT":PRINT BGET#F%;BGET#F%:CLOSE#F%
+RUN
+*REN K05NEW.DAT=K05BIN.DAT
+F%=OPENIN "K05BIN.DAT":PRINT F%
+F%=OPENIN "K05NEW.DAT":PRINT F%>0;BGET#F%:CLOSE#F%
+*ERA K05NEW.DAT
+*ERA K05TWO.DAT
+F%=OPENIN "K05NEW.DAT":PRINT F%
+NEW
+10 REM *TYPE of a text file; *EXEC of a file of commands (each 128
+15 REM bytes: CP/M files are in 128s, and *TYPE there shows all of it)
+20 F%=OPENOUT "K05TEXT.TXT"
+30 FOR i%=1 TO 16:PRINT#F%,"row "+RIGHT$("0"+STR$(i%),2):BPUT#F%,10:NEXT
+40 PRINT PTR#F%:CLOSE#F%
+50 F%=OPENOUT "K05EXEC.TXT"
+60 PRINT#F%,"B%=6*7"+STRING$(18," "):PRINT#F%,"A%=123"
+70 PRINT#F%,"C%=A%+1":PRINT#F%,"REM "+STRING$(83,"x"):PRINT PTR#F%:CLOSE#F%
+RUN
+*TYPE K05TEXT.TXT
+*EXEC K05EXEC.TXT
+PRINT "after exec ";A%;B%;C%
+*ERA K05TEXT.TXT
+OSCLI "ERA K05EXEC.TXT"
+F%=OPENIN "K05EXEC.TXT":PRINT F%
+*ESC OFF
+*ESC ON
+*ESC
+PRINT "esc ok"
+OSCLI "|comment"
+REM (not tested, they differ: *ERA of a file that is not there, "Bad
+REM command" in the Z80 version; OSCLI "* ERA ...", a space after the *)
+PRINT "end"

@@ -1021,8 +1021,8 @@ static void cmd_era(char *s)
 static void cmd_esc(char *s)
 {
 	s = skipsp(s);
-	if (upper(s[0]) == 'O' && upper(s[1]) == 'N')
-		os_flags &= ~F_NOESC;
+	if (*s == CR || upper(s[0]) == 'O' && upper(s[1]) == 'N')
+		os_flags &= ~F_NOESC;		/* *ESC alone = *ESC ON */
 	else if (upper(s[0]) == 'O' && upper(s[1]) == 'F'
 	    && upper(s[2]) == 'F')
 		os_flags |= F_NOESC;

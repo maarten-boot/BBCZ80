@@ -1,0 +1,94 @@
+REM data files, after the manual's examples (bbcwin9), with DATA instead
+REM of INPUT; no EXT# or EOF# at the end of a file (CP/M files are in 128s)
+10 REM serial character file (F-WSER1, F-RSER1), with a count in front
+20 phonenos=OPENOUT "K06PHONE.DAT"
+30 PRINT#phonenos,0
+40 n%=0:REPEAT:READ name$:IF name$<>"" PRINT#phonenos,name$:READ phone$:PRINT#phonenos,phone$:n%+=1
+50 UNTIL name$=""
+60 PTR#phonenos=0:PRINT#phonenos,n%:CLOSE#phonenos
+70 PROCread
+80 REM appending (F-WESER1): past the records, then the new count
+90 phonenos=OPENUP "K06PHONE.DAT":INPUT#phonenos,n%
+100 FOR i%=1 TO n%:INPUT#phonenos,name$,phone$:NEXT
+110 PRINT#phonenos,"Zoe","555 0199":PTR#phonenos=0:PRINT#phonenos,n%+1:CLOSE#phonenos
+120 PROCread
+130 END
+140 DEF PROCread:LOCAL c%,i%
+150 phonenos=OPENIN "K06PHONE.DAT":INPUT#phonenos,c%:PRINT c%;" records"
+160 FOR i%=1 TO c%:INPUT#phonenos,name$,phone$:PRINT name$,phone$:NEXT
+170 CLOSE#phonenos:ENDPROC
+180 DATA Fred,01234 567890,"Smith, John",555 0100,"  spaces  ",0,""
+RUN
+NEW
+10 REM mixed numeric and string data (F-WSER2, F-RSER2): how it is stored
+20 F%=OPENOUT "K06MIXED.DAT"
+30 PRINT#F%,"Name",1,-1,1.5,-0.25,2147483647,-2147483648,1E-30,"",0,"end"
+40 l%=PTR#F%:CLOSE#F%:PRINT l%
+50 F%=OPENIN "K06MIXED.DAT"
+60 FOR i%=1 TO l%:PRINT ;~BGET#F%;" ";:NEXT:PRINT
+70 PTR#F%=0:INPUT#F%,a$,b,c,d,e,f,g,h,i$,j,k$
+80 PRINT a$;" ";b;" ";c;" ";d;" ";e;" ";f;" ";g;" ";h;" [";i$;"] ";j;k$
+90 PTR#F%=5:INPUT#F%,x:PRINT x
+100 CLOSE#F%
+110 REM integers and reals read back into the other kind
+120 F%=OPENOUT "K06MIXED.DAT":PRINT#F%,7,2.75,100000:CLOSE#F%
+130 F%=OPENIN "K06MIXED.DAT":INPUT#F%,r,i%,s:PRINT r;i%;s:CLOSE#F%
+140 *ERA K06MIXED.DAT
+RUN
+NEW
+10 REM a compatible file (F-WSTD, F-RSTD): records as text, CR LF
+20 F%=OPENOUT "K06COMP.DAT"
+30 FOR r%=1 TO 3:READ name$,age,height,sex$
+40 record$=name$+","+STR$(age)+","+STR$(height)+","+sex$
+50 PRINT#F%,record$:BPUT#F%,&0A:NEXT
+60 l%=PTR#F%:CLOSE#F%
+70 F%=OPENIN "K06COMP.DAT":field$="":n%=0
+80 FOR i%=1 TO l%
+90 c%=BGET#F%
+100 IF c%=44 OR c%=13 THEN PRINT "[";field$;"]";:field$="":n%+=1
+110 IF c%=10 THEN PRINT
+120 IF c%>31 AND c%<>44 THEN field$+=CHR$(c%)
+130 NEXT:CLOSE#F%:PRINT n%;" fields"
+140 *ERA K06COMP.DAT
+150 DATA Alice,34.5,170,F,Bob,7,121,M,Carol Ann,101.2,155,F
+RUN
+NEW
+10 REM a random access file (F-RAND0): fixed size records by PTR#
+20 size%=32:F%=OPENOUT "K06RAND.DAT"
+30 FOR rec%=0 TO 7:PROCput(rec%,"item "+STR$(rec%*11),rec%*1.25,rec%^2):NEXT
+40 PROCput(3,"changed",-1,-1)
+50 FOR rec%=7 TO 0 STEP -2:PROCget(rec%):NEXT
+60 PROCget(3):PRINT PTR#F%
+70 CLOSE#F%
+80 F%=OPENUP "K06RAND.DAT":PROCget(5):PROCput(5,"again",0,5):PROCget(5):CLOSE#F%
+90 *ERA K06RAND.DAT
+100 END
+110 DEF PROCput(r%,n$,v,q%):PTR#F%=r%*size%:PRINT#F%,n$,v,q%:ENDPROC
+120 DEF PROCget(r%):LOCAL n$,v,q%:PTR#F%=r%*size%:INPUT#F%,n$,v,q%
+130 PRINT r%;" ";n$,v,q%:ENDPROC
+RUN
+NEW
+10 REM an indexed file and the binary chop (F-INDEX, the Binary Chop)
+20 DIM key$(20),ptr%(20):n%=0
+30 F%=OPENOUT "K06INDEX.DAT"
+40 REPEAT:READ k$:IF k$<>"" READ phone$:PROCadd(k$,phone$)
+50 UNTIL k$=""
+60 FOR i%=1 TO n%:PRINT key$(i%);" ";:NEXT:PRINT
+70 FOR t%=1 TO 4:READ k$:PRINT k$;": ";FNfind(k$):NEXT
+80 CLOSE#F%:*ERA K06INDEX.DAT
+90 END
+100 DEF PROCadd(k$,p$):LOCAL i%,j%
+110 i%=1:WHILE i%<=n% AND key$(i%)<k$:i%+=1:ENDWHILE
+120 FOR j%=n% TO i% STEP -1:key$(j%+1)=key$(j%):ptr%(j%+1)=ptr%(j%):NEXT
+130 key$(i%)=k$:ptr%(i%)=PTR#F%:PRINT#F%,p$:n%+=1:ENDPROC
+140 DEF FNfind(k$):LOCAL lo%,hi%,mid%,p$
+150 lo%=1:hi%=n%
+160 REPEAT:mid%=(lo%+hi%) DIV 2
+170 IF key$(mid%)<k$ THEN lo%=mid%+1 ELSE hi%=mid%-1
+180 UNTIL key$(mid%)=k$ OR lo%>hi%
+190 IF key$(mid%)<>k$ THEN ="not found"
+200 PTR#F%=ptr%(mid%):INPUT#F%,p$:=p$
+210 DATA mike,111,anna,222,zack,333,lisa,444,bert,555,ruth,666,""
+220 DATA lisa,anna,zack,nobody
+RUN
+*ERA K06PHONE.DAT

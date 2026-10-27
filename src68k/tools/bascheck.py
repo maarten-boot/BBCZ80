@@ -180,6 +180,13 @@ def run_bare(tests, secs):
                     for c in (line + '\r').encode('latin-1'):
                         os.write(fd, bytes([c]))
                     out += until(rb'(^|\n)>', secs)
+                    # *EXEC: a prompt for each line of the file, so the
+                    # rest until the output is quiet for a second
+                    while line.lstrip(' *').upper().startswith('EXEC'):
+                        try:
+                            out += until(rb'(^|\n)>', 1)
+                        except TimeoutError:
+                            break
                 res[t] = out.decode('latin-1').replace('\r', '')
             except TimeoutError:
                 res[t] = (out + buf[0]).decode('latin-1').replace('\r', '') + '\n(timeout)'
