@@ -1946,3 +1946,19 @@ Mid-turn:
   docker image emscripten/emsdk:4.0.10 was pulled for it (can be
   removed). The page stays as it is: 2 MB, no bus errors (an address
   error is caught by the handlers, a bus error is not raised there).
+
+## 74. The run 5 artifacts checked
+
+* **User:** "commit, no need for a new zip we now have artifacts during
+  the CI github action." (f2698e0); "ok artifacts are in ./tmp/".
+* **tmp/bbc68k-windows.zip** (sha256 e7e9bb38...) and
+  **tmp/bbc68k-linux.zip** (a42ca1a2..., a tar.gz inside): README
+  "Version 2026-10-27 13:56 (commit 0827b68, GitHub Actions run 5)".
+  0827b68 is master's merge of PR #9 (with f2698e0); its src68k equals
+  the branch. The exe imports only KERNEL32, msvcrt, WS2_32; the Linux
+  program is static.
+* **Tested in place of the local builds** (restored after): bascheck
+  host 57/57 and hostwin 57/57 (x07fault, x06bigmem, k05star among
+  them), asmcheck 162, hostcheck, editcheck, ttycheck --exe all ok.
+* **README:** "Changes since 2026-10-23b" lists all of today's changes
+  (*ESC, 5 MB, file speed, error 8). Ready for Russell.
