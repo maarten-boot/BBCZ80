@@ -1920,3 +1920,17 @@ Mid-turn:
   at &800000; `!` and `?` there; the timer still runs; immediate mode.
 * **Tests:** 57/57 host, hostwin, bare; asmcheck 162; fatcheck,
   hostcheck, editcheck, ttycheck --exe all ok. Web and Minix unchanged.
+
+## 72. The error handlers on MAME
+
+* **User:** "pushed; what is next?"; "do 2, check the handlers in MAME".
+* **How:** a card with build/bare/ROSCODE1.BIN on its FAT partition
+  (mkfat.py, mksd.py), mamesession.py in the docker image
+  rosco-emulator:local (the real firmware, rosco_m68k_010), the lines of
+  test/bas/x07fault.in typed.
+* **5 MB (-ram 5m):** the output is the same as x07fault.exp, line for
+  line: odd read/write/jump "Odd address", &800000 "Address out of
+  range", `!`/`?` there, the timer still runs, immediate mode.
+* **1 MB (the default):** HIMEM &D47F0, `?&FFFFF` reads 0, `?&100000` is
+  "Address out of range": MAME's board gives a bus error past the RAM.
+* **bare/README.md:** the MAME line says so.

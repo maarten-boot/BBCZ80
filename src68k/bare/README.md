@@ -76,6 +76,8 @@ for programs and variables. The PC programs and the tests use 5 MB too. On the b
   `*REN`/`*ERA` and `*BYE`; then `fsck.fat` must find each card clean.
 * **MAME with the real firmware:** boots from the card, then loads, runs,
   saves, writes 40 KB, and uses `*MKDIR`/`*CD`.
+  The bus and address errors of `test/bas/x07fault` give the same
+  output there (5 MB, and the 1 MB board: `?&100000`).
 * **`tools/bareprof.py`:** where the cycles go (the interpreter, the C
   files, the library) in the benchmarks, console output and file I/O,
   under the profiling r68k (see `tools/bench.py`).
