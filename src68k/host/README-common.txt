@@ -54,6 +54,9 @@ Changes since 2026-10-23b
   3.6 MB for programs and variables (was 2.8 MB).
 * PRINT#, INPUT#, BPUT# and BGET# are faster: a loop that writes and
   reads a file takes about 18% less time.
+* A bus error or an address error (in machine code, or ? ! $ where there
+  is no memory) is BASIC's error 8, "Address out of range" or "Odd
+  address", instead of ending the program.
 
 Changes since 2026-10-23
 ------------------------

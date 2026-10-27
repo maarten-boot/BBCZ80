@@ -24,6 +24,9 @@
 //   machine is idle and nothing has been written for IDLE_EXIT_MS (a
 //   script has run; the timer wakes the CPU 60 times a second, so idle
 //   alone is never long).  *BYE ends it (hostfs).
+// * Bus errors on, as with r68k -d: an access where nothing is mapped
+//   takes vector 2 (BASIC's "Address out of range").  The program's own
+//   looks at memory (the idle test here, hostfs's file calls) never fault.
 //
 #include <atomic>
 #include <chrono>
@@ -72,6 +75,8 @@ extern "C" {
     void r68k_hostfs_init();
     void r68k_hostfs_arg(const char *name);
     void r68k_hostfs_end();
+    extern bool r68k_bus_errors;
+    extern int r68k_no_bus_errors;
 }
 
 /*==================================================== the console ====*/
@@ -378,6 +383,7 @@ int main(int argc, char **argv)
     m68k_set_cpu_type(M68K_CPU_TYPE_68010);
     m68k_init();
     m68k_pulse_reset();
+    r68k_bus_errors = true;		// (after the reset, as in main.cpp)
 
     auto last_flush = std::chrono::steady_clock::now();
     last_output = last_flush;
@@ -394,8 +400,10 @@ int main(int argc, char **argv)
         __duart->poll();
         auto now = std::chrono::steady_clock::now();
         unsigned int pc = m68k_get_reg(nullptr, M68K_REG_PC);
+        r68k_no_bus_errors++;
         bool idle = r68k_duart_idle && (m68k_read_memory_16(pc - 4) == 0x4E72
                                         || m68k_read_memory_16(pc) == 0x60FE);
+        r68k_no_bus_errors--;
         if (idle || now - last_flush > std::chrono::milliseconds(15)) {
             r68k_flush();
             std::fflush(stdout);

@@ -39,6 +39,8 @@ void bare_restart(void);
 void bare_isr(void);
 void bare_idle(void);
 long bare_getvbr(void);
+void bare_buserr(void);
+void bare_adrerr(void);
 int bare_ints(int on);
 long bare_host(int op, long a, long b, long c);
 void bare_nohost(void);
@@ -990,6 +992,8 @@ long bare_init(int cold)
 	DU(DU_IMR) = 0;
 	vbr = (long *) bare_getvbr();
 	vbr[VECTOR] = (long) bare_isr;
+	vbr[2] = (long) bare_buserr;		/* BASIC's error 8 (start.s) */
+	vbr[3] = (long) bare_adrerr;
 	DU(DU_ACR) = ACR_VAL;
 	DU(DU_CTUR) = (unsigned char) (TIMER >> 8);
 	DU(DU_CTLR) = (unsigned char) (TIMER & 0xFF);

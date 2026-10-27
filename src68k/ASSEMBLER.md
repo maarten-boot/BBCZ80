@@ -180,6 +180,14 @@ FN's code went.
   addresses, so use byte moves for those.
 * Code must be at an even address. `DIM name size` blocks are word-aligned
   on this port, while the Z80 version does not align them.
+* **Faults.** A word or long access at an odd address, or a jump to one,
+  is an address error on the 68000; an access where there is no memory
+  (for example `&800000` on the 5 MB machine) is a bus error. Both stop
+  the code and give BASIC's error 8, "Odd address" or "Address out of
+  range" (the number BBC BASIC for Windows gives for an address it
+  rejects), which `ON ERROR` can trap. `?`, `!` and `$` at an address
+  with no memory give "Address out of range" too. (On the rosco_m68k
+  and the PC programs; under Minix not yet.)
 
 ## Tests
 

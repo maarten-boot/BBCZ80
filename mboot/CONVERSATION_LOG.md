@@ -1896,3 +1896,27 @@ Mid-turn:
   build/prof/bare-e32e576.txt is the first report (file loop 69.8M
   cycles, 25% in C).
 * **Docs:** bench.py (the build steps), bare/README.md (Tests).
+
+## 71. Address and bus errors: BASIC's error 8
+
+* **User:** "commit, then do the address and bus error handlers"
+  (b78981c: bareprof.py and the profiler patch).
+* **bare/start.s, bare.c:** vectors 2 and 3 (set in bare_init) raise
+  BASIC's error 8 through EXTERR: "Address out of range" (bus error, the
+  number BB4W gives for an address it rejects; 8 is unused in the Z80
+  table) and "Odd address" (address error, also an odd PC). ERROR sets
+  the stack to HIMEM, which drops the exception frame; the handler sets
+  SR to 0x2000 first. ON ERROR traps them.
+* **host/hostmain.cpp, hostfs.cpp:** bus errors on after the reset (as
+  r68k -d); the idle test and hostfs's host calls under
+  r68k_no_bus_errors. Before: an address error ended bbc68k ("[r68k]
+  address error ... no handler"), `PRINT !&800000` read nothing.
+* **tools/bascheck.py:** the bare runner takes ../r68k/r68k before the
+  demo's copy (21 Oct, without address and bus errors).
+* **Found on the way:** mkhost.py embeds build/bare/demo/ROSCODE1.BIN, so
+  `make bare` must come first; the host runs after e32e576 had tested the
+  old image (all rerun now).
+* **Test x07fault** (.exp): odd read, write and jump; read, write and jump
+  at &800000; `!` and `?` there; the timer still runs; immediate mode.
+* **Tests:** 57/57 host, hostwin, bare; asmcheck 162; fatcheck,
+  hostcheck, editcheck, ttycheck --exe all ok. Web and Minix unchanged.

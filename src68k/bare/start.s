@@ -13,8 +13,10 @@
 
 	.define	start, _bare_restart, _bare_isr, _bare_idle, _bare_getvbr
 	.define	_bare_setsr, _bare_ints, EXIT, .trpim, .trppc
+	.define	_bare_buserr, _bare_adrerr
 	.define	_bare_sdinit, _bare_sdread, _bare_sdwrite, _bare_host, _bare_nohost
 	.extern	_main, _bare_init, _bare_irq, _bare_argc, _bare_argv, __end
+	.extern	EXTERR
 
 	.sect	.text
 	.sect	.rom
@@ -55,6 +57,25 @@ _bare_isr:
 	jsr	_bare_irq
 	movem.l	(sp)+,d0-d2/a0-a1
 	rte
+
+! A bus error (vector 2: nothing at that address) or an address error
+! (vector 3: a word or long at an odd address, or an odd PC), in machine
+! code or in a ? ! or $ of BASIC's: error 8, as BBC BASIC for Windows
+! gives for an address it rejects.  The frame is left on the stack: ERROR
+! sets the stack pointer to HIMEM.  The interrupts on again, as BASIC runs
+! (the fault may have come with them off).
+_bare_buserr:
+	move.w	#0x2000,sr
+	move.b	#8,d4
+	jsr	EXTERR
+	.asciz	"Address out of range"
+	.align	2
+_bare_adrerr:
+	move.w	#0x2000,sr
+	move.b	#8,d4
+	jsr	EXTERR
+	.asciz	"Odd address"
+	.align	2
 
 ! wait for an interrupt (keeps emulators idle)
 _bare_idle:
