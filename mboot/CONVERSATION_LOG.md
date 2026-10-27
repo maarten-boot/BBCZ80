@@ -1962,3 +1962,19 @@ Mid-turn:
   them), asmcheck 162, hostcheck, editcheck, ttycheck --exe all ok.
 * **README:** "Changes since 2026-10-23b" lists all of today's changes
   (*ESC, 5 MB, file speed, error 8). Ready for Russell.
+
+## 75. Housekeeping
+
+* **User:** "pushed; what is next?"; "housekeeping first"; chose all four
+  of: merged branches, Docker build cache, the bbc68k-ci image, old build
+  folders.
+* **Docker:** emscripten/emsdk:4.0.10 (2.8 GB) and bbc68k-ci (1.6 GB, the
+  local CI dry-run image; ci-windows.sh can make it again) removed; the
+  build cache pruned (9.7 GB). Kept: rosco-emulator:local (MAME),
+  roscopeco/rosco_m68k (firmware, m68k-elf-gcc), the other projects'.
+* **git:** local branches mboot/edit-wrap and mboot/lockdown (merged)
+  deleted, the refs of the old remotes agent-s-8250 and lockdown too;
+  local master fast-forwarded (over https) to addcf06, PR #10.
+* **build/:** wt-base, bare/fat (fatcheck makes it again), mame's cards
+  and run/ removed (build/ 640 MB to 104 MB); build/mame/image-115200.bin
+  kept (it comes from the Minix tree).
