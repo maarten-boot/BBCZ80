@@ -1868,3 +1868,16 @@ Mid-turn:
   are ACK syntax; ACK int is 16 bits (gcc -mshort) and ACK's d2 is a
   scratch register; a libc. So: not worth it for speed; a per-byte fast
   path in osl.c gives the file gain with ACK.
+
+## 69. The osl.c fast path for file bytes
+
+* **User:** "commit, then do the osl.c fast path" (4045ea8: the log).
+* **osl.c:** a pointer table chanp[] (no multiply by the struct size), a
+  FIND macro in line for BGET#, BPUT# and EOF#; inside the channel buffer
+  os_bget, os_bput (also when appending) and os_eof return at once,
+  without cext().
+* **Measured** (the scratch profiler, bare): the file loop of 2000
+  PRINT#/BPUT# + INPUT#/BGET# 92.0M to 75.4M cycles (-18%); C from 37% to
+  23% of it. The rest is ACK's call overhead (about 30 instructions a
+  byte); further only with an assembler fast path in minix.s.
+* **Tests:** 56/56 host, hostwin, bare; fatcheck, hostcheck all ok.

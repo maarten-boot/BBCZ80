@@ -52,6 +52,8 @@ Changes since 2026-10-23b
 * *ESC on its own (the same as *ESC ON) gave "Bad command".
 * The machine has 5 MB, as a rosco_m68k with its 4 MB expansion: about
   3.6 MB for programs and variables (was 2.8 MB).
+* PRINT#, INPUT#, BPUT# and BGET# are faster: a loop that writes and
+  reads a file takes about 18% less time.
 
 Changes since 2026-10-23
 ------------------------

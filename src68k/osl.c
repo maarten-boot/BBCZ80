@@ -84,6 +84,14 @@ struct chan {
 	char buf[BUFSZ];
 };
 static struct chan chans[CH_SPOOL + 1];
+static struct chan *chanp[CH_SPOOL + 1];	/* &chans[ch]: no multiply */
+
+/* FIND - c = the open channel ch, else "Invalid channel" (find, in line
+ * for BGET# and BPUT#, which are called for each byte of PRINT#/INPUT#)
+ */
+#define FIND(c, ch) \
+	if ((ch) < 1 || (ch) > CH_SPOOL || ((c) = chanp[ch])->fd < 0) \
+		oserror(222, "Invalid channel")
 
 /*==================================================== console ======*/
 
@@ -555,9 +563,10 @@ static int openfile(char *name, int mode)
 
 static struct chan *find(int ch)
 {
-	if (ch < 1 || ch > CH_SPOOL || chans[ch].fd < 0)
-		oserror(222, "Invalid channel");
-	return &chans[ch];
+	struct chan *c;
+
+	FIND(c, ch);
+	return c;
 }
 
 static void cflush(struct chan *c)
@@ -659,9 +668,13 @@ void os_shut(int ch)
  */
 int os_bget(int ch)
 {
-	struct chan *c = find(ch);
+	struct chan *c;
 	int b;
 
+	FIND(c, ch);
+	if (c->bpos + 1 < c->blen)		/* not the buffer's last byte, so
+						 * not the file's either */
+		return (unsigned char) c->buf[c->bpos++];
 	if (c->bpos >= BUFSZ)
 		cload(c, c->bstart + c->bpos);
 	if (c->bpos < c->blen)
@@ -677,8 +690,16 @@ int os_bget(int ch)
 /* os_bput - OSBPUT */
 void os_bput(int ch, int b)
 {
-	struct chan *c = find(ch);
+	struct chan *c;
 
+	FIND(c, ch);
+	if (c->bpos < c->blen || c->bpos == c->blen && c->bpos < BUFSZ) {
+		c->buf[c->bpos++] = b;		/* inside the buffer, or at */
+		c->dirty = 1;			/* its end (appending) */
+		if (c->bpos > c->blen)
+			c->blen = c->bpos;
+		return;
+	}
 	if (c->bpos >= BUFSZ)
 		cload(c, c->bstart + c->bpos);
 	if (c->bpos > c->blen)			/* after reading past the end */
@@ -692,8 +713,11 @@ void os_bput(int ch, int b)
 /* os_eof - OSSTAT: 1 at end of file */
 int os_eof(int ch)
 {
-	struct chan *c = find(ch);
+	struct chan *c;
 
+	FIND(c, ch);
+	if (c->bpos < c->blen)
+		return 0;
 	return c->bstart + c->bpos >= cext(c);
 }
 
@@ -1219,8 +1243,10 @@ int os_init(int argc, char **argv)
 	int ch;
 	struct sigaction sa;
 
-	for (ch = 0; ch <= CH_SPOOL; ch++)
+	for (ch = 0; ch <= CH_SPOOL; ch++) {
 		chans[ch].fd = -1;
+		chanp[ch] = &chans[ch];
+	}
 	os_flags = 0;
 	optval = 0;
 	toffset = 0;
