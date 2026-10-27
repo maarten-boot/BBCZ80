@@ -23,4 +23,4 @@ stty intr '^]'
 echo "Starting BBC BASIC on the emulated rosco_m68k (Ctrl-] quits) ..."
 # (r68k makes its standard input non-blocking: a separate open of the
 # terminal keeps that from the shell)
-R68K_RAM=2M "$here/r68k" -d "$here/ROSCODE1.BIN" </dev/tty
+R68K_RAM=5M "$here/r68k" -d "$here/ROSCODE1.BIN" </dev/tty

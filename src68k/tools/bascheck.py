@@ -21,7 +21,8 @@ BBC_EMU=bare tests BBC BASIC on a bare rosco_m68k (tools/mkbare.py): an
 image per group with the #file files in its RAM store, in r68k on a pty
 ($R68K, else the demo's -O2 r68k if there is one); the lines are typed at the >
 prompt, each after the prompt is back, and *BYE ends a test (BASIC starts
-again with the files kept).
+again with the files kept).  The machine has 5 MB (R68K_RAM, unless set):
+the rosco_m68k with its 4 MB expansion.
 BBC_EMU=host and BBC_EMU=hostwin test BBC BASIC as a program on the PC
 (tools/mkhost.py): build/host/linux/bbc68k, or build/host/windows/
 bbc68k.exe under Wine; each test in a new folder with its #file files (the
@@ -149,7 +150,7 @@ def run_bare(tests, secs):
     sin = os.open(os.ttyname(slave), os.O_RDWR)
     p = subprocess.Popen([r68k, '-d', img], stdin=sin, stdout=slave,
                          stderr=subprocess.DEVNULL,
-                         env=dict(os.environ, R68K_RAM=os.environ.get('R68K_RAM', '2M')))
+                         env=dict(os.environ, R68K_RAM=os.environ.get('R68K_RAM', '5M')))
     os.close(slave)
     os.close(sin)
     buf = [b'']

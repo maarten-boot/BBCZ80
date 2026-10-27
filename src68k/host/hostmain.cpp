@@ -4,8 +4,9 @@
 // BASIC built in (images.h, made by tools/mkhost.py).  BASIC's files are
 // the host's (hostfs.cpp), its console is the program's.
 //
-// The machine is set up as in "R68K_RAM=4M r68k -d ROSCODE1.BIN" (r68k's
-// main.cpp is compiled with its main renamed, for its trap handlers).  The
+// The machine is set up as in "R68K_RAM=5M r68k -d ROSCODE1.BIN" (the 1 MB
+// board with the 4 MB expansion; r68k's main.cpp is compiled with its main
+// renamed, for its trap handlers).  The
 // DUART (r68k-web.patch, R68K_HOSTED) takes keys from r68k_key() and hands
 // its output to r68k_host_output().
 // * Input: a thread reads the console (raw keys; on Windows arrow keys etc.
@@ -322,7 +323,7 @@ static void setup_console()
 static unsigned int ram_size()
 {
     const char *e = std::getenv("R68K_RAM");
-    unsigned long n = 4ul << 20;
+    unsigned long n = 5ul << 20;
     if (e && *e) {
         char *end;
         n = std::strtoul(e, &end, 0);
@@ -332,7 +333,7 @@ static unsigned int ram_size()
             n <<= 10;
     }
     if (n < 0x80000 || n > 0xE00000 || (n & 0x7FFFF))
-        n = 4ul << 20;
+        n = 5ul << 20;
     return (unsigned int) n;
 }
 

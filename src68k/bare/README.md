@@ -9,7 +9,7 @@ it from the SD card and it runs straight on the machine.
 the FAT partition of the SD card. The firmware loads and starts it, and
 BBC BASIC comes up on the serial console at the firmware's speed.
 
-**In r68k:** `R68K_RAM=2M r68k -d build/bare/ROSCODE1.BIN`. A
+**In r68k:** `R68K_RAM=5M r68k -d build/bare/ROSCODE1.BIN`. A
 `rosco_sd.bin` in the current directory is the SD card.
 
 **In MAME:** the rosco-emulator, with `ROSCODE1.BIN` on the card's FAT
@@ -17,6 +17,14 @@ partition.
 
 `build/bare/demo/ROSCODE1.BIN` has the demo programs in its RAM store and
 starts the menu.
+
+## Memory
+
+BASIC uses the memory the firmware reports. The usual machine is the
+board's 1 MB with the 4 MB expansion, 5 MB in all. The RAM store takes
+a quarter of the memory above BASIC's code, which leaves about 3.6 MB
+for programs and variables. The PC programs and the tests use 5 MB too. On the board alone
+(1 MB) BASIC has about 0.5 MB.
 
 ## Files
 

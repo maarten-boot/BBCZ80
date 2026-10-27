@@ -49,6 +49,8 @@ Changes since 2026-10-23b
 * The variables @% to Z% are at addresses that are a multiple of 4, so
   68000 code can move.l to and from ^T% (GitHub issue #4).
 * Also as a Linux program (bbc68k-linux).
+* The machine has 5 MB, as a rosco_m68k with its 4 MB expansion: about
+  3.6 MB for programs and variables (was 2.8 MB).
 
 Changes since 2026-10-23
 ------------------------

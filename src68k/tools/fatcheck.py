@@ -49,7 +49,7 @@ class Basic:
         self.fd, slave = pty.openpty()
         sin = os.open(os.ttyname(slave), os.O_RDWR)
         self.p = subprocess.Popen([r68k, '-d', img], cwd=card_dir, stdin=sin, stdout=slave,
-                                  stderr=subprocess.DEVNULL, env=dict(os.environ, R68K_RAM='2M'))
+                                  stderr=subprocess.DEVNULL, env=dict(os.environ, R68K_RAM='5M'))
         os.close(slave)
         os.close(sin)
         self.buf = b''

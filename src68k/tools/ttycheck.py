@@ -47,7 +47,7 @@ class Tty:
             cmd, cwd = ['./r68k', '-d', 'ROSCODE1.BIN'], demo
         self.p = subprocess.Popen(cmd, cwd=cwd,
                                   stdin=sin, stdout=slave, stderr=subprocess.DEVNULL,
-                                  env=dict(os.environ, R68K_RAM='2M'))
+                                  env=dict(os.environ, R68K_RAM='5M' if exe else '2M'))
         os.close(slave)
         os.close(sin)
         self.buf = self.all = b''
