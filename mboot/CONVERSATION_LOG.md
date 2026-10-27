@@ -1843,3 +1843,28 @@ Mid-turn:
   `tmp/` (ignored by git).
 * **Workflow:** apt-get with 5 retries; a 60-minute limit for the job and
   40 minutes for the apt step (run 2's slow mirror took 29.5).
+
+## 68. Would gcc help the standalone build? Measured
+
+* **User:** "pushed; now measure gcc for the bare build"; the summary went
+  to Russell by e-mail (copied from the page).
+* **How:** the profiling r68k rebuilt from r68k 24958aa
+  (`r68k-0002-cycle-profiler.patch` no longer applies: two hunks by hand,
+  and the instruction hook must be switched on, `r68k_trace_on`, when
+  R68K_PROF is set); the bare image's cycles split by object (anm on
+  em_led's output): interpreter (.s), C (osl, bare, fat), ACK library.
+* **Benchmarks b1-b7:** 99.1-99.9% in the interpreter, under 1% in C.
+* **Console output** (300 lines): 44% in C (out, con_write, os_wrch),
+  about 700 of 1600 cycles a character; at 10 MHz 70 us, while 115200
+  baud takes 87 us: the serial line is the limit.
+* **Files** (2000 PRINT#/BPUT#, read back): 37% in C, the same in the RAM
+  store and on the card (512-byte channel buffer); find() alone 14.5%,
+  os_bget/os_bput/cext the rest: per byte calls.
+* **ACK -O:** no change at all. **gcc 13.3** (rosco image, m68k-elf):
+  C text 23.6 KB with ACK, 19.0 KB -Os, 28.0 KB -O2; -O2 inlines find
+  and cext (estimate: the C part of file I/O about halved, 15-20% off a
+  file loop).
+* **Cost of gcc:** ELF objects cannot be linked with em_led; the .s files
+  are ACK syntax; ACK int is 16 bits (gcc -mshort) and ACK's d2 is a
+  scratch register; a libc. So: not worth it for speed; a per-byte fast
+  path in osl.c gives the file gain with ACK.
