@@ -1920,3 +1920,29 @@ Mid-turn:
   at &800000; `!` and `?` there; the timer still runs; immediate mode.
 * **Tests:** 57/57 host, hostwin, bare; asmcheck 162; fatcheck,
   hostcheck, editcheck, ttycheck --exe all ok. Web and Minix unchanged.
+
+## 72. The error handlers on MAME
+
+* **User:** "pushed; what is next?"; "do 2, check the handlers in MAME".
+* **How:** a card with build/bare/ROSCODE1.BIN on its FAT partition
+  (mkfat.py, mksd.py), mamesession.py in the docker image
+  rosco-emulator:local (the real firmware, rosco_m68k_010), the lines of
+  test/bas/x07fault.in typed.
+* **5 MB (-ram 5m):** the output is the same as x07fault.exp, line for
+  line: odd read/write/jump "Odd address", &800000 "Address out of
+  range", `!`/`?` there, the timer still runs, immediate mode.
+* **1 MB (the default):** HIMEM &D47F0, `?&FFFFF` reads 0, `?&100000` is
+  "Address out of range": MAME's board gives a bus error past the RAM.
+* **bare/README.md:** the MAME line says so.
+
+## 73. The web page: not this time
+
+* **User:** "commit, then update the web page" (150786b: the MAME
+  check); then "no need for a web version this time, the windows and
+  linux are ok now".
+* **Started and undone:** 5 MB and bus errors for the bare page
+  (webmain.cpp, a WEB_MINIX define from mkweb.py for the Minix page);
+  not built, so reverted. Emscripten is not installed on vibe-u26; the
+  docker image emscripten/emsdk:4.0.10 was pulled for it (can be
+  removed). The page stays as it is: 2 MB, no bus errors (an address
+  error is caught by the handlers, a bus error is not raised there).
