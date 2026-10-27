@@ -1,0 +1,130 @@
+REM keywords ABS to EOF#, from the manual's examples (bbcwin4)
+PRINT ABS(-3.5);ABS(7);ABS(-2147483647);ABS(0);ABS(-1E-30)
+X1=3:X2=10:PRINT ABS(X1-X2);ABS(X2-X1)
+answer=10.3:ideal=10:IF ABS(answer-ideal)<0.5 THEN PRINT "close"
+PRINT ACS(1);ACS(0);ACS(-1);DEG(ACS(0.5))
+PRINT ASN(0);ASN(1);DEG(ASN(0.5));ASN(-1)
+PRINT ATN(1);DEG(ATN(1));ATN(-1E10);ATN(0)
+PRINT -20 AND 11;&FF AND &3C;(3=3 AND 5=5);(3=3 AND 5=4)
+count=3:total=5:test=(count=3 AND total=5):PRINT test
+PRINT ~(&12345678 AND &F0F0F0F0);~(-1 AND &80000000)
+PRINT ASC("A");ASC("ABC");ASC("");ASC(CHR$(200));ASC(" ")
+PRINT CHR$(72);CHR$(65)+CHR$(66);LEN(CHR$(0));CHR$(256+67);ASC(CHR$(-1))
+A=13000:PRINT CHR$(A/200)
+PRINT DEG(PI/2);DEG(ATN(1));RAD(180);RAD(DEG(1))
+PRINT COS(0);COS(PI);COS(RAD(60));COS(-PI/3)
+PRINT 21 DIV 4;-21 DIV 4;21 DIV -4;7.9 DIV 2;&7FFFFFFF DIV 3
+PRINT 1E9 DIV 7
+10 REM CASE, as in the manual
+20 FOR toss%=0 TO 2
+30   CASE toss% OF
+40     WHEN 0 : coin$ = "tails"
+50     WHEN 1 : coin$ = "heads"
+60     OTHERWISE coin$ = "cheat"
+70   ENDCASE
+80   PRINT toss%;" ";coin$
+90 NEXT
+100 FOR i%=1 TO 3:READ direction$
+110   CASE direction$ OF
+120     WHEN "left","LEFT" :
+130     PRINT "turn left"
+140     WHEN "right","RIGHT" :
+150     PRINT "Turn right"
+160     OTHERWISE
+170     PRINT "Straight on"
+180   ENDCASE
+190 NEXT
+200 DATA LEFT,ahead,right
+210 FOR die%=0 TO 7
+220   CASE die% OF
+230     WHEN 1,2,3 : bet$ = "lose"
+240     WHEN 4,5,6 : bet$ = "win"
+250     OTHERWISE bet$ = "cheat"
+260   ENDCASE
+270   PRINT bet$;" ";
+280 NEXT:PRINT
+290 CASE 2.5 OF
+295 WHEN 2.5:PRINT "real" :ENDCASE
+300 CASE TRUE OF
+310   WHEN 1=2 : PRINT "no"
+320   WHEN 2=2 : PRINT "yes"
+330 ENDCASE
+340 ON ERROR PRINT REPORT$:END
+350 CASE 1 OF WHEN 1:PRINT "one line":ENDCASE
+RUN
+NEW
+10 REM DATA and READ, as in the manual
+20 READ a,b,c$,d$,e,f$
+30 PRINT a;" ";b;" [";c$;"] [";d$;"] ";e;" [";f$;"]"
+40 READ g$:PRINT "[";g$;"]"
+50 RESTORE 150
+60 FOR n%=1 TO 2:READ name$:READ age:NEXT:PRINT name$,age
+70 name$="NOEL":RESTORE 150
+80 REPEAT
+90 READ list$,age
+100 IF list$=name$ THEN PRINT name$,age
+110 UNTIL list$=name$ OR list$="ZZZZ"
+120 IF list$="ZZZZ" PRINT "Name not in list"
+130 DATA 10.7,2,HELLO," THIS IS A COMMA,",1/3,PRINT
+140 DATA " This is a string with leading spaces."
+150 DATA FRED,17,BILL,21,ALLISON,21,NOEL,32
+160 DATA JOAN,26,JOHN,19,WENDY,35,ZZZZ,0
+RUN
+NEW
+10 REM DEF, DIM, CLEAR, COUNT
+20 PRINT FNMEAN(3,4);FN_mean(10,20,30):PROCJIM:PROC_Jim$("x")
+30 DIM A(2),A$(2,3,4),A%(3,4,5,6),chess_board(7,7)
+40 A(2)=1.5:A$(2,3,4)="top":A%(3,4,5,6)=-9:chess_board(7,7)=64
+50 PRINT A(2);A$(2,3,4);A%(3,4,5,6);chess_board(7,7);A(0)
+60 PRINT DIM(A%());DIM(A%(),4);DIM(A$(),2)
+70 DIM p% 67:DIM q% -1:PRINT q%-p%>=67
+80 PRINT "abc";:PRINT COUNT:PRINT "abcdefg";COUNT
+90 FOR i=1 TO 8:PRINT "word ";:IF COUNT>20 THEN PRINT
+100 NEXT:PRINT
+110 CLEAR:PRINT A%(0,0,0,0)
+120 END
+200 DEF FNMEAN(a,b)=(a+b)/2
+210 DEF FN_mean(a,b,c)=(a+b+c)/3
+220 DEF PROCJIM:PRINT "jim";:ENDPROC
+230 DEF PROC_Jim$(s$):PRINT "jim$ ";s$:ENDPROC
+RUN
+NEW
+10 REM IF, THEN, ELSE, ENDIF
+20 FOR x=2 TO 5:A=x:B=3:C=4:D=5
+30   IF A=B THEN B=C:PRINT"WWW" ELSE B=D:PRINT"QQQ"
+40   IF A=B THEN PRINT "eq" ELSE IF A=C THEN PRINT "c" ELSE PRINT "neither"
+50   IF x=3 THEN IF A=3 THEN PRINT "a3" ELSE PRINT "er"
+60   IF x=3 THEN
+70     PRINT "x is 3"
+80   ELSE
+90     IF x=4 THEN PRINT "x is 4" ELSE PRINT "x is not 3 or 4"
+100    PRINT "else part"
+120  ENDIF
+130  IF x>4 PRINT "big"
+140 NEXT
+150 A$="   lead":WHILE LEFT$(A$,1) = " " A$ = MID$(A$,2) : ENDWHILE:PRINT "[";A$;"]"
+160 n%=0:WHILE n%<3:n%+=1:ENDWHILE:PRINT n%
+RUN
+NEW
+10 REM BGET#, BPUT#, CLOSE#, EOF# (128 bytes: CP/M files are in 128s)
+20 outfile=OPENOUT "K01DATA"
+30 BPUT#outfile,72:BPUT#outfile,&13:BPUT#outfile,"lo";:BPUT#outfile,"!"
+40 BPUT#outfile,300:FOR i%=8 TO 128:BPUT#outfile,i%:NEXT:CLOSE#outfile
+50 infile=OPENIN "K01DATA":outfile=OPENOUT "K01COPY"
+60 REPEAT
+70   temp=BGET#infile
+80   IF temp=&13 THEN temp=&19
+90   BPUT#outfile,temp
+100 UNTIL EOF#infile
+110 CLOSE#0
+120 F%=OPENIN "K01COPY":n%=0
+130 WHILE NOT EOF#F%:b%=BGET#F%:IF n%<8 PRINT b%;" ";
+135 n%+=1:ENDWHILE
+140 PRINT:PRINT n%;EXT#F%;PTR#F%:CLOSE#F%
+RUN
+*ERA K01DATA
+*ERA K01COPY
+NEW
+10 P."abbrev ";ABS(-2):REP.:U.TRUE:E.
+LIST
+RUN

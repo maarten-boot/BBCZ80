@@ -152,8 +152,9 @@ def our_keywords():
             m = re.search(r'\.ascii\s+"([^"]*)"', line)
             if on and m:
                 words.add(m.group(1).rstrip(' ('))
-    # TIME$ is TIME then $, TOP is TO then P, OPT is the assembler's
-    return words | {'TIME$', 'TOP', 'OPT'}
+    # TIME$ and REPORT$ are TIME and REPORT then $, TOP is TO then P, OPT
+    # is the assembler's
+    return words | {'TIME$', 'REPORT$', 'TOP', 'OPT'}
 
 
 def keyword_names(title):
