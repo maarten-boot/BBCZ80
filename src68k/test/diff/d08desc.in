@@ -1,0 +1,1 @@
+S$="abc":P%=^S$:FOR I%=0 TO 5:PRINT P%?I%;" ";:NEXT:PRINT

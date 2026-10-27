@@ -1,0 +1,82 @@
+       100 18 Division by zero
+        -1
+        10
+       130 21 -ve root
+       140 22 Log range
+       150 22 Log range
+       160 20 Number too big
+       170 24 Exponent range
+       180 21 -ve root
+       190 20 Number too big
+       200 20 Number too big
+       210 19 String too long
+       220 6 Type mismatch
+       230 6 Type mismatch
+       240 6 Type mismatch
+       250 6 Type mismatch
+       260 26 No such variable
+       270 29 No such FN/PROC
+       280 29 No such FN/PROC
+       290 31 Bad arguments
+       300 29 No such FN/PROC
+       310 10 Bad DIM
+       320 15 Bad subscript
+       330 5 Missing ,
+       340 11 DIM space
+       350 27 Missing )
+       360 9 Missing "
+       370 5 Missing ,
+       380 41 No such line
+       390 41 No such line
+       400 32 Not in a FOR loop
+       410 43 Not in a REPEAT loop
+       420 46 Not in a WHILE loop
+       430 38 No GOSUB
+       440 13 Not in a PROC
+       450 7 Not in a FN
+       460 42 Out of DATA
+       470 40 ON range
+       480 39 ON syntax
+STEP 0 is not an error: 3
+       500 36 Missing TO
+       510 37 
+       520 28 Bad hex or binary
+       530 16 Syntax error
+       540 16 Syntax error
+       550 12 Not in a FN or PROC
+       560 222 Invalid channel
+       570 222 Invalid channel
+       580 99 My own error
+       590 232 Big number
+       600 34 Bad FOR variable
+       610 33 Can't match FOR
+       630 16 Syntax error
+       640 6 Type mismatch
+       650 16 Syntax error
+       660 6 Type mismatch
+       670 6 Type mismatch
+OPENIN gives0
+       700 222 Invalid channel
+TAN ok
+RND ok
+       740 16 Syntax error
+no check
+       760 6 Type mismatch
+       770 6 Type mismatch
+end of the errors
+
+Division by zero at line 800
+        18 800 Division by zero
+
+Syntax error
+
+Missing "
+
+Syntax error
+
+Division by zero at line 100
+
+Syntax error
+
+No room at line 50
+after No room 0

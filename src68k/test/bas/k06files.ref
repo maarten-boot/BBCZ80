@@ -1,0 +1,31 @@
+         3 records
+Fred      01234 567890
+Smith, John         555 0100
+  spaces  0
+         4 records
+Fred      01234 567890
+Smith, John         555 0100
+  spaces  0
+Zoe       555 0199
+        50
+4E 61 6D 65 D 1 0 0 0 0 FF FF FF FF 0 0 0 0 40 80 0 0 0 80 7E FF FF FF 7F 0 0 0 0 80 9F F6 5F 42 22 1C D 0 0 0 0 0 65 6E 64 D 
+Name 1 -1 1.5 -0.25 2.14748365E9 -2.14748365E9 1E-30 [] 0end
+         1
+         72100000
+[Alice][34.5][170][F]
+[Bob][7][121][M]
+[Carol Ann][101.2][155][F]
+        12 fields
+         7 item 77        8.75        49
+         5 item 55        6.25        25
+         3 changed          -1        -1
+         1 item 11        1.25         1
+         3 changed          -1        -1
+       114
+         5 item 55        6.25        25
+         5 again             0         5
+anna bert lisa mike ruth zack 
+lisa: 444
+anna: 222
+zack: 333
+nobody: not found

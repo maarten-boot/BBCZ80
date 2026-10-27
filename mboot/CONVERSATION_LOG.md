@@ -1822,3 +1822,101 @@ Mid-turn:
   user.
 * **Also open:** check run 2's exe (tmp/) before it goes to Russell with
   the issue 4 reply; the Minix items wait for the minix inspection.
+
+## 67. 5 MB default; tests from the manual; the Z80 differences
+
+* **User:** "postpone item 3 we will first focus on the standalone version
+  withount minix. 5 make that the default image."; extract the CLI parts of
+  the BBC BASIC for Windows manual; write tests from its keyword, star
+  command, files, error and general chapters; summarise every difference
+  from the Z80 version, each with a test; "dont make artifacts on
+  claude.ai it is limited to our company and i cannot share to outside
+  persons, best created markdown and let me email the text".
+* **3bd050a:** the 5 MB machine (board + 4 MB expansion) is the default;
+  `tools/getmanual.py` (the manual's text stays local: copyright).
+* **3f20310, 3814dc8, 55cbef2, 2728ff3:** tests k01-k09 (all compared with
+  the Z80 BBCBASIC.COM under RunCPM 12fc57a); `*ESC` alone is `*ESC ON`;
+  `test/diff/d01-d12` and `mboot/Z80_DIFFERENCES.md`. 56/56 on host,
+  hostwin and bare.
+* **Not for Russell:** the summary page on claude.ai (company only). The
+  Markdown is in `mboot/Z80_DIFFERENCES.md`, a copy for the e-mail in
+  `tmp/` (ignored by git).
+* **Workflow:** apt-get with 5 retries; a 60-minute limit for the job and
+  40 minutes for the apt step (run 2's slow mirror took 29.5).
+
+## 68. Would gcc help the standalone build? Measured
+
+* **User:** "pushed; now measure gcc for the bare build"; the summary went
+  to Russell by e-mail (copied from the page).
+* **How:** the profiling r68k rebuilt from r68k 24958aa
+  (`r68k-0002-cycle-profiler.patch` no longer applies: two hunks by hand,
+  and the instruction hook must be switched on, `r68k_trace_on`, when
+  R68K_PROF is set); the bare image's cycles split by object (anm on
+  em_led's output): interpreter (.s), C (osl, bare, fat), ACK library.
+* **Benchmarks b1-b7:** 99.1-99.9% in the interpreter, under 1% in C.
+* **Console output** (300 lines): 44% in C (out, con_write, os_wrch),
+  about 700 of 1600 cycles a character; at 10 MHz 70 us, while 115200
+  baud takes 87 us: the serial line is the limit.
+* **Files** (2000 PRINT#/BPUT#, read back): 37% in C, the same in the RAM
+  store and on the card (512-byte channel buffer); find() alone 14.5%,
+  os_bget/os_bput/cext the rest: per byte calls.
+* **ACK -O:** no change at all. **gcc 13.3** (rosco image, m68k-elf):
+  C text 23.6 KB with ACK, 19.0 KB -Os, 28.0 KB -O2; -O2 inlines find
+  and cext (estimate: the C part of file I/O about halved, 15-20% off a
+  file loop).
+* **Cost of gcc:** ELF objects cannot be linked with em_led; the .s files
+  are ACK syntax; ACK int is 16 bits (gcc -mshort) and ACK's d2 is a
+  scratch register; a libc. So: not worth it for speed; a per-byte fast
+  path in osl.c gives the file gain with ACK.
+
+## 69. The osl.c fast path for file bytes
+
+* **User:** "commit, then do the osl.c fast path" (4045ea8: the log).
+* **osl.c:** a pointer table chanp[] (no multiply by the struct size), a
+  FIND macro in line for BGET#, BPUT# and EOF#; inside the channel buffer
+  os_bget, os_bput (also when appending) and os_eof return at once,
+  without cext().
+* **Measured** (the scratch profiler, bare): the file loop of 2000
+  PRINT#/BPUT# + INPUT#/BGET# 92.0M to 75.4M cycles (-18%); C from 37% to
+  23% of it. The rest is ACK's call overhead (about 30 instructions a
+  byte); further only with an assembler fast path in minix.s.
+* **Tests:** 56/56 host, hostwin, bare; fatcheck, hostcheck all ok.
+
+## 70. The bare profiler kept
+
+* **User:** "commit, then keep the profiler" (e32e576: the fast path).
+* **mboot/patches/r68k-0002-cycle-profiler.patch:** made again for r68k
+  24958aa (applies cleanly); profiling also switches on the instruction
+  hook (r68k_trace_on) when R68K_PROF is set. build/r68kprof rebuilt
+  from it; the r68k needs firmware/rosco_m68k.rom copied in (bench.py
+  says so now).
+* **tools/bareprof.py:** the benchmarks plus console output and a file
+  in the RAM store and on the card, on the bare image; cycles split into
+  interpreter, C, library, with the top C and library routines.
+  build/prof/bare-e32e576.txt is the first report (file loop 69.8M
+  cycles, 25% in C).
+* **Docs:** bench.py (the build steps), bare/README.md (Tests).
+
+## 71. Address and bus errors: BASIC's error 8
+
+* **User:** "commit, then do the address and bus error handlers"
+  (b78981c: bareprof.py and the profiler patch).
+* **bare/start.s, bare.c:** vectors 2 and 3 (set in bare_init) raise
+  BASIC's error 8 through EXTERR: "Address out of range" (bus error, the
+  number BB4W gives for an address it rejects; 8 is unused in the Z80
+  table) and "Odd address" (address error, also an odd PC). ERROR sets
+  the stack to HIMEM, which drops the exception frame; the handler sets
+  SR to 0x2000 first. ON ERROR traps them.
+* **host/hostmain.cpp, hostfs.cpp:** bus errors on after the reset (as
+  r68k -d); the idle test and hostfs's host calls under
+  r68k_no_bus_errors. Before: an address error ended bbc68k ("[r68k]
+  address error ... no handler"), `PRINT !&800000` read nothing.
+* **tools/bascheck.py:** the bare runner takes ../r68k/r68k before the
+  demo's copy (21 Oct, without address and bus errors).
+* **Found on the way:** mkhost.py embeds build/bare/demo/ROSCODE1.BIN, so
+  `make bare` must come first; the host runs after e32e576 had tested the
+  old image (all rerun now).
+* **Test x07fault** (.exp): odd read, write and jump; read, write and jump
+  at &800000; `!` and `?` there; the timer still runs; immediate mode.
+* **Tests:** 57/57 host, hostwin, bare; asmcheck 162; fatcheck,
+  hostcheck, editcheck, ttycheck --exe all ok. Web and Minix unchanged.

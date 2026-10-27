@@ -51,6 +51,7 @@ namespace fs = std::filesystem;
 extern "C" {
     int r68k_illegal(int opcode);
     void r68k_host_exit(int code);
+    extern int r68k_no_bus_errors;
 }
 
 static constexpr std::uint32_t HOST_MAGIC = 0x42424348;	// "BBCH"
@@ -361,10 +362,12 @@ extern "C" void r68k_hostfs_init()
 extern "C" int illegal_instruction_handler(int opcode)
 {
     if (m68k_get_reg(nullptr, M68K_REG_D6) == HOST_MAGIC) {
+        r68k_no_bus_errors++;		// (its reads and writes of BASIC's memory)
         long r = host_call((int) m68k_get_reg(nullptr, M68K_REG_D7),
                            m68k_get_reg(nullptr, M68K_REG_D1),
                            m68k_get_reg(nullptr, M68K_REG_D2),
                            m68k_get_reg(nullptr, M68K_REG_D3));
+        r68k_no_bus_errors--;
         m68k_set_reg(M68K_REG_D0, (unsigned int) r);
         return 1;
     }

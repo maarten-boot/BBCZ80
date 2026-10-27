@@ -1,0 +1,29 @@
+10 REM bus and address errors (machine code, indirection): error 8
+20 DIM code% 100, data% 3
+30 P%=code%
+40 [OPT 0
+50 .rdlong move.l d1,a0 : move.l (a0),d0 : rts
+60 .wrword move.l d1,a0 : move.w d0,(a0) : rts
+70 .jump move.l d1,a0 : jmp (a0)
+80 ]
+90 !data%=&12345678:PROCtry(rdlong,data%)
+100 PROCtry(rdlong,data%+1)
+110 PROCtry(wrword,data%+1)
+120 PROCtry(jump,code%+1)
+130 PROCtry(rdlong,&800000)
+140 PROCtry(wrword,&800000)
+150 PROCtry(jump,&800000)
+160 ON ERROR LOCAL PRINT ERR;" ";REPORT$;" at ";ERL:GOTO 180
+170 PRINT !&800000
+180 ON ERROR LOCAL PRINT ERR;" ";REPORT$;" at ";ERL:GOTO 200
+190 ?&800001=1
+200 ON ERROR OFF
+210 T%=TIME:REPEAT UNTIL TIME>T%+2:PRINT "the timer runs"
+220 END
+230 DEF PROCtry(a%,b%)
+240 ON ERROR LOCAL PRINT ERR;" ";REPORT$:ENDPROC
+250 B%=b%:PRINT ~USR(a%):ENDPROC
+RUN
+PRINT !&800000
+CALL jump
+PRINT "still here"

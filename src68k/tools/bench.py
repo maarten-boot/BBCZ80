@@ -11,7 +11,9 @@ a copy of r68k with mboot/patches/r68k-0002-cycle-profiler.patch applied
 	mkdir -p build/r68kprof && (cd ../r68k && git ls-files | tar cf - -T -)
 	    | tar xf - -C build/r68kprof && cd build/r68kprof &&
 	    patch -p1 < ../../mboot/patches/r68k-0002-cycle-profiler.patch &&
-	    make r68k  The addresses are mapped to
+	    cp ../../../r68k/firmware/rosco_m68k.rom firmware && make r68k
+(the patch is for r68k 24958aa).  tools/bareprof.py does the same for
+the bare image.  The addresses are mapped to
 bbcbasic's routines with the symbols of an unconverted link (ack.out,
 anm); bbcbasic's load address is ^@% minus STAVAR.  The report gives per
 benchmark the cycles, the instructions, the share outside bbcbasic (the

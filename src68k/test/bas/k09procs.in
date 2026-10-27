@@ -1,0 +1,121 @@
+REM the general chapter (bbcwin2): procedures and functions, program
+REM flow, error handling; the manual's examples with DATA, not INPUT
+10 REM parameters, LOCAL, recursion, RETURN parameters, arrays
+20 FOR I%=1 TO 3:PROC_printit(I%):NEXT
+30 PROC_printit3(1,"FRED",2)
+40 retail_price=26.55:PRINT FN_discount(retail_price,25);FN_average(3,8)
+50 PRINT FN_fact_num(0);FN_fact_num(1);FN_fact_num(10);FN_fact_num(20)
+60 DIM arr(20):FOR n%=0 TO 20:arr(n%)=n%:NEXT
+70 PROC_multiply(arr(),2):PRINT arr(0);arr(1);arr(20);SUM(arr())
+80 real=3:imag=4:PROCcomplexsquare(real,imag):PRINT real;" + ";imag;" i"
+90 A$="first":B$="second":PROCmixupstrings(A$,B$):PRINT A$;" ";B$
+100 x=1:y$="g":PROCloc(5):PRINT x;y$
+110 PROCnewarray(alpha()):PRINT DIM(alpha());DIM(alpha(),3);alpha(3,4,5)
+130 i=0:PROCrec(3):PRINT
+140 PROC_clear:PRINT "|"
+145 REM (BBC BASIC Z80: ENDPROC or = inside a FOR is an error)
+150 ON ERROR PRINT 'REPORT$:GOTO 160
+155 PROCloop(4)
+160 ON ERROR PRINT REPORT$:END
+165 PRINT FNloop(7)
+200 DEF PROC_printit(num1):PRINT num1:ENDPROC
+210 DEF PROC_printit3(num1,name$,num2):PRINT num1,name$,num2:ENDPROC
+220 DEF FN_discount(price,pcent)=price*(1-pcent/100)
+230 DEF FN_average(A,B) = (A+B)/2
+240 DEF FN_fact_num(n)
+250 IF n=1 OR n=0 THEN =1
+260 =n*FN_fact_num(n-1)
+270 DEF PROC_multiply(B(),M)
+280 LOCAL n%
+290 FOR n%=0 TO DIM(B(),1):B(n%)=B(n%)*M:NEXT
+300 ENDPROC
+310 DEF PROCcomplexsquare(RETURN r,RETURN i)
+320 LOCAL x,y
+330 x=r:y=i:r=x^2-y^2:i=2*x*y
+340 ENDPROC
+350 DEF PROCmixupstrings(RETURN a$,RETURN b$)
+360 LOCAL c$:c$=a$:a$=b$:b$=c$:ENDPROC
+370 DEF PROCloc(x):LOCAL y$:y$="l":PRINT x;y$:ENDPROC
+380 DEF PROCnewarray(RETURN a()):DIM a(3,4,5):a(3,4,5)=345:ENDPROC
+390 DEF FNloop(num):LOCAL i
+400 FOR i=1 TO 100:IF i=num THEN =TRUE
+410 NEXT i:=FALSE
+420 DEF PROCloop(num):LOCAL i
+430 FOR i=1 TO 100:PRINT i;:IF i=num THEN ENDPROC
+440 NEXT i:ENDPROC
+450 DEF PROCrec(n):IF n=0 ENDPROC
+460 PRINT n;:PROCrec(n-1):PRINT n;:ENDPROC
+470 DEF PROC_clear:PRINT SPC(10-POS);:ENDPROC
+RUN
+NEW
+10 REM program flow: leaving loops, the manual's four ways
+20 GOTO 70
+30 REPEAT:READ num
+40   FOR i=1 TO 100:PRINT i;:IF i=num THEN 60
+50   NEXT i
+60 PRINT:UNTIL num=-1
+65 END
+70 RESTORE 300
+80 REPEAT:READ num:i=0
+90   REPEAT:i=i+1:PRINT i;:UNTIL i=5 OR i=num
+100 PRINT:UNTIL num=-1
+110 RESTORE 300
+120 REPEAT:READ num
+130   FOR i=1 TO 5:PRINT i;
+140     IF i=num THEN
+150       i=500
+160     ELSE
+170       PRINT "-";
+180     ENDIF
+190   NEXT:PRINT " ";i
+200 UNTIL num=-1
+210 RESTORE 300
+220 REPEAT:READ num
+230   FOR i=1 TO 5:PRINT i;:IF i=num THEN EXIT FOR
+240   NEXT i:PRINT
+250 UNTIL num=-1
+260 PROClocarr(3):PROClocarr(5)
+265 A = 5
+270 PRINT A;:A = A + 1:IF A < 8 THEN GOTO 270
+280 PRINT
+285 REM (the manual's "structure limitation": out of a FOR into an UNTIL)
+290 RESTORE 300:GOTO 30
+300 DATA 3,1,-1
+310 DEF PROClocarr(n):LOCAL data():DIM data(n):data()=n:PRINT SUM(data()):ENDPROC
+RUN
+NEW
+10 REM error handling: ON ERROR, ON ERROR LOCAL, the manual's examples
+20 FOR n=-2 TO 2
+30   ok%=TRUE
+40   ON ERROR LOCAL PRINT "Infinity":ok%=FALSE
+50   IF ok% PRINT "The reciprocal of ";n;" is ";1/n
+60 NEXT n
+70 x=OPENOUT "K09TEST"
+80 FOR i=-2 TO 2
+90   ok%=TRUE
+100   ON ERROR LOCAL PROCerr:ok%=FALSE
+110   IF ok% PRINT#x,1/i
+120 NEXT
+130 CLOSE#x
+140 x=OPENIN "K09TEST"
+150 FOR j=1 TO 5:INPUT#x,i:PRINT i:NEXT
+160 CLOSE#x
+170 ON ERROR OFF
+180 PROC1(0):PROC1(4):PRINT "after PROC1"
+190 RESTORE 400:ON ERROR PROCerror
+200 REPEAT:READ num:PRINT num," ",SQR(num):UNTIL FALSE
+210 END
+300 DEF PROCerr
+310 IF ERR<>18 REPORT:END
+320 PRINT#x,3.4E38
+330 ENDPROC
+340 DEF PROC1(A)
+350 ON ERROR LOCAL REPORT:PRINT " in PROC1":ENDPROC
+360 LOCAL B:B=8/A:PRINT B
+370 ENDPROC
+380 DEF PROCerror
+390 PRINT:PRINT "Error No ";ERR:IF ERR=21 THEN PRINT "No negatives":END
+395 REPORT:PRINT:END
+400 DATA 1,4,2.25,-2
+RUN
+*ERA K09TEST
