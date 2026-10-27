@@ -1822,3 +1822,24 @@ Mid-turn:
   user.
 * **Also open:** check run 2's exe (tmp/) before it goes to Russell with
   the issue 4 reply; the Minix items wait for the minix inspection.
+
+## 67. 5 MB default; tests from the manual; the Z80 differences
+
+* **User:** "postpone item 3 we will first focus on the standalone version
+  withount minix. 5 make that the default image."; extract the CLI parts of
+  the BBC BASIC for Windows manual; write tests from its keyword, star
+  command, files, error and general chapters; summarise every difference
+  from the Z80 version, each with a test; "dont make artifacts on
+  claude.ai it is limited to our company and i cannot share to outside
+  persons, best created markdown and let me email the text".
+* **3bd050a:** the 5 MB machine (board + 4 MB expansion) is the default;
+  `tools/getmanual.py` (the manual's text stays local: copyright).
+* **3f20310, 3814dc8, 55cbef2, 2728ff3:** tests k01-k09 (all compared with
+  the Z80 BBCBASIC.COM under RunCPM 12fc57a); `*ESC` alone is `*ESC ON`;
+  `test/diff/d01-d12` and `mboot/Z80_DIFFERENCES.md`. 56/56 on host,
+  hostwin and bare.
+* **Not for Russell:** the summary page on claude.ai (company only). The
+  Markdown is in `mboot/Z80_DIFFERENCES.md`, a copy for the e-mail in
+  `tmp/` (ignored by git).
+* **Workflow:** apt-get with 5 retries; a 60-minute limit for the job and
+  40 minutes for the apt step (run 2's slow mirror took 29.5).

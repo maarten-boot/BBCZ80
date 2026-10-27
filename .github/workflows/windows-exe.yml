@@ -11,6 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -26,10 +27,12 @@ jobs:
           ref: 23f4e665855521d596780a8b921e9853d9cc4422  # main, with address errors (tested)
           path: r68k
 
+      # retry a failed download (an Ubuntu mirror can be slow or down)
       - name: Build tools
+        timeout-minutes: 40
         run: |
-          sudo apt-get update
-          sudo apt-get install -y flex bison ninja-build lua5.4 lua-posix zip \
+          sudo apt-get -o Acquire::Retries=5 update
+          sudo apt-get -o Acquire::Retries=5 install -y flex bison ninja-build lua5.4 lua-posix zip \
             g++-mingw-w64-x86-64-posix gcc-mingw-w64-x86-64-posix
 
       - name: ACK cache
