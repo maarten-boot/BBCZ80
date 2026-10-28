@@ -9,7 +9,8 @@ programs, inside an emulated rosco_m68k, as one program:
 | `build/host/linux/bbc68k` | Linux x86-64, static | 2.7 MB |
 
 Start it in a console (`bbc68k.exe`, or by double-clicking). BBC BASIC
-starts at once with the demo menu.
+starts at once at its `>` prompt; `CHAIN "menu"` starts the demo menu
+(the demo programs are built in).
 
 ## Files
 
@@ -37,7 +38,6 @@ in. There is no SD card and no image.
   ```
   bbc68k.exe < test.txt > out.txt
   ```
-  The first key goes to the demo menu (Return gives the prompt).
 
 ## How it is made
 

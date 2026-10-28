@@ -3,7 +3,8 @@
 // bare: bare BBC BASIC, files on the SD card's FAT16 file system, which
 // the test reads and writes as the page does (fat.js); minix: files copied
 // with dd as the Minix page does.
-// Boots the emulator and runs the asm demo from the menu.  Then, as the
+// Boots the emulator to the > prompt and runs the asm demo from the menu
+// (CHAIN "menu").  Then, as the
 // page's Load program does (loader.js upload: the SD card and dd):
 // * the upstream test programs (TESTS_DIR/*.BBC), each loaded, run and
 //   compared with its bascheck reference (REF_DIR/u_*.ref);
@@ -101,8 +102,10 @@ async function main() {
   });
   if (bare) card = BBCFat.card(M.r68kSdRead, M.r68kSdWrite);
   let failed = 0;
-  await until('Return: BASIC prompt) ?', 60);
-  console.log(`menu after ${secs()}`);
+  await until('\n>', 60);
+  console.log(`prompt after ${secs()}`);
+  send('CHAIN "menu"\r');
+  await until('Return: BASIC prompt) ?', 30);
   send('5\r');
   const asm = await until('for the menu', 120);
   const ok = asm.includes('CALL upper: HELLO FROM THE 68000!');

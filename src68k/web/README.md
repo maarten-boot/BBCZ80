@@ -4,7 +4,7 @@
 page, about 1.4 MB.
 * **What runs:** bare BBC BASIC (`make bare`, `bare/README.md`) on an
   emulated rosco_m68k with no operating system, with the demo programs
-  and their menu. Files are on an SD card with a FAT16 file system,
+  and their menu (`CHAIN "menu"`; BASIC starts at its prompt). Files are on an SD card with a FAT16 file system,
   which the page also reads and writes itself.
 * **The earlier page:** `make webminix` builds the one with Minix 2.0.4
   under BASIC (`build/web/bbc68k-minix.html`). Files then go to and from

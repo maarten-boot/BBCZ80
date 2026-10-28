@@ -126,9 +126,7 @@ def main():
               'screen %r, cursor at %d (want %d)' % (shown, at, pos))
 
     try:
-        t.until(r'BASIC prompt\) \? ', 60)
-        t.send('\r')
-        t.until(r'\n>')
+        t.until(r'\n>', 60)
         t.cmd('NEW')
         text = 'PRINT "' + 'abcdefghij' * 5 + '"'
         t.send('10 ' + text + '\r')

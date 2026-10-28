@@ -49,6 +49,8 @@ Changes since 2026-10-27 (GitHub Actions run 5)
 * *HELP and the start-up line say "BBC BASIC (68k)" (was "(Z80)").
 * BPUT# with a value that is not a whole number (BPUT#c,48.9) gave
   "Invalid channel"; it writes 48, as in the Z80 version.
+* BBC BASIC starts at its > prompt, no longer in the demo menu: the demo
+  programs are still built in, CHAIN "menu" starts them.
 
 Changes since 2026-10-23b
 -------------------------

@@ -27,7 +27,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 TOP = os.path.dirname(os.path.dirname(HERE))
 
 SCRIPT = [
-    '', 'NEW',
+    'NEW',
     '10 PRINT "saved on the host"', 'SAVE "PROG"', 'NEW', 'CHAIN "prog"',
     'SAVE "LongFileName.bbc"',
     'F%=OPENOUT "DATA.TXT":FOR I%=1 TO 3000:PRINT#F%,"line "+STR$I%:NEXT:CLOSE#F%',
@@ -139,7 +139,7 @@ def keys_windows():
 
 
 def autorun(kind):
-    """bbc68k NAME: CHAIN it at the start (no demo menu); with a folder in
+    """bbc68k NAME: CHAIN it at the start; with a folder in
     the name, that folder is BASIC's"""
     exe = os.path.join(TOP, 'build', 'host', kind, 'bbc68k.exe' if kind == 'windows' else 'bbc68k')
     pre = ['wine'] if kind == 'windows' else []
@@ -150,7 +150,7 @@ def autorun(kind):
         f.write(b'in sub\n')
     prog = ['NEW', '10 F%=OPENIN "mark.txt"', '20 PRINT "started by name, mark: ";F%<>0',
             'SAVE "hi"', '*BYE']
-    subprocess.run(pre + [exe], input=('\r' + '\r'.join(prog) + '\r').encode(), cwd=sub,
+    subprocess.run(pre + [exe], input=('\r'.join(prog) + '\r').encode(), cwd=sub,
                    capture_output=True, timeout=120)
     def go(arg, cwd):
         return subprocess.run(pre + [exe, arg], input=b'*BYE\r', cwd=cwd, capture_output=True,

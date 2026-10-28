@@ -6,9 +6,8 @@ the Python websockets module are there), through the DevTools protocol:
 
 Opens PAGE (bbc68k.html) as a file in headless Chromium and, with key
 events as a user types them:
-* loads TESTS_DIR/FORTEST.BBC while the demo menu waits for its INPUT
-  (the page presses Escape to get to the > prompt), runs it, and goes
-  back to the menu;
+* loads TESTS_DIR/FORTEST.BBC at the > prompt, runs it, and starts the
+  demo menu (CHAIN "menu");
 * runs the asm demo from the menu;
 * stops life with Escape;
 * loads TESTS_DIR/FORTEST.BBC with the Load program button (its file
@@ -103,8 +102,8 @@ async def run(page_file, tests):
         async with websockets.connect(url, max_size=None) as ws:
             p = Page(ws)
             t0 = time.time()
-            await p.wait('Return: BASIC prompt) ?', 60)
-            print('ok    boot to the menu (%.1f s)' % (time.time() - t0))
+            await p.wait('Copyright', 60)
+            print('ok    boot to the prompt (%.1f s)' % (time.time() - t0))
             await p.js("document.querySelector('.xterm-helper-textarea').focus()")
 
             await p.call('DOM.enable')
@@ -118,7 +117,7 @@ async def run(page_file, tests):
             await p.js("document.querySelector('.xterm-helper-textarea').focus()")
             await p.type('RUN\r')
             await p.wait('FOR...NEXT tests completed.', 120)
-            print('ok    Load program at the menu\'s INPUT (Escape first; status "%s"), RUN' % st)
+            print('ok    Load program at the prompt (status "%s"), RUN' % st)
             await p.type('CHAIN "menu"\r')
             await p.wait('Return: BASIC prompt) ?', 30)
 

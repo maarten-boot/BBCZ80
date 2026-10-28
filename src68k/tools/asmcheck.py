@@ -159,8 +159,8 @@ def main():
     with open(prog, 'w') as f:
         f.write(basic_prog(items))
     if HOST:
-        # a Return for the demo menu, NEW, the lines (*BYE is the last)
-        inp = '\rNEW\r' + open(prog).read().replace('\n', '\r')
+        # NEW, the lines (*BYE is the last)
+        inp = 'NEW\r' + open(prog).read().replace('\n', '\r')
         out = subprocess.run(
             [os.path.join(TOP, 'build', 'host', 'linux', 'bbc68k')],
             input=inp.encode('latin-1'), cwd=WORK, capture_output=True,

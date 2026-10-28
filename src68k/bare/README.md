@@ -15,8 +15,9 @@ BBC BASIC comes up on the serial console at the firmware's speed.
 **In MAME:** the rosco-emulator, with `ROSCODE1.BIN` on the card's FAT
 partition.
 
-`build/bare/demo/ROSCODE1.BIN` has the demo programs in its RAM store and
-starts the menu.
+`build/bare/demo/ROSCODE1.BIN` has the demo programs in its RAM store; it
+starts at the `>` prompt like the plain one, and `CHAIN "menu"` starts the
+demo.
 
 ## Memory
 

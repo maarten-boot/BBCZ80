@@ -22,7 +22,7 @@ Everything is inlined (-sSINGLE_FILE), so the page works offline, also
 opened as a file.
 
 --test builds a Node version too (build/web/node) and runs web/test.js:
-boot, the asm demo from the menu, and the upstream test programs (tests/)
+boot, the asm demo from the menu (CHAIN "menu"), and the upstream test programs (tests/)
 uploaded through loader.js and run, compared with their bascheck
 references (test/bas/u_*.ref), a listing read in with *EXEC, and two files
 uploaded together and CHAINed.  Then, if chromium and the Python

@@ -11,11 +11,11 @@ cd $HOME
 # runs: the SIGINT goes to this script too, which must not die of it
 # (bbcbasic catches it; the shell below gets the default back).
 trap '' 2
-bbcbasic menu
+bbcbasic
 trap 2
 echo
 echo "You have left BBC BASIC.  This is the Minix shell:"
 echo "  bbcbasic      start BBC BASIC again"
 echo "  ls, cat ...   look around (the demo programs are in /usr/demo)"
-echo "  exit          back to the demo menu"
+echo "  exit          back to BBC BASIC"
 exec sh

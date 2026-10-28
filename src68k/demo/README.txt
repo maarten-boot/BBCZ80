@@ -9,7 +9,8 @@ Start it with
     ./demo.sh
 
 in a terminal (Linux x86-64; nothing else is needed, no internet).  Minix
-boots in a few seconds and BBC BASIC starts with a menu of demo programs.
+boots in a few seconds and BBC BASIC starts at its > prompt; CHAIN "menu"
+starts the menu of demo programs.
 
 With Docker (Linux, Mac, Windows), from the image file:
 
@@ -30,7 +31,7 @@ In BBC BASIC
     RUN                 run it again
     *DIR                the files (the demo programs are *.bbc)
     *BYE                leave BBC BASIC (to the Minix shell; "exit" in
-                        the shell brings the demo back)
+                        the shell brings BBC BASIC back)
 
 The demo programs:
     mandel   the Mandelbrot set in ASCII (floating point)
