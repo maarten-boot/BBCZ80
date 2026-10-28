@@ -1,0 +1,14 @@
+REM ERR: from the RISC OS BBC BASIC manual, keywords chapter
+REM the second example waits for a key (GET$), so it is left out
+10 ON ERROR GOTO 100
+20 READ e$:PRINT e$;
+30 X=EVAL(e$)
+40 PRINT
+50 GOTO 20
+100 IF ERR=18 THEN PRINT ": Can't use zero; try again!!":GOTO 20
+110 PRINT ": ";ERR;" ";REPORT$
+120 IF ERR=42 THEN END ELSE GOTO 20
+130 DATA 1/0,SQR(-1),LN(0),EXP(100),ASC(1),ACS(2),undefined,"2"
+140 DATA 1,LEFT$(1)
+RUN
+NEW

@@ -1,0 +1,18 @@
+REM PAGE: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the address differs between versions: relations are printed)
+10 PRINT "first program"
+20 PRINT "PAGE<TOP: ";PAGE<TOP;"  TOP-PAGE: ";TOP-PAGE
+30 PRINT "PAGE<=LOMEM: ";PAGE<=LOMEM;"  PAGE<HIMEM: ";PAGE<HIMEM
+RUN
+P%=PAGE
+PAGE = HIMEM - &4000
+PRINT PAGE>P%,PAGE<HIMEM
+NEW
+10 PRINT "second program at the new PAGE"
+20 PRINT "TOP-PAGE: ";TOP-PAGE
+RUN
+PAGE=P%
+LIST
+RUN
+PRINT PAGE=P%
+NEW

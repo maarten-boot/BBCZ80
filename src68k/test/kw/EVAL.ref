@@ -1,0 +1,17 @@
+        31
+
+Missing )
+AB
+        1310244-3
+abcdef 3xyz
+        25-1042
+31.5
+         6
+a$*2 = a$*2: 6 Type mismatch
+x+"s" = x+"s": 6 Type mismatch
+FNnone = FNnone: 29 No such FN/PROC
+PROCsq(2) = PROCsq(2): 16 Syntax error
+undefined = undefined: 26 No such variable
+1/0 = 1/0: 18 Division by zero
+1+ = 1+: 16 Syntax error
+         6 Type mismatch

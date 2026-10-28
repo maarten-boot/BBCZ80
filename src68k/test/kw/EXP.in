@@ -1,0 +1,15 @@
+REM EXP: from the RISC OS BBC BASIC manual, keywords chapter
+PRINT EXP(0);EXP(1);EXP(-1);EXP(2)
+PRINT EXP(LN(5));LN(EXP(3));EXP(0.5)^2;EXP(1E-9)
+PRINT EXP(-50);EXP(50);EXP(80)
+PRINT EXP(88)>1E38;EXP(-88)<1E-38;EXP(-1000)
+10 REM the manual's example, and the range of the argument
+20 PRINT FNcosh(0);FNcosh(1);FNcosh(-1);FNcosh(2)
+30 FOR x=-2 TO 2:PRINT EXP(x);:NEXT:PRINT
+40 PROCtry(89):PROCtry(100):PROCtry(1E10)
+50 END
+100 DEF FNcosh(x)=(EXP(x) + EXP(-x))/2
+110 DEF PROCtry(x):ON ERROR LOCAL PRINT "EXP(";x;"): ";ERR;" ";REPORT$:ENDPROC
+120 PRINT EXP(x):ENDPROC
+RUN
+NEW

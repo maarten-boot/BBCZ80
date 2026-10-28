@@ -35,6 +35,17 @@ DATA anyway. Our `RESLO7` already set the flag. His fix is merged here
 (`bin/cpm/BBCBASIC.COM` too), so the test is now an ordinary one:
 `test/bas/t18localdata` (was `test/diff/d01localdata`).
 
+**Still open in 5.4** (`d13restoredata`): `RESTORE DATA` with no `LOCAL
+DATA` should give "DATA not LOCAL" (54). The Z80 version does nothing,
+without an error, when another LOCAL frame is on top: a `LOCAL X`, or an
+`ON ERROR LOCAL`. In `RESLOC`, `RESLO2`'s `POP IX` (the variable's
+address) overwrites `IX`, the "nothing restored" flag, so `RESLO8` finds
+it non-zero. Ours gives the error in both cases.
+
+| Test | Z80 5.4 | 68k |
+|---|---|---|
+| `d13restoredata` | `PROCa: no error`, `PROCb: no error` | `54 DATA not LOCAL` twice |
+
 ## 3. Files and the console: CP/M against a modern file system
 
 These come from CP/M, which counts a file's length in 128-byte records and
@@ -55,6 +66,8 @@ does not know the cursor position. The tests in `test/bas` avoid them.
 | Test | Difference |
 |---|---|
 | `test/bas/k05star` | **`*ESC` on its own** gave "Bad command". The manual and the Z80 version treat it as `*ESC ON`. Fixed in `osl.c` (commit 3814dc8). |
+| `test/kw/BPUT_HASH` | **`BPUT#c,48.9`** (a real value) gave "Invalid channel": SFIX overwrote the channel in d6. Fixed in `exec.s`. |
+| `tools/hostcheck.py`, `fatcheck.py` | **`*DIR afsp`, `*ERA afsp`** (from R.T. Russell's feedback) and **`*OPT`** on its own. Fixed in `osl.c` (commit a137c0f). |
 
 ## 5. Checked: the same in both
 

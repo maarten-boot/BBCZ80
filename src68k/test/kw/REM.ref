@@ -1,0 +1,5 @@
+before
+next prime after 20: 23
+end
+   60 REM:PRINT "not printed"
+   70 PRINT "end" : REM a remark after a statement

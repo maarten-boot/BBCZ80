@@ -1,0 +1,11 @@
+REM 68k-only: POS is always 0 in the Z80 version under CP/M
+REM POS: from the RISC OS BBC BASIC manual, keywords chapter
+10 PRINT "abc";:old_x%=POS:PRINT:PRINT old_x%
+20 PRINT "12345";:IF POS<>0 THEN PRINT
+30 PRINT "POS after the new line: ";:PRINT POS
+40 PRINT POS
+50 PRINT SPC(7);POS;" ";COUNT
+60 PRINT TAB(12);POS
+70 PRINT "x";TAB(3);"y";POS
+RUN
+NEW

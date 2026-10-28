@@ -1,0 +1,14 @@
+REM RUN: from the RISC OS BBC BASIC manual, keywords chapter
+RUN
+PRINT "RUN with no program"
+10 ON ERROR PRINT "count: ";REPORT$:GOTO 30
+20 PRINT "count=";count
+30 count=7:A%=A%+1:PRINT "count=";count;" A%=";A%
+RUN
+count=99:A%=10
+RUN
+PRINT count;A%
+40 DIM d(3):d(1)=count
+RUN
+PRINT d(1)
+NEW

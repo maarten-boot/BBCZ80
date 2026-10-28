@@ -1,0 +1,7 @@
+channel non-zero: -1
+first 12345 2.5 A
+again: first 6
+missing file gives 0
+        -1        -1        -1
+first first
+         6 Type mismatch

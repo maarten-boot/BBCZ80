@@ -1,0 +1,21 @@
+REM WHILE: from the RISC OS BBC BASIC manual, keywords chapter
+10 REM TIME<1000 example uses a count instead (TIME varies)
+20 count%=0
+30 WHILE count% < 3
+40   PROCdraw
+50 ENDWHILE
+60 flag=TRUE:n%=0
+70 WHILE flag : PROCmainloop : ENDWHILE
+80 PRINT "n%=";n%
+90 WHILE FALSE:PRINT "never":ENDWHILE:PRINT "body skipped"
+100 i=0:WHILE TRUE:i+=1:IF i=5 EXIT WHILE
+110 ENDWHILE:PRINT "exit at ";i
+120 i=0:WHILE i<2:j=0:WHILE j<2:PRINT i;j;" ";:j+=1:ENDWHILE:i+=1:ENDWHILE:PRINT
+130 ON ERROR PRINT ERR;" ";REPORT$:END
+140 ENDWHILE
+150 END
+200 DEF PROCdraw:count%+=1:PRINT "draw ";count%:ENDPROC
+210 DEF PROCmainloop:n%+=1:IF n%=4 flag=FALSE
+220 ENDPROC
+RUN
+NEW

@@ -1,0 +1,13 @@
+REM STRING_STRING: from the RISC OS BBC BASIC manual, keywords chapter
+REM MODE left out: not in the Z80 version
+PRINT STRING$(40,"_");:PRINT :REM underline across the screen
+pattern$=STRING$(20,"<-->"):PRINT pattern$:PRINT LEN(pattern$)
+PRINT STRING$(5,"ab");"|";STRING$(0,"x");"|";STRING$(3,"");"|";STRING$(1,"one");"|"
+PRINT LEN(STRING$(255,"z"));LEN(STRING$(127,"ab"));LEN(STRING$(85,"abc"))
+n%=3:PRINT STRING$(n%+1,CHR$(65+n%))
+10 ON ERROR PRINT ERR;" ";REPORT$:GOTO 30
+20 a$=STRING$(128,"ab"):PRINT LEN(a$)
+30 ON ERROR PRINT ERR;" ";REPORT$:END
+40 PRINT STRING$("x",3)
+RUN
+NEW

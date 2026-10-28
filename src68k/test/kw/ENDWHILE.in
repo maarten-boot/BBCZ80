@@ -1,0 +1,18 @@
+REM ENDWHILE: from the RISC OS BBC BASIC manual, keywords chapter
+REM the manual's example with MODE, INPUT, GCOL and CIRCLE: X is set
+REM and printed instead
+10 X=13
+20 WHILE X > 0
+30   PRINT X;
+40   X -= 4
+50 ENDWHILE
+60 PRINT 'X
+70 WHILE FALSE
+80   PRINT "not here"
+90 ENDWHILE
+100 PRINT "skipped"
+110 i%=0:WHILE i%<3:j%=0:WHILE j%<2:PRINT i%;j%;" ";:j%+=1:ENDWHILE:i%+=1:ENDWHILE:PRINT
+120 ON ERROR PRINT ERR;" ";REPORT$:END
+130 ENDWHILE
+RUN
+NEW

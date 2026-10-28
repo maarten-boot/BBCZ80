@@ -4,8 +4,11 @@
 	bascheck.py [-k] [-n] [-t SECS] [TEST ...]
 
 Each TEST is a file of lines typed at the BASIC prompt (default: all of
-test/bas/*.in).  The Z80 reference output comes from bin/cpm/BBCBASIC.COM
-under RunCPM (tools/runcpm.py) and is cached as test/bas/NAME.ref (delete it
+test/bas/*.in and test/kw/*.in, the keyword tests).  A line "#file PATH"
+puts that file beside the test; a line "#typed" marks a test that needs
+each line typed after the prompt (INKEY), which BBC_EMU=host/hostwin
+skip.  The Z80 reference output comes from bin/cpm/BBCBASIC.COM
+under RunCPM (tools/runcpm.py) and is cached as NAME.ref beside it (delete it
 to regenerate), or is NAME.exp if there is one (written by hand, for
 68k-only features such as the 68000 assembler).  The 68k output comes from bbcbasic under Minix in r68k
 (tools/runminix.py), all tests in one boot, as "bbcbasic < test".  The
@@ -61,18 +64,27 @@ BUDGET = 65536
 
 
 def parse(test):
-    """(typed lines, [host paths of #file files])"""
+    """(typed lines, [host paths of #file files]); a "#typed" line is not
+    typed (see typed)"""
     lines, files = [], []
     with open(test, 'rb') as f:
         for l in f.read().decode('latin-1').split('\n'):
             if l.startswith('#file '):
                 files.append(os.path.normpath(os.path.join(
                     os.path.dirname(test), l[6:].strip())))
-            else:
+            elif l.rstrip() != '#typed':
                 lines.append(l)
     while lines and lines[-1] == '':
         lines.pop()
     return lines, files
+
+
+def typed(test):
+    """A "#typed" line: the test needs each line typed after the prompt
+    (INKEY would read lines typed ahead as keys), so the PC programs,
+    which get all the lines at once, skip it."""
+    with open(test, 'rb') as f:
+        return b'#typed' in f.read().split(b'\n')
 
 
 def reference(test):
@@ -214,6 +226,9 @@ def run_host(tests, secs):
                        'bbc68k.exe' if win else 'bbc68k')
     res = {}
     for t in tests:
+        if typed(t):
+            res[t] = None			# (skipped: see typed)
+            continue
         lines, files = parse(t)
         with tempfile.TemporaryDirectory(dir=os.path.join(TOP, 'build', 'host')) as d:
             for p in files:
@@ -253,8 +268,14 @@ def clean68k(text):
     if lines and lines[0].startswith('BBC BASIC'):
         lines = lines[2:]
     out = []
-    for l in lines:
+    for i, l in enumerate(lines):
         if l.startswith('>'):
+            continue
+        # (the banner again: QUIT or *BYE restarts bare BASIC)
+        if l.startswith('BBC BASIC (') and i + 1 < len(lines) and \
+                lines[i + 1].startswith('(C) Copyright'):
+            continue
+        if l.startswith('(C) Copyright') and i > 0 and lines[i - 1].startswith('BBC BASIC ('):
             continue
         out.append(l)
     return out
@@ -267,15 +288,19 @@ def main():
     ap.add_argument('-t', type=int, default=60)
     ap.add_argument('tests', nargs='*')
     a = ap.parse_args()
-    tests = a.tests or sorted(glob.glob(os.path.join(SRC, 'test', 'bas',
-                                                     '*.in')))
+    tests = a.tests or sorted(glob.glob(os.path.join(SRC, 'test', 'bas', '*.in'))
+                              + glob.glob(os.path.join(SRC, 'test', 'kw', '*.in')))
     refs = {} if a.n else {t: reference(t) for t in tests}
     got = {}
     for g in groups(tests):
         got.update(run_host(g, a.t) if HOSTED else run_bare(g, a.t) if BARE
                    else run68k(g, a.t))
-    bad = 0
+    bad = skipped = 0
     for t in tests:
+        if got[t] is None:
+            skipped += 1
+            print('skip ', os.path.basename(t), '(#typed: not on the PC program)')
+            continue
         g = clean68k(got[t])
         if a.n:
             print('\n'.join(g))
@@ -299,7 +324,8 @@ def main():
             for l in difflib.unified_diff(r, g, 'z80', '68k', lineterm='',
                                           n=1):
                 print('     ', l)
-    print('%d of %d failed' % (bad, len(tests)))
+    print('%d of %d failed' % (bad, len(tests) - skipped)
+          + (', %d skipped' % skipped if skipped else ''))
     sys.exit(1 if bad else 0)
 
 

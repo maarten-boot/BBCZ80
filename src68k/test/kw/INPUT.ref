@@ -1,0 +1,9 @@
+   10 INPUT a$ : REM Print a simple"?" as a prompt
+   20 INPUT "How many",num% : REM prompt is "How many?"
+   30 INPUT "Address &"hex$ : REM "Address &" no ? because no ,
+   40 INPUT TAB(10)"Name ",n$'TAB(10)"Address ",a$
+   50 INPUT a,b,c,d,"More ",yn$
+   60 INPUT SPC(5)"Letter",char$
+   70 INPUT LINE "Line" l$
+   40 INPUT TAB(10)"Name ",n$'TAB(10)"Address ",a$
+   20 INPUT "How many",num% : REM prompt is "How many?"

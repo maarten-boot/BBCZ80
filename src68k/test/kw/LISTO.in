@@ -1,0 +1,31 @@
+REM LISTO: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the Z80 version has bits 0 and 1 only: LISTO 4 to 31 (BASIC V's line
+REM  splitting, no line numbers, lower case) list as with the low bits)
+10 FOR i%=1 TO 2
+20 REPEAT
+30 IF i%=1 THEN
+40 PRINT "one":i%+=1
+50 ELSE
+60 WHILE FALSE:ENDWHILE
+70 ENDIF
+80 UNTIL TRUE
+90 CASE i% OF
+100 WHEN 2:PRINT "two"
+110 ENDCASE
+120 NEXT
+LISTO 0
+LIST
+LISTO 1
+LIST ,30
+LISTO 2
+LIST
+LISTO 3
+LIST ,40
+LISTO %10011
+LIST ,40
+LISTO 8
+LIST ,20
+LISTO 7
+LIST ,20
+RUN
+NEW

@@ -1,0 +1,22 @@
+REM ERROR: from the RISC OS BBC BASIC manual, keywords chapter
+REM ERROR EXT (pass the error on to the caller of BASIC) is not in
+REM BBC BASIC (Z80) and is left out. REPORT$ after an immediate ERROR
+REM shows the next typed line: the message is kept in the input buffer
+ERROR 6, "Type mismatch: number needed"
+PRINT ERR;" ";REPORT$
+10 ON ERROR PRINT ERR;" ";REPORT$;" at ";ERL:GOTO 30
+20 ERROR 6, "Type mismatch: number needed"
+30 ON ERROR PRINT ERR;" ";REPORT$;" at ";ERL:GOTO 50
+40 n%=100:ERROR n%+1, "My error "+STR$(n%)
+50 ON ERROR PRINT ERR;" ";REPORT$;" at ";ERL:GOTO 70
+60 ERROR 255, ""
+70 ON ERROR PRINT ERR;" ";REPORT$;" at ";ERL:GOTO 90
+80 PROCa
+90 ON ERROR PRINT "trapped: ";ERR:END
+100 ERROR 0, "fatal: not trapped"
+110 DEF PROCa:ON ERROR LOCAL PRINT "local ";ERR;" ";REPORT$:ENDPROC
+120 ERROR 17,"Escape-like"
+130 ENDPROC
+RUN
+PRINT ERR;" ";ERL;" ";REPORT$
+NEW

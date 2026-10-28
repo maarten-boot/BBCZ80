@@ -1,0 +1,19 @@
+REM OSCLI: from the RISC OS BBC BASIC manual, keywords chapter
+REM (OSCLI "CAT" lists the directory, which differs: left out)
+10 DIM buff% 255,copy% 255
+20 $buff%="saved by *SAVE, loaded by *LOAD"
+30 file$="KWOSCLI.DAT"
+40 OSCLI "SAVE "+file$+" "+STR$~buff%+" +40"
+50 OSCLI "LOAD "+file$+" "+STR$~copy%:REM get file in buffer
+60 PRINT $copy%
+70 F%=OPENIN file$:PRINT "exists: ";F%<>0:CLOSE#F%
+80 OSCLI "ERA "+file$
+90 PRINT "after ERA: ";OPENIN file$
+100 c$="OPT":OSCLI c$+" 0":OSCLI ""
+110 PRINT "OSCLI evaluates its argument: ";"ERA "+file$
+120 ON ERROR PRINT ERR;" ";REPORT$:GOTO 140
+130 OSCLI "XYZZY"
+140 ON ERROR PRINT ERR;" ";REPORT$:END
+150 OSCLI 42
+RUN
+NEW

@@ -1,0 +1,9 @@
+REM QUIT: from the RISC OS BBC BASIC manual, keywords chapter
+REM (QUIT as a function, for BASIC V's -quit flag, is not in the Z80
+REM version: it is a Syntax error)
+10 ON ERROR PRINT ERR;" ";REPORT$:GOTO 30
+20 IF QUIT THEN PRINT "quit flag" ELSE PRINT "no quit flag"
+30 PRINT "leaving BASIC"
+40 QUIT
+50 PRINT "not reached"
+RUN

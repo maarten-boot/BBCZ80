@@ -1,0 +1,25 @@
+REM CALL: from the RISC OS BBC BASIC manual, keywords chapter
+REM 68k-only: CALL runs machine code, 68000 code here, Z80 code there
+REM d0-d7 = A%-H% on entry, a0 = the parameter block (see ASSEMBLER.md)
+REM the manual's ARM register and R14 tables, and BBC MOS addresses
+REM (CALL &FFF4), do not apply
+10 DIM code 100, buf 7
+20 FOR pass%=0 TO 2 STEP 2
+30   P%=code
+40   [OPT pass%
+50   .addup  add.l d1,d0 : move.l d2,a1 : move.b d0,(a1) : rts
+60   .count  move.l d2,a1 : move.b (a0),(a1)+ : move.b 1(a0),(a1)+
+70           move.b 6(a0),(a1) : rts
+80   .nothing rts
+90   ]
+100 NEXT
+110 A%=20:B%=22:C%=buf:CALL addup:PRINT ?buf
+120 A%=200:B%=100:CALL addup:PRINT ?buf
+130 x=1.5:y%=3:z$="s":C%=buf:CALL count,x,y%,z$:PRINT buf?0;" ";buf?1;" ";buf?2
+140 CALL count:PRINT buf?0
+150 CALL nothing:PRINT "back"
+160 invertMatrix=nothing:DIM a(3):CALL invertMatrix,x
+170 REM as in the Z80 version, a parameter variable that does not exist is made
+180 CALL nothing,undefined,u$:PRINT undefined;" [";u$;"]"
+RUN
+NEW

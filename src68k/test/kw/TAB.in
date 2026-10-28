@@ -1,0 +1,10 @@
+REM TAB: from the RISC OS BBC BASIC manual, keywords chapter
+REM TAB(x,y) and INPUT TAB(0,10) left out: screen cursor and keyboard input
+PRINT TAB(10) "Product";TAB(20) "Price"
+PRINT TAB(5);"x"
+PRINT TAB(0);"left"
+PRINT "abc";TAB(10);"col 10"
+PRINT "abcdefghijkl";TAB(5);"new line"
+PRINT TAB(3);"a";TAB(3);"b"
+PRINT "abc";TAB(3);"d"
+x%=4:PRINT TAB(x%*2)"eight"

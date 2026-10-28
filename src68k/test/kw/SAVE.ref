@@ -1,0 +1,11 @@
+
+No such variable
+
+Syntax error
+   10 REM > KWSAVE1
+   20 PRINT "saved program"
+   30 DEF FNprogName="KWSAVE2"
+saved program
+
+File not found
+         4 Mistake

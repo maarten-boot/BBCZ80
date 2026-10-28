@@ -1,0 +1,22 @@
+REM LET: from the RISC OS BBC BASIC manual, keywords chapter
+REM (TIME varies: only that LET starttime=TIME works is shown)
+LET starttime=TIME:PRINT starttime>=0
+addr$="10 Downing Street, London":LET a$=LEFT$(addr$,10):PRINT a$
+DIM table 360:FOR i=0 TO 90 STEP 30:LET table?i=127*SIN(RAD(i)):NEXT:PRINT table?0;table?30;table?60;table?90
+DIM a(3):LET a() = 1:PRINT a(0);a(3);SUM(a())
+DIM A%(2),B%(2),C%(2):B%()=1,2,3:C%()=10,20,30:LET A%() = B%() + C%():PRINT A%(0);A%(1);A%(2)
+LET x=1.5:LET x%=-7:LET x$="str":PRINT x;x%;" ";x$
+x=2:x$="no LET":PRINT x;" ";x$
+DIM p% 8:LET !p%=&12345678:LET p%?4=300:LET $(p%+5)="ab":PRINT ~!p%;p%?4;" ";$(p%+5)
+LET y=x*2+1:PRINT y
+10 REM errors: LET with a pseudo-variable, type mismatch, out of range
+20 ON ERROR PRINT ERR;" ";REPORT$:GOTO 40
+30 LET TIME=100
+40 ON ERROR PRINT ERR;" ";REPORT$:GOTO 60
+50 LET n="text"
+60 ON ERROR PRINT ERR;" ";REPORT$:GOTO 80
+70 LET i%=3E10
+80 ON ERROR PRINT ERR;" ";REPORT$:END
+90 LET s$=5
+RUN
+NEW

@@ -1,0 +1,20 @@
+REM MID_STRING: from the RISC OS BBC BASIC manual, keywords chapter
+any$="ABCDEFGH":right_half$=MID$(any$,LEN(any$) DIV 2):PRINT right_half$
+A$="123456789":B$="abcd":MID$(A$,4,4) = B$:PRINT A$
+A$="123456789":B$="abcdefghij":MID$(A$,2,5) = MID$(B$,3,6):PRINT A$
+PRINT MID$("ABC",1);"|";MID$("ABC",3);"|";MID$("ABC",4);"|";MID$("ABC",2,0);"|";MID$("ABC",2,99);"|";MID$("",1,1);"|"
+PRINT MID$("ABC",0);"|";MID$("ABC",0,1);"|";LEN(MID$(STRING$(255,"x"),2))
+A$="123456":MID$(A$,5)="abcdef":PRINT A$;LEN(A$)
+A$="123456":MID$(A$,2,1)="abc":PRINT A$
+A$="123456":MID$(A$,3)="":PRINT A$
+A$="123456":MID$(A$,7)="x":PRINT A$
+10 REM the manual's first example, MID$ in a loop, and the errors
+15 PRINT MID$("ABCDEFG",2,3); : REM should print "BCD"
+16 PRINT
+20 s$="BBC":FOR i%=LEN(s$) TO 1 STEP -1:PRINT MID$(s$,i%,1);:NEXT:PRINT
+30 ON ERROR PRINT ERR;" ";REPORT$:GOTO 50
+40 PRINT MID$(123,1)
+50 ON ERROR PRINT ERR;" ";REPORT$:END
+60 PRINT MID$("abc")
+RUN
+NEW

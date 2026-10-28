@@ -1,0 +1,14 @@
+Square root of 4 = 2
+Negative value
+Square root of 2.25 = 1.5
+Negative value
+Square root of 0 = 0
+outer handler: ON ERROR not LOCAL
+local handler: Division by zero
+outer handler restored
+outer handler: -ve root
+end
+        53 ON ERROR not LOCAL
+
+ON ERROR not LOCAL
+still at the prompt

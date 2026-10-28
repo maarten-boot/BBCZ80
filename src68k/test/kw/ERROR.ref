@@ -1,0 +1,10 @@
+
+Type mismatch: number needed
+         6 PRINT ERR;" ";REPORT$
+         6 Type mismatch: number needed at 20
+       101 My error 100 at 40
+       255  at 60
+local 17 Escape-like
+
+fatal: not trapped at line 100
+         0 100 PRINT ERR;" ";ERL;" ";REPORT$

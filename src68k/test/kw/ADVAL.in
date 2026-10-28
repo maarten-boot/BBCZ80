@@ -1,0 +1,15 @@
+REM ADVAL: from the RISC OS BBC BASIC manual, keywords chapter
+REM BBC BASIC (Z80) under CP/M has no buffers or analogue ports:
+REM ADVAL gives the error Sorry (number 0, which ON ERROR cannot trap)
+PRINT ADVAL(-1)
+PRINT ADVAL(1)
+PRINT ERR;" ";REPORT$
+10 ON ERROR PRINT ERR;" ";REPORT$;" at line ";ERL:END
+20 PRINT "start"
+30 IF ADVAL(-1)=0 THEN PROCinput
+40 PRINT "not here"
+50 END
+60 DEF PROCinput:PRINT "input":ENDPROC
+RUN
+PRINT ERR;" ";ERL;" ";REPORT$
+NEW

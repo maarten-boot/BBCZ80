@@ -14,7 +14,8 @@
 #	W/RunCPM		cloned here if missing: the Z80 BBC BASIC under
 #				RunCPM tokenises the demo programs
 # Needs gcc, g++, make, flex, bison, ninja, lua5.4 with lua-posix, python3,
-# git, zip, x86_64-w64-mingw32-g++-posix, and docker for the ROM (the
+# git, zip, x86_64-w64-mingw32-g++-posix, dosfstools (fatcheck), and
+# docker for the ROM (the
 # roscopeco/rosco_m68k image has m68k-elf-gcc and vasm).
 # Result, in W/BBCZ80/build/dist: bbc68k-windows/ (bbc68k.exe, README.txt)
 # and its .zip; bbc68k-linux/ (bbc68k, static, and README.txt) and its
@@ -50,9 +51,13 @@ if [ ! -x "$W/RunCPM/RunCPM/RunCPM" ]; then
 fi
 export RUNCPM="$W/RunCPM/RunCPM/RunCPM"
 
-echo "== bare BBC BASIC with the demo programs"
+echo "== r68k (the bare tests)"
+make -C "$W/r68k" r68k
+
+echo "== bare BBC BASIC, and with the demo programs"
 cd "$SRC"
 python3 tools/mkdemo.py --progs
+python3 tools/mkbare.py
 python3 tools/mkbare.py --demo
 
 echo "== the PC programs"
@@ -61,6 +66,15 @@ python3 tools/mkhost.py -r "$W/r68k"
 echo "== tests: the Linux program against the Z80 references"
 BBC_EMU=host python3 tools/bascheck.py -t 300
 BBC_EMU=host python3 tools/asmcheck.py
+
+echo "== tests: the Linux program's files, editor and keys"
+python3 tools/hostcheck.py linux
+python3 tools/editcheck.py "$TOP/build/host/linux/bbc68k"
+python3 tools/ttycheck.py --exe "$TOP/build/host/linux/bbc68k"
+
+echo "== tests: bare BBC BASIC in r68k, and its SD card (FAT16, FAT32)"
+BBC_EMU=bare python3 tools/bascheck.py -t 300
+python3 tools/fatcheck.py
 
 echo "== the zip and the tar"
 dist=$TOP/build/dist

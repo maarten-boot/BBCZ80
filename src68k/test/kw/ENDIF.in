@@ -1,0 +1,25 @@
+REM ENDIF: from the RISC OS BBC BASIC manual, keywords chapter
+10 FOR x=1 TO 3
+20   IF x=1 THEN
+30     PRINT "one"
+40   ELSE
+50     PRINT "not one ";x
+60   ENDIF
+70   IF x=3 THEN
+80     PRINT "three"
+90   ENDIF
+100 NEXT
+110 IF FALSE THEN
+120   PRINT "not here"
+130 ENDIF:PRINT "after ENDIF"
+140 IF TRUE THEN
+150   IF FALSE THEN
+160     PRINT "inner"
+170   ELSE
+180     PRINT "nested ELSE"
+190   ENDIF
+200 ENDIF
+210 ENDIF
+220 PRINT "ENDIF executed alone"
+RUN
+NEW

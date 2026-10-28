@@ -1,0 +1,11 @@
+REM PI: from the RISC OS BBC BASIC manual, keywords chapter
+10 PRINT FNcircum(1);" ";FNcircum(10)
+20 PRINT PI;" ";-PI;" ";PI/2;" ";PI*1E6;" ";PI^2
+30 PRINT INT(PI*1E8),SIN(PI/2),COS(PI),DEG(PI)
+40 PRINT PI=4*ATN(1),PI=ACS(-1):PRINT STR$(PI)
+50 @%=&A0A:PRINT PI:@%=&90A
+60 ON ERROR PRINT ERR;" ";REPORT$:END
+70 PI=3
+80 DEF FNcircum(r)=2*PI*r
+RUN
+NEW

@@ -1,0 +1,17 @@
+else 0
+goto 1
+goto 2
+goto 3
+else 4
+gosub 1
+gosub 2
+gosub 3
+PROCa
+PROCb 2
+no proc 3
+        40 ON range
+        39 ON syntax
+
+Sorry
+
+Sorry

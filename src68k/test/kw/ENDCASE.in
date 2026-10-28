@@ -1,0 +1,23 @@
+REM ENDCASE: from the RISC OS BBC BASIC manual, keywords chapter
+10 FOR n%=1 TO 3
+20   CASE n% OF
+30     WHEN 1:PRINT "one":PRINT "still one"
+40     WHEN 2
+50       PRINT "two"
+60   ENDCASE
+70   PRINT "after ENDCASE ";n%
+80 NEXT
+90 CASE 5 OF
+100 ENDCASE
+110 PRINT "empty CASE"
+120 CASE 1 OF
+130   WHEN 1:CASE 2 OF
+140     WHEN 2:PRINT "nested"
+150   ENDCASE:PRINT "inner done"
+160   WHEN 2:PRINT "not here"
+170 ENDCASE
+180 ON ERROR PRINT ERR;" ";REPORT$:END
+190 CASE 3 OF
+200   WHEN 3:PRINT "no ENDCASE"
+RUN
+NEW

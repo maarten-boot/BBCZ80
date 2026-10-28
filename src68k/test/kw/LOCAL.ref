@@ -1,0 +1,15 @@
+[]00
+outer12.5
+         325
+         71
+        10
+proc read 100
+main read 2
+attempt to divide by zero
+         0
+         2
+PROCerror: Division by zero
+local: Division by zero
+outer: Division by zero
+inner: ON ERROR not LOCAL
+        12 Not in a FN or PROC

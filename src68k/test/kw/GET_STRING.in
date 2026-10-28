@@ -1,0 +1,16 @@
+REM GET_STRING: from the RISC OS BBC BASIC manual, keywords chapter
+REM (GET$ waits for a key: the examples are LISTed, not run; GET$# reads a file)
+10 PRINT "Do you want another game?":response$ = GET$
+20 IF response$ = "Y" or response$ = "y" CHAIN "program"
+30 PRINT "Input a digit "; : PRINT GET$
+40 IF GET$="*" THEN PRINT "star"
+LIST
+NEW
+10 f=OPENOUT "KWGETS.DAT":BPUT#f,"Y":BPUT#f,"*n":CLOSE#f
+20 f=OPENIN "KWGETS.DAT":response$=GET$#f
+30 IF response$ = "Y" OR response$ = "y" THEN PRINT "yes" ELSE PRINT "no"
+40 IF GET$#f="*" THEN PRINT "star" ELSE PRINT "no star"
+50 CLOSE#f
+RUN
+*ERA KWGETS.DAT
+NEW

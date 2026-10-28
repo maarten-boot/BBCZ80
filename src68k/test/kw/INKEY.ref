@@ -1,0 +1,8 @@
+        -1-1-1-1
+waited
+         1
+no key
+        -1-1
+  100 DEF PROCwait(secs%)
+  110 IF INKEY(100*secs%): REM throw away result
+  120 ENDPROC

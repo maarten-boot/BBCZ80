@@ -1,0 +1,16 @@
+before
+handler: 18 Division by zero at line 20
+         1
+         2
+not Escape: -ve root
+1/-2 = -0.5
+1/-1 = -1
+1/0 = Infinity
+1/1 = 1
+1/2 = 0.5
+         4/2 = 2
+         4/0 = Bad arguments
+         9/3 = 3
+now ON ERROR OFF
+
+Division by zero at line 100

@@ -1,0 +1,19 @@
+REM PRINT_HASH: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the bytes written are the Z80 version's format, not BASIC V's:
+REM a string is its characters then CR, a number 5 bytes, LSB first)
+10 file=OPENOUT "KWPRINT.DAT"
+20 name$="Widget":price=1.234:qnty%=17
+30 PRINT#file,name$+":",INT(100*price+.5),qnty%
+40 PRINT#file:PRINT#file,-1,0.5,"",PI
+50 PRINT PTR#file
+60 CLOSE#file
+70 file=OPENIN "KWPRINT.DAT"
+80 INPUT#file,n$,p,q%:PRINT n$;" ";p;" ";q%
+90 INPUT#file,a,b,c$,d:PRINT a;" ";b;" [";c$;"] ";d
+100 PTR#file=0:FOR i%=1 TO 34:PRINT ;~BGET#file;" ";:NEXT:PRINT
+110 CLOSE#file
+120 ON ERROR PRINT ERR;" ";REPORT$:END
+130 PRINT#file,1
+RUN
+NEW
+*ERA KWPRINT.DAT

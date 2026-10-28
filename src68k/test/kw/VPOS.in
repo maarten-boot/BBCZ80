@@ -1,0 +1,5 @@
+REM VPOS: from the RISC OS BBC BASIC manual, keywords chapter
+REM 68k-only: VPOS is always 0 under CP/M
+REM FNmyTab and PRINT TAB(0,10) left out: they move the screen cursor
+v%=VPOS:PRINT v%>=0
+PRINT VPOS=INT(VPOS)

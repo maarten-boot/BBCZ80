@@ -1,0 +1,14 @@
+REM ASN: from the RISC OS BBC BASIC manual, keywords chapter
+opposite=3:hypotenuse=5:PRINT ASN(opposite/hypotenuse)
+angle=DEG(ASN(0.2213)):PRINT angle
+PRINT ASN(0);ASN(1);ASN(-1);ASN(1)=PI/2;ASN(-1)=-PI/2
+PRINT DEG(ASN(0.5));ASN 0.5;SIN(ASN(0.3))
+30 PROCe("ASN(-0.999999)")
+40 PROCe("ASN(1.0001)")
+50 PROCe("ASN(-2)")
+60 PROCe("ASN(""1"")")
+90 END
+100 DEF PROCe(e$):ON ERROR LOCAL PRINT e$;": ";ERR;" ";REPORT$:ENDPROC
+110 LOCAL v:v=EVAL(e$):PRINT e$;" = ";v:ENDPROC
+RUN
+NEW

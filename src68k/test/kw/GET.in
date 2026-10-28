@@ -1,0 +1,21 @@
+REM GET: from the RISC OS BBC BASIC manual, keywords chapter (GET$#)
+REM (GET from the keyboard is not tested: no keyboard input)
+10 REM GET$#: strings read from a file up to LF, CR or NUL
+20 f=OPENOUT "KWGET.DAT"
+30 BPUT#f,"line one":BPUT#f,"two"
+40 BPUT#f,"abc"+CHR$13+"def"+CHR$0+"ghi"
+50 BPUT#f,"":BPUT#f,"1,2,3,4,5,6,7,8"
+60 BPUT#f,STRING$(200,"x");:BPUT#f,STRING$(100,"y")
+70 CLOSE#f
+80 channel=OPENIN "KWGET.DAT"
+90 string$ = GET$#channel:PRINT "[";string$;"] ";PTR#channel
+100 fileno=channel:PRINT GET$#fileno
+110 FOR i%=1 TO 4:PRINT "[";GET$#channel;"]";:NEXT:PRINT
+120 PRINT GET$#channel BY 4;" ";GET$#channel TO 44;" ";GET$#channel TO ASC(",")
+130 PRINT GET$#channel
+140 l$=GET$#channel:PRINT LEN(l$);" ";LEFT$(l$,3);RIGHT$(l$,3)
+150 PRINT LEN(GET$#channel)
+160 CLOSE#channel
+RUN
+*ERA KWGET.DAT
+NEW

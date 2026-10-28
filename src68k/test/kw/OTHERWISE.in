@@ -1,0 +1,28 @@
+REM OTHERWISE: from the RISC OS BBC BASIC manual, keywords chapter
+10 FOR n%=1 TO 4
+20   x=n%*10:y=n%
+30   CASE n% OF
+40     WHEN 1:PRINT "one"
+50     WHEN 2:PRINT "two"
+60     OTHERWISE PRINT "Bad input"
+70   ENDCASE
+80   CASE n% OF
+90     WHEN 1,2:PRINT "small"
+100    OTHERWISE PROCdraw(x,y) : PROCwait
+110      PRINT "more statements up to ENDCASE"
+120  ENDCASE
+130 NEXT
+140 REM no OTHERWISE and no match: nothing is done
+150 CASE "z" OF
+155   WHEN "a":PRINT "a"
+158 ENDCASE
+160 PRINT "after CASE"
+170 REM OTHERWISE matches any value, also a string
+180 CASE "z" OF
+190   OTHERWISE PRINT "otherwise z"
+200 ENDCASE
+210 END
+220 DEF PROCdraw(x,y):PRINT "draw ";x;",";y:ENDPROC
+230 DEF PROCwait:PRINT "wait":ENDPROC
+RUN
+NEW

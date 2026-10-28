@@ -1,0 +1,11 @@
+REM EOR: from the RISC OS BBC BASIC manual, keywords chapter
+height=12:weight=15:PRINT height>10 EOR weight<20
+weight=25:PRINT height>10 EOR weight<20
+mask=&F0:value1=&3C:bits = mask EOR value1:PRINT ~bits
+PRINT 5 EOR 3;-1 EOR 0;-1 EOR -1;TRUE EOR FALSE;FALSE EOR FALSE
+PRINT ~(&12345678 EOR &FFFFFFFF);~(&80000000 EOR 1);7.9 EOR 1
+PRINT 1 EOR 2 AND 3;1 OR 2 EOR 3;(5 EOR 3) EOR 3
+10 ON ERROR PRINT ERR;" ";REPORT$:END
+20 PRINT "a" EOR 1
+RUN
+NEW

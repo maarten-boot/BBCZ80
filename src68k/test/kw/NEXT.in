@@ -1,0 +1,21 @@
+REM NEXT: from the RISC OS BBC BASIC manual, keywords chapter
+FOR a%=1 TO 3:PRINT a%;:NEXT a%:PRINT
+FOR a%=1 TO 3:PRINT a%;:NEXT:PRINT : REM close one loop
+FOR i%=1 TO 2:FOR j%=1 TO 3:PRINT i%*10+j%;:NEXT j%,i%:PRINT : REM close two loops
+FOR a=1 TO 2:FOR b=1 TO 2:FOR c=1 TO 2:FOR d=1 TO 2:PRINT ;a;b;c;d;" ";:NEXT ,,,:PRINT : REM close four loops
+10 REM NEXT with a variable that is not the innermost loop
+20 FOR i%=1 TO 2
+30 FOR j%=1 TO 5:PRINT ;i%;j%;" ";:IF j%<2 NEXT j%
+35 NEXT i%
+40 PRINT
+50 FOR x=0.5 TO 1.5 STEP 0.25:PRINT x;" ";:NEXT x:PRINT
+60 FOR k%=5 TO 1 STEP -2:PRINT k%;:NEXT:PRINT " ";k%
+70 ON ERROR PRINT ERR;" ";REPORT$:GOTO 90
+80 NEXT
+90 ON ERROR PRINT ERR;" ";REPORT$:GOTO 110
+100 FOR i%=1 TO 2:NEXT q%
+110 ON ERROR PRINT ERR;" ";REPORT$:END
+120 PROCn
+130 DEF PROCn:NEXT
+RUN
+NEW

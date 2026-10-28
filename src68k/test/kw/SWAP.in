@@ -1,0 +1,15 @@
+REM SWAP: from the RISC OS BBC BASIC manual, keywords chapter
+A%=1:B%=2:SWAP A%, B%:PRINT A%;B%
+forename$="John":surname$="Smith":SWAP forename$, surname$:PRINT forename$;" ";surname$
+DIM arr(10):arr(2)=22:arr(5)=55:i%=2:gap%=3:SWAP arr(i%), arr(i%+gap%):PRINT arr(2);arr(5)
+DIM array1$(1),array2$(2):array1$()="a","b":array2$()="x","y","z":SWAP array1$(), array2$():PRINT DIM(array1$(),1);DIM(array2$(),1);" ";array1$(2);array2$(1)
+a=1.5:B%=7:SWAP a, B%:PRINT a;B%
+DIM M% 20:$M%="mem":A$="var":SWAP A$, $M%:PRINT A$;" ";$M%
+DIM A(10),B(20,20):B(20,20)=9:A(10)=4:SWAP A(),B():PRINT DIM(A());DIM(A(),2);DIM(B());DIM(B(),1);A(20,20);B(10)
+DIM matrix(2,2),vector(3):matrix()=5:SWAP matrix(), vector():PRINT DIM(matrix());DIM(vector());vector(1,1)
+10 ON ERROR PRINT ERR;" ";REPORT$:GOTO 30
+20 x=1:y$="s":SWAP x,y$
+30 ON ERROR PRINT ERR;" ";REPORT$:END
+40 DIM p%(2),q(2):SWAP p%(),q()
+RUN
+NEW

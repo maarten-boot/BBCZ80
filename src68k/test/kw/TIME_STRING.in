@@ -1,0 +1,10 @@
+REM TIME_STRING: from the RISC OS BBC BASIC manual, keywords chapter
+REM no real-time clock under CP/M: each use should give the same error
+REM (Sorry is error 0, which ON ERROR cannot trap: immediate statements)
+PRINT TIME$
+t$=TIME$:PRINT LEN(t$)
+TIME$="Tue,01 Jan 1972"
+TIME$="21:12:06"
+TIME$="Tue,01 Jan 1972.21:12:06"
+TIME$="xxx,19 Aug 1987"
+PRINT "still running"

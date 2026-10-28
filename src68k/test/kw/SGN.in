@@ -1,0 +1,13 @@
+REM SGN: from the RISC OS BBC BASIC manual, keywords chapter
+PRINT SGN(-3.5);SGN(0);SGN(7);SGN(-1E-30);SGN(1E30)
+PRINT SGN(-2147483647);SGN(&7FFFFFFF);SGN(0.0);SGN(-0);SGN(-1);SGN 5
+a%=-5:a=-0.25:PRINT SGN a%;SGN a;SGN(a%*a)
+10 DEF FNsquare(th)=SGN(SIN(th))
+20 FOR i=0 TO 7:PRINT FNsquare(i*PI/4+0.1);:NEXT:PRINT
+30 a=3:b=-4
+40 IF SGN(a)<>SGN(b) THEN PRINT "opposite signs"
+50 b=4:IF SGN(a)<>SGN(b) THEN PRINT "opposite" ELSE PRINT "same sign"
+60 ON ERROR PRINT ERR;" ";REPORT$:END
+70 PRINT SGN("x")
+RUN
+NEW

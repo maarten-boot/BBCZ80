@@ -1,0 +1,33 @@
+REM ON_ERROR: from the RISC OS BBC BASIC manual, keywords chapter
+10 ON ERROR PROCerr_handler
+20 PRINT "before":PRINT 1/0
+30 PRINT "not reached"
+40 DEF PROCerr_handler
+50 PRINT "handler: ";ERR;" ";REPORT$;" at line ";ERL
+60 IF ERR=18 THEN PROCtwo
+70 ENDPROC
+80 DEF PROCtwo
+90 ON ERROR IF ERR=17 STOP ELSE PRINT "not Escape: ";REPORT$:END
+100 FOR i%=1 TO 3:PRINT i%:IF i%=2 THEN PRINT SQR(-1)
+110 NEXT:ENDPROC
+RUN
+NEW
+REM (the default handler in the manual uses BASIC V's ERROR EXT, QUIT
+REM and !(HIMEM-4): left out)
+10 REM ON ERROR LOCAL: the nesting level is re-entered
+20 FOR n=-2 TO 2
+30   ok%=TRUE
+40   ON ERROR LOCAL PRINT "Infinity":ok%=FALSE
+50   IF ok% PRINT "1/";n;" = ";1/n
+60 NEXT n
+70 PROCargs(4,2):PROCargs(4,0):PROCargs(9,3)
+80 ON ERROR OFF
+90 PRINT "now ON ERROR OFF"
+100 PRINT 1/0
+110 PRINT "not reached"
+120 DEF PROCargs(a,b)
+130 ON ERROR LOCAL PRINT"Bad arguments" : ENDPROC
+140 PRINT a;"/";b;" = ";a/b
+150 ENDPROC
+RUN
+NEW

@@ -1,0 +1,15 @@
+REM RESTORE DATA with no LOCAL DATA: the manual says "DATA not LOCAL"
+REM (54); the Z80 version 5.4 does nothing when another LOCAL frame (here
+REM ON ERROR LOCAL, or a LOCAL variable) is on top: RESLO2's POP IX
+REM overwrites the "nothing restored" flag
+10 PROCa:PROCb:PRINT "end"
+20 END
+30 DEF PROCa:LOCAL X
+40 ON ERROR LOCAL PRINT ERR;" ";REPORT$:ENDPROC
+50 RESTORE DATA:PRINT "PROCa: no error"
+60 ENDPROC
+70 DEF PROCb
+80 ON ERROR LOCAL PRINT ERR;" ";REPORT$:ENDPROC
+90 RESTORE DATA:PRINT "PROCb: no error"
+100 ENDPROC
+RUN

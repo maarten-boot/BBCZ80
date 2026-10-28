@@ -1,0 +1,10 @@
+ 1000 REM first line 1000
+ 1010 FOR I%=1 TO 3:PRINT I%;:NEXT:PRINT
+ 1020 PRINT "recovered"
+         1         2         3
+recovered
+   10 REM first line 1000
+   20 FOR I%=1 TO 3:PRINT I%;:NEXT:PRINT
+   30 PRINT "recovered"
+         1         2         3
+recovered

@@ -1,0 +1,12 @@
+         1 2
+RESTORE: 1
+RESTORE 1000: line 1000
+RESTORE n%: line 1010
+RESTORE +1: plus zero
+RESTORE +0: next line
+RESTORE +2: two lines on
+main: line 1000
+in PROC: line 1010
+main again: line 1010
+        41 No such line
+        42 Out of DATA

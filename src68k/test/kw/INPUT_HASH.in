@@ -1,0 +1,21 @@
+REM INPUT_HASH: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the file is written with PRINT#; the byte format of the data differs
+REM  from BASIC V's and is not looked at; $buffer is replaced by b$)
+10 data=OPENOUT "KWINP.DAT"
+20 PRINT#data,"Fred Bloggs","1 High St","Town","County",42
+30 PRINT#data,"buffer text",12,-1.5,PI,&7FFFFFFF,1E-20,""
+40 CLOSE#data
+50 data=OPENIN "KWINP.DAT"
+60 INPUT#data,name$,addr1$,addr2$,addr3$,age%
+70 PRINT name$;"|";addr1$;"|";addr2$;"|";addr3$;"|";age%
+80 INPUT#data,b$,len
+90 PRINT b$;len
+100 INPUT#data,x:INPUT#data,y%,z:PRINT x;y%;z
+110 INPUT#data,a,e$:PRINT a;" [";e$;"]"
+120 CLOSE#data
+140 data=OPENIN "KWINP.DAT":INPUT#data,a$,b$,c$,d$,i%:PRINT i%:CLOSE#data
+150 ON ERROR PRINT ERR;" ";REPORT$:END
+160 INPUT#data,a$
+RUN
+*ERA KWINP.DAT
+NEW

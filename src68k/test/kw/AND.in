@@ -1,0 +1,32 @@
+REM AND: from the RISC OS BBC BASIC manual, keywords chapter
+x=12:y=10:a = x AND y     : REM a is set to binary AND of x and y
+PRINT a
+var=14:PRINT var AND 3 : REM print lowest 2 bits of var
+day=4:month$="April":IF day=4 AND month$="April" THEN PRINT "Happy birthday"
+day=5:IF day=4 AND month$="April" THEN PRINT "Happy birthday" ELSE PRINT "not today"
+PRINT 2 AND 4;(2<>0) AND (4<>0);TRUE AND TRUE;TRUE AND FALSE;FALSE AND FALSE
+PRINT ~(&12345678 AND &F0F0F0F0);~(-1 AND &80000000);-20 AND 11;7.9 AND 3
+PRINT 1 AND 2 OR 4;1 OR 2 AND 4;(1=1 AND 2=2);1+2 AND 3
+10 temp=60:windy=FALSE:PROCday
+20 temp=60:windy=TRUE:PROCday
+30 temp=40:windy=FALSE:PROCday
+40 a=0:b=5
+50 REPEAT
+60   a=a+1
+70   b=b-1
+80 UNTIL a>10 AND b<0
+90 PRINT a;b
+100 feet=4:tails=1:hairy=TRUE
+110 isadog = feet=4 AND tails=1 AND hairy
+120 PRINT isadog
+130 hairy=FALSE:isadog = feet=4 AND tails=1 AND hairy:PRINT isadog
+140 ON ERROR PRINT ERR;" ";REPORT$:END
+150 PRINT "a" AND 1
+160 END
+170 DEF PROCday
+180 IF temp>50 AND NOT windy THEN PROCgo_out ELSE PROCstay_in
+190 ENDPROC
+200 DEF PROCgo_out:PRINT "go out":ENDPROC
+210 DEF PROCstay_in:PRINT "stay in":ENDPROC
+RUN
+NEW

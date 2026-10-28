@@ -1,0 +1,19 @@
+REM EXT_HASH: from the RISC OS BBC BASIC manual, keywords chapter
+REM (CP/M files are in 128-byte records, so lengths are printed in 128s;
+REM  EXT#f=expression, setting the length, is BASIC V only: not tested)
+10 REM EXT#: length of a file opened for reading
+20 f=OPENOUT "KWEXT.DAT":FOR i%=1 TO 200:BPUT#f,i%:NEXT:CLOSE#f
+30 file=OPENIN "KWEXT.DAT"
+40 PRINT (EXT#file+127) DIV 128;EXT#file>=200
+50 IF EXT#file>90000 THEN PRINT "File full":CLOSE#file ELSE PRINT "not full"
+60 dummy=BGET#file:dummy=BGET#file:PRINT (EXT#file+127) DIV 128;PTR#file
+70 CLOSE#file
+80 f=OPENOUT "KWEXT0.DAT":CLOSE#f:f=OPENIN "KWEXT0.DAT":PRINT EXT#f:CLOSE#f
+90 f=OPENUP "KWEXT.DAT":PTR#f=EXT#f:FOR i%=1 TO 100:BPUT#f,0:NEXT:CLOSE#f
+100 f=OPENIN "KWEXT.DAT":PRINT (EXT#f+127) DIV 128;EXT#f>=300:CLOSE#f
+110 ON ERROR PRINT ERR;" ";REPORT$:END
+120 PRINT EXT#f
+RUN
+*ERA KWEXT.DAT
+*ERA KWEXT0.DAT
+NEW

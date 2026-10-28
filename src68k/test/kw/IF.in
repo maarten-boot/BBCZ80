@@ -1,0 +1,53 @@
+REM IF: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the manual's IF a THEN *CAT is left out: catalogue output differs)
+10 REM the manual's examples, single-line and multi-line IF
+20 FOR temp=9 TO 11:IF temp<=10 PROClow_temp
+30 NEXT
+40 a%=5:b%=3:IF a%>b% THEN SWAP a%, b% ELSE PRINT "No swap"
+50 PRINT a%;b%:IF a%>b% THEN SWAP a%, b% ELSE PRINT "No swap"
+60 A=1:B=5:C=6:IF B^2 >= 4*A*C THEN
+70   PROCroots(A,B,C)
+80 ENDIF
+90 FOR i%=1 TO 3:READ r$
+100   IF r$ = "Y" OR r$ = "y" THEN
+110     PRINT "YES"
+120   ELSE
+130     PRINT "NO"
+140   ENDIF
+150 NEXT
+160 DATA Y,n,y
+170 FOR a=0 TO 1:FOR b=0 TO 1
+180   IF a THEN
+190     IF b THEN
+200       PRINT "a b"
+210     ELSE
+220       PRINT "a, not b"
+230     ENDIF
+240   ELSE REM part of IF a
+250     PRINT "not a"
+260   ENDIF
+270 NEXT:NEXT
+280 FOR a=0 TO 2:IF a=0 THEN PRINT "zero" ELSE IF a=1 THEN PRINT "one" ELSE PRINT "two"
+290 NEXT
+300 x=0:IF x=0 THEN 320
+310 PRINT "not here"
+320 IF x ELSE PRINT "zero x"
+330 IF 0.5 THEN PRINT "non-zero is TRUE"
+340 IF "a"<"b" PRINT "a<b":IF -1 THEN PRINT "line ";:PRINT 340
+350 IF 1 THEN PRINT "then" ELSE 9999
+360 END
+400 DEF PROClow_temp:PRINT "low ";temp:ENDPROC
+410 DEF PROCroots(A,B,C):LOCAL d:d=SQR(B^2-4*A*C)
+420 PRINT (-B+d)/(2*A);(-B-d)/(2*A):ENDPROC
+RUN
+NEW
+10 REM the manual's IF ... STOP, as the last NO
+20 r$="n":IF r$ = "Y" OR r$ = "y" THEN
+30   PRINT "YES"
+40 ELSE
+50   PRINT "NO"
+60   STOP
+70 ENDIF
+80 PRINT "not here"
+RUN
+NEW

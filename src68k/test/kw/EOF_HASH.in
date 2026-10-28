@@ -1,0 +1,22 @@
+REM EOF_HASH: from the RISC OS BBC BASIC manual, keywords chapter
+REM the files are 0 and 128 bytes (one CP/M record), so EOF# is the same
+10 file=OPENOUT "KWEOF.DAT"
+20 FOR i%=0 TO 3:BPUT#file,STRING$(30,CHR$(65+i%))+CHR$13:NEXT
+30 PRINT PTR#file
+40 CLOSE#file
+50 file=OPENIN "KWEOF.DAT":PRINT EOF#file
+60 REPEAT
+70   VDU BGET#file
+80 UNTIL EOF#file
+90 invoices=file
+100 IF EOF#invoices PRINT "No more invoices"
+110 PTR#file=0:PRINT EOF#file:PTR#file=127:PRINT EOF#file:PTR#file=128:PRINT EOF#file
+120 CLOSE#file
+130 file=OPENOUT "KWEOF0.DAT":CLOSE#file
+140 file=OPENIN "KWEOF0.DAT":PRINT EOF#file:CLOSE#file
+150 ON ERROR PRINT ERR;" ";REPORT$:END
+160 PRINT EOF#file
+RUN
+NEW
+*ERA KWEOF.DAT
+*ERA KWEOF0.DAT

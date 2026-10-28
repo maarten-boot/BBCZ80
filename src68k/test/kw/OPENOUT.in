@@ -1,0 +1,20 @@
+REM OPENOUT: from the RISC OS BBC BASIC manual, keywords chapter
+10 out_file%=OPENOUT "CUSTOMER.DAT"
+20 PRINT "channel non-zero: ";out_file%<>0
+30 PRINT#out_file%,"Smith",42:PRINT PTR#out_file%
+40 REM opened for input and output: read back what was written
+50 PTR#out_file%=0:INPUT#out_file%,a$,n%:PRINT a$;" ";n%
+60 CLOSE#out_file%
+70 data$="DAT":data%=OPENOUT("KWOUT."+data$)
+80 BPUT#data%,72:BPUT#data%,105:BPUT#data%,13:CLOSE#data%
+90 F%=OPENIN "KWOUT.DAT":INPUT#F%,s$:CLOSE#F%:PRINT s$
+100 REM OPENOUT on an existing file makes it new and empty
+110 F%=OPENOUT "CUSTOMER.DAT":PRINT PTR#F%:PRINT#F%,"Jones":CLOSE#F%
+120 F%=OPENIN "CUSTOMER.DAT":INPUT#F%,a$:CLOSE#F%:PRINT a$
+130 ON ERROR PRINT ERR;" ";REPORT$:END
+140 F%=OPENOUT 5
+RUN
+NEW
+REM (the manual's ":datadisc."+data$ is a RISC OS path: an 8.3 name is used)
+*ERA CUSTOMER.DAT
+*ERA KWOUT.DAT

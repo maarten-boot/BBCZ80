@@ -1,0 +1,23 @@
+REM READ: from the RISC OS BBC BASIC manual, keywords chapter
+10 READ n%:PRINT n%
+20 READ a$, fred%, float:PRINT a$;"|";fred%;"|";float
+30 REM a string READ takes any DATA item as a string, without leading spaces
+40 READ s1$,s2$,s3$:PRINT s1$;"|";s2$;"|";s3$;"|"
+50 REM a numeric READ evaluates its DATA item
+60 READ x,y%,z:PRINT x;" ";y%;" ";z
+70 READ q$:PRINT q$;"|"
+80 READ a,b:PRINT a;" ";b
+90 ON ERROR PRINT ERR;" ";REPORT$:GOTO 110
+100 READ k:PRINT "k=";k
+110 ON ERROR PRINT ERR;" ";REPORT$:END
+120 RESTORE 200:READ m,n
+130 DATA 42
+140 DATA Fred, 17, 2.5
+150 DATA   leading,  3.75  ,"  quoted, with comma "
+160 DATA 2*3, 7.9, &FF
+170 DATA ""
+180 DATA 1, -2
+190 DATA word
+200 DATA 5
+RUN
+NEW

@@ -1,0 +1,13 @@
+first program
+PAGE<TOP: -1  TOP-PAGE: 114
+PAGE<=LOMEM: -1  PAGE<HIMEM: -1
+        -1        -1
+second program at the new PAGE
+TOP-PAGE: 64
+   10 PRINT "first program"
+   20 PRINT "PAGE<TOP: ";PAGE<TOP;"  TOP-PAGE: ";TOP-PAGE
+   30 PRINT "PAGE<=LOMEM: ";PAGE<=LOMEM;"  PAGE<HIMEM: ";PAGE<HIMEM
+first program
+PAGE<TOP: -1  TOP-PAGE: 114
+PAGE<=LOMEM: -1  PAGE<HIMEM: -1
+        -1

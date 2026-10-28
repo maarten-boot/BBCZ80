@@ -1,0 +1,27 @@
+REM DIM: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the address DIM gives need not be a multiple of four in BBC BASIC (Z80))
+10 num_names%=3:DIM name$(num_names%)
+20 DIM sin(90)
+30 DIM matrix%(4,4)
+40 DIM A(64), B%(12,4), C$(2,8,3)
+50 PRINT "[";name$(3);"]";sin(90);matrix%(4,4);A(64);B%(12,4);"[";C$(2,8,3);"]"
+60 size=10:overhead=5:DIM bytes% size*10+overhead
+70 DIM next% 0:PRINT next%-bytes%>=size*10+overhead+1
+80 PRINT DIM(name$())
+90 size%=DIM(name$(),1):PRINT size%
+100 PRINT DIM(C$());DIM(C$(),1);DIM(C$(),2);DIM(C$(),3);DIM(B%(),2)
+110 DIM e% -1:DIM f% 3:PRINT f%-e%>=0
+120 matrix%(4,4)=7:sin(1)=0.5:C$(1,2,3)="x":PRINT matrix%(4,4);sin(1);C$(1,2,3)
+130 PROCp(B%()):PROCloc
+140 ON ERROR PRINT ERR;" ";REPORT$:GOTO 160
+150 DIM A(3)
+160 ON ERROR PRINT ERR;" ";REPORT$:GOTO 180
+170 PRINT A(65)
+180 ON ERROR PRINT ERR;" ";REPORT$:GOTO 200
+190 DIM neg(-1)
+200 ON ERROR PRINT ERR;" ";REPORT$:END
+210 PRINT DIM(B%(),3)
+220 DEF PROCp(a%()):PRINT DIM(a%());DIM(a%(),1):ENDPROC
+230 DEF PROCloc:LOCAL l():DIM l(5):l(5)=55:PRINT l(5);DIM(l(),1):ENDPROC
+RUN
+NEW

@@ -1,0 +1,26 @@
+REM ON: from the RISC OS BBC BASIC manual, keywords chapter
+10 REM the other ON statements: ON expr GOTO/GOSUB/PROC [ELSE]
+60 FOR k%=0 TO 4
+70   ON k% GOTO 80,90,100 ELSE PRINT "else ";k%:GOTO 110
+80   PRINT "goto 1":GOTO 110
+90   PRINT "goto 2":GOTO 110
+100  PRINT "goto 3"
+110 NEXT
+120 FOR k%=1 TO 3:ON k% GOSUB 300,310,320:NEXT
+130 FOR k%=1 TO 3:ON k% PROCa,PROCb(k%) ELSE PRINT "no proc ";k%
+140 NEXT
+150 ON ERROR PRINT ERR;" ";REPORT$:GOTO 170
+160 k%=5:ON k% GOTO 80,90
+170 ON ERROR PRINT ERR;" ";REPORT$:END
+180 ON 1 PRINT "x"
+300 PRINT "gosub 1":RETURN
+310 PRINT "gosub 2":RETURN
+320 PRINT "gosub 3":RETURN
+330 DEF PROCa:PRINT "PROCa":ENDPROC
+340 DEF PROCb(n):PRINT "PROCb ";n:ENDPROC
+RUN
+NEW
+REM ON on its own turns the text cursor on (after OFF); the CP/M
+REM versions have no cursor control and give the untrappable Sorry
+OFF
+ON

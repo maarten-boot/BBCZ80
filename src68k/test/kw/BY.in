@@ -1,0 +1,12 @@
+REM BY: from the RISC OS BBC BASIC manual, keywords chapter
+REM BY is part of MOVE, DRAW, POINT and FILL; BBC BASIC (Z80) under
+REM CP/M has no graphics, so the manual's examples give the error Sorry
+x%=2:y%=3
+MOVE BY 4*x%,4*y%
+DRAW BY x%*16, y%*4
+FILL BY x%, y%
+10 ON ERROR PRINT ERR;" ";REPORT$;" at line ";ERL:END
+20 PRINT "move"
+30 MOVE BY 4*x%,4*y%
+RUN
+NEW

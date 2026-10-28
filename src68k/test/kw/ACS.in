@@ -1,0 +1,16 @@
+REM ACS: from the RISC OS BBC BASIC manual, keywords chapter
+PRINT ACS(0.5)
+cos1=0.5:angle=DEG(ACS(cos1)):PRINT angle
+DIM normvec1(2),normvec2(2):normvec1(1)=0.6:normvec1(2)=0.8:normvec2(1)=0.8:normvec2(2)=0.6
+ang=ACS(normvec1(1)*normvec2(1)+normvec1(2)*normvec2(2)):PRINT ang;" ";DEG(ang)
+PRINT ACS(1);ACS(0);ACS(-1);ACS(-1)=PI;ACS(0)=PI/2
+PRINT DEG(ACS(-0.5));ACS 1;COS(ACS(0.3))
+30 PROCe("ACS(0.999999)")
+40 PROCe("ACS(1.0001)")
+50 PROCe("ACS(-2)")
+60 PROCe("ACS(""1"")")
+90 END
+100 DEF PROCe(e$):ON ERROR LOCAL PRINT e$;": ";ERR;" ";REPORT$:ENDPROC
+110 LOCAL v:v=EVAL(e$):PRINT e$;" = ";v:ENDPROC
+RUN
+NEW

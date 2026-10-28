@@ -1,0 +1,24 @@
+REM THEN: from the RISC OS BBC BASIC manual, keywords chapter
+REM MODE, COLOUR and CLS of the multi-line example left out: not comparable
+a=5:IF a>3 THEN PRINT "Too large"   : REM THEN optional
+a=5:IF a>3 PRINT "Too large without THEN"
+a=2:IF a>3 THEN PRINT "Too large" ELSE PRINT "fine"
+10 mem=FALSE:IF mem THEN H=1 ELSE H=0
+20 PRINT H
+30 A$="Y":GOSUB 100
+40 A$="N":GOSUB 100
+50 colour$="red":GOSUB 200
+60 colour$="blue":GOSUB 200
+70 END
+100 IF A$="Y" THEN 120 ELSE GOTO 140
+110 PRINT "not here"
+120 PRINT "at 120":RETURN
+140 PRINT "at 140":RETURN
+200 IF colour$ = "red" THEN
+210   PRINT "red branch"
+220 ELSE
+230   PRINT "other branch" : PRINT colour$
+240 ENDIF
+250 RETURN
+RUN
+NEW

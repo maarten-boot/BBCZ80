@@ -1,0 +1,21 @@
+REM CHAIN: from the RISC OS BBC BASIC manual, keywords chapter
+10 PRINT "partB: A%=";A%;" Z%=";Z%
+20 ON ERROR PRINT "partB: ";REPORT$:END
+30 PRINT x
+SAVE "PARTB.BBC"
+NEW
+10 PRINT "part2 runs"
+SAVE "PART2.BBC"
+NEW
+10 A%=12:Z%=26:x=1.5
+20 PRINT "partA: x=";x
+30 CHAIN "PARTB"
+40 PRINT "not here"
+RUN
+a$="PART":CHAIN a$+"2"
+10 ON ERROR PRINT ERR;" ";REPORT$:END
+20 CHAIN "NOFILE"
+RUN
+NEW
+*ERA PARTB.BBC
+*ERA PART2.BBC

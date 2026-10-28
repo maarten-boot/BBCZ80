@@ -1,0 +1,30 @@
+REM RESTORE: from the RISC OS BBC BASIC manual, keywords chapter
+5 DATA 1,2
+10 READ a,b:PRINT a;" ";b
+20 RESTORE:READ a:PRINT "RESTORE: ";a
+30 RESTORE 1000:READ a$:PRINT "RESTORE 1000: ";a$
+50 n%=1010:RESTORE n%:READ a$:PRINT "RESTORE n%: ";a$
+55 REM (Z80: +0 and +1 both mean the next line; BASIC V: +1 is the one after)
+60 RESTORE +1:READ a$:PRINT "RESTORE +1: ";a$
+70 DATA plus zero
+80 DATA plus one
+90 RESTORE +0:READ a$:PRINT "RESTORE +0: ";a$:RESTORE +2:READ a$:PRINT "RESTORE +2: ";a$
+100 DATA next line
+105 DATA two lines on
+110 RESTORE 1000:READ a$:PRINT "main: ";a$
+120 PROCread:READ a$:PRINT "main again: ";a$
+130 ON ERROR LOCAL PRINT ERR;" ";REPORT$:GOTO 150
+135 REM (the Z80 version needs the line to exist; BASIC V uses the next one)
+140 RESTORE 995
+150 REM (RESTORE DATA with no LOCAL DATA: test/diff/d13restoredata)
+170 ON ERROR PRINT ERR;" ";REPORT$:END
+180 RESTORE 1010:READ a$,b$,c$
+200 DEF PROCread
+210 LOCAL DATA
+220 RESTORE 1010:READ a$:PRINT "in PROC: ";a$
+230 RESTORE DATA
+240 ENDPROC
+1000 DATA line 1000
+1010 DATA line 1010,last
+RUN
+NEW

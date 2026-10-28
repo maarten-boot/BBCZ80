@@ -1,0 +1,11 @@
+REM TIME: from the RISC OS BBC BASIC manual, keywords chapter
+10 REM values vary: relations only
+20 TIME=0:t%=TIME:PRINT t%>=0;t%<500
+30 TIME=100000:t%=TIME:PRINT t%>=100000;t%<100500
+40 s%=TIME:PROCdelay(0.1):e%=TIME:PRINT e%>s%+10;c%<20000
+50 TIME=0:PRINT TIME<TIME+1
+60 END
+70 REM the manual's one-line PROCdelay, with the ENDPROC it needs and a guard (c%) against a clock that stops
+80 DEF PROCdelay(n) T%=TIME+n*100:c%=0:REPEAT c%+=1:UNTIL TIME>T% OR c%>20000:ENDPROC
+RUN
+NEW

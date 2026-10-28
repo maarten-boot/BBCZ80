@@ -1,0 +1,6 @@
+   10 PRINT "Do you want another game?":response$ = GET$
+   20 IF response$ = "Y" or response$ = "y" CHAIN "program"
+   30 PRINT "Input a digit "; : PRINT GET$
+   40 IF GET$="*" THEN PRINT "star"
+yes
+no star

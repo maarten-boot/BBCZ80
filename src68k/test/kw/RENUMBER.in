@@ -1,0 +1,26 @@
+REM RENUMBER: from the RISC OS BBC BASIC manual, keywords chapter
+1 REM renumber me
+2 RESTORE 9:READ a$:PRINT a$
+3 IF a$="x" THEN 7 ELSE GOSUB 8
+5 GOTO 7
+7 PRINT "end":END
+8 PRINT "gosub":RETURN
+9 DATA data line
+RENUMBER
+LIST
+RUN
+RENUMBER 1000,20
+LIST
+RUN
+RENUMBER 5
+LIST 5,15
+RENUMBER ,1
+LIST 10,12
+NEW
+REM a reference to a missing line: the Z80 version says "Failed at <line>"
+10 GOTO 25
+20 RESTORE 99
+30 PRINT "x"
+RENUMBER 100,5
+LIST
+NEW

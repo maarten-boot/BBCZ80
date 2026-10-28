@@ -1,0 +1,19 @@
+REM LEFT_STRING: from the RISC OS BBC BASIC manual, keywords chapter
+a$="Hello!":start$ = LEFT$(a$):PRINT start$;"|";LEFT$(a$,2);"|";LEFT$("x");"|";LEFT$("");"|"
+input$="ABCDEFGH":left_half$=LEFT$(input$,LEN(input$) DIV 2 ):PRINT left_half$
+input$="ABCDEFG":left_half$=LEFT$(input$,LEN(input$) DIV 2 ):PRINT left_half$
+PRINT LEFT$("ABC",0);"|";LEFT$("ABC",3);"|";LEFT$("ABC",300);"|";LEN(LEFT$(STRING$(255,"a"),255))
+REM (the Z80 version's LEFT$(A$)= changes all but the last character)
+A$="xyz":LEFT$(A$) = "ABCD":PRINT A$
+A$="xyzzy":LEFT$(A$) = "AB":PRINT A$
+A$="123456":B$="abcdef":n%=4:LEFT$(A$,n%) = B$:PRINT A$
+A$="123456":LEFT$(A$,10) = "ab":PRINT A$;LEN(A$)
+A$="123456":LEFT$(A$,0) = "ab":PRINT A$
+A$="":LEFT$(A$)="abc":PRINT "[";A$;"]"
+10 REM strip a trailing character, as the manual suggests
+20 l$="text"+CHR$(13):PRINT LEN(l$);LEN(LEFT$(l$));" ";LEFT$(l$)
+30 FOR i%=0 TO 4:PRINT LEFT$("BASIC",i%);",";:NEXT:PRINT
+40 ON ERROR PRINT ERR;" ";REPORT$:END
+50 PRINT LEFT$(123,2)
+RUN
+NEW

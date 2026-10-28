@@ -1,0 +1,21 @@
+REM OPENIN: from the RISC OS BBC BASIC manual, keywords chapter
+10 F%=OPENOUT "INVOICE.DAT":PRINT#F%,"first",12345,2.5:BPUT#F%,65:CLOSE#F%
+20 in_file%=OPENIN "INVOICE.DAT"
+30 PRINT "channel non-zero: ";in_file%<>0
+40 INPUT#in_file%,a$,n%,x:PRINT a$;" ";n%;" ";x;" ";CHR$BGET#in_file%
+50 PTR#in_file%=0:INPUT#in_file%,a$:PRINT "again: ";a$;" ";PTR#in_file%
+60 CLOSE#in_file%
+70 data$="DAT":data%=OPENIN("NOINV."+data$)
+80 PRINT "missing file gives ";data%
+90 REM a file may be opened for reading several times
+100 A%=OPENIN "INVOICE.DAT":B%=OPENIN "INVOICE.DAT"
+110 PRINT A%<>0,B%<>0,A%<>B%
+120 INPUT#A%,a$:PRINT a$;" ";:INPUT#B%,b$:PRINT b$
+130 CLOSE#A%:CLOSE#B%
+140 ON ERROR PRINT ERR;" ";REPORT$:END
+150 F%=OPENIN 123
+RUN
+NEW
+REM (the manual's ":0"+data$ is a RISC OS path: a missing 8.3 name is used;
+REM file names have an extension: CP/M adds .BBC to a name without one)
+*ERA INVOICE.DAT

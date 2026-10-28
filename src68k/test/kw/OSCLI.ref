@@ -1,0 +1,6 @@
+saved by *SAVE, loaded by *LOAD
+exists: -1
+after ERA: 0
+OSCLI evaluates its argument: ERA KWOSCLI.DAT
+       254 Bad command
+         6 Type mismatch

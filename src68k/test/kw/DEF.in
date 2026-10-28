@@ -1,0 +1,26 @@
+REM DEF: from the RISC OS BBC BASIC manual, keywords chapter
+10 PRINT FNmean(3,8);" ";FNmean(-1,1)
+20 PROCinit:PRINT n%
+30 m$="":PROCthrow_dice(6,3,m$):PRINT m$
+40 DIM A(1,1):A()=2,1,5,4:PROCarray_determinant(A()):PRINT det
+50 DIM b% 20:p%=b%:q%=b%+8:!p%=1:$q%="old":PROCind(12345,"abc"):PRINT !p%;" ";$q%
+60 x=1:PROClocal(5):PRINT x
+70 ON ERROR PRINT ERR;" ";REPORT$:END
+80 PROCnotfirst
+90 END
+100 DEF FNmean(a,b)
+110 =(a+b)/2
+120 DEF PROCinit
+130 n%=42
+140 ENDPROC
+150 DEF PROCthrow_dice(d%,tries,RETURN mesg$)
+160 mesg$="dice "+STR$(d%)+" thrown "+STR$(tries)+" times"
+170 ENDPROC
+180 DEF PROCarray_determinant(A())
+190 det=A(0,0)*A(1,1)-A(0,1)*A(1,0)
+200 ENDPROC
+210 DEF PROCind(!p%,$q%):PRINT !p%;" ";$q%:ENDPROC
+220 DEF PROClocal(x):PRINT x:ENDPROC
+230 PRINT "x":DEF PROCnotfirst:PRINT "found":ENDPROC
+RUN
+NEW
