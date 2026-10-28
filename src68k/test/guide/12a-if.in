@@ -1,0 +1,53 @@
+REM 12a-if: from the RISC OS BBC BASIC manual, chapter 12 (Control statements)
+REM IF ... THEN ... ELSE; INPUT is replaced by READ/DATA
+10 RESTORE 100
+20 FOR T%=1 TO 3
+30   PRINT "What is 2 * 4"
+40   READ ans%:PRINT ans%
+50   IF ans% = 8 THEN PRINT "Well done" ELSE PRINT "Wrong"
+60 NEXT
+70 IF 7 PRINT "non-zero is TRUE"
+80 IF 0 THEN PRINT "zero is TRUE" ELSE PRINT "zero is FALSE"
+90 PRINT (1=1);" ";(1=2);" ";TRUE;" ";FALSE
+100 DATA 8,9,-8
+RUN
+NEW
+REM relational and logical operators
+PRINT 2=2;2<3;3>2;2<=2;3>=4;2<>3;2.5<2.75;3=3.0
+PRINT "A"="A";"A"<>"B";"HI"<"Hi";"SIX">"FIFTEEN";"AB"<"ABC";"ABC"<="AB";"">=""
+PRINT NOT TRUE;NOT FALSE;TRUE AND FALSE;TRUE OR FALSE;TRUE EOR TRUE;TRUE EOR FALSE
+REM multi-line IF ... THEN ... ELSE ... ENDIF; RND and INPUT replaced
+10 FOR T%=1 TO 2
+20 n% = 6
+30 m% = 7
+35 READ ans%
+40 PRINT "What is ";n% " * "m%;"? ";ans%
+50 IF ans% = n%*m% THEN
+60   PRINT "Well done"
+70 ELSE
+80   PRINT "Wrong"
+90   PRINT n%;" * ";m% " = ";n%*m%
+100 ENDIF
+110 NEXT
+120 DATA 42,24
+RUN
+NEW
+REM nested IF ... ENDIF; the numbers are READ, the GOTO 30 loop ends at -99
+10 DIM A%(10)
+20 count% = 0
+30 PRINT "Give me an integer between 0 and 9 ";
+40 READ number%:PRINT number%:IF number%=-99 THEN PRINT count%:END
+50 IF number% >= 0 AND number% <= 9 THEN
+60   IF A%(number%) = 0 THEN
+70     PRINT "Thank you"
+80     A%(number%) = 1 : count% = count% + 1
+90   ELSE
+100     PRINT "You've already had that number"
+110   ENDIF
+120 ELSE
+130   PRINT number% " is not between 0 and 9 !"
+140 ENDIF
+150 IF count% < 10 GOTO 30
+160 DATA 3,5,3,12,-1,0,-99
+RUN
+NEW

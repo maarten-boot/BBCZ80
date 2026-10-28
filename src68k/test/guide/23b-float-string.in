@@ -1,0 +1,30 @@
+REM 23b-float-string: from the RISC OS BBC BASIC manual, chapter 23 (Accessing memory locations)
+10 DIM pointer% 100
+20 |pointer% = 3.678
+30 PRINT |pointer%
+45 REM (5 bytes in the Z80 version: the next byte is left alone)
+50 pointer%?5 = 77 : |pointer% = -1E10 : PRINT |pointer%;" ";pointer%?5
+RUN
+REM no dyadic | or $: errors
+a = 0
+a|5 = 1.23
+string% = 0
+string%$1 = "x"
+NEW
+DIM pointer% 100
+$pointer% = "STRING"
+PRINT $pointer%
+10 DIM space% 10
+20 REM set all bytes to zero
+30 FOR N% = 0 TO 10
+40   space%?N% = 0
+50 NEXT N%
+60 REM Store the string
+70 $space% = "STRING"
+80 REM Print out the bytes (not CHR$ of 0 and 13)
+90 FOR N% = 0 TO 10
+100   IF space%?N% > 31 THEN PRINT space%?N% "  ";CHR$(space%?N%) ELSE PRINT space%?N%
+110 NEXT N%
+120 PRINT $(space% + 2);" ";LEN($space%)
+RUN
+NEW

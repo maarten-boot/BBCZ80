@@ -1,0 +1,29 @@
+REM 28b-storage: from the RISC OS BBC BASIC manual, appendix A (Numeric implementation)
+REM storage: integers 4 bytes, reals 5 bytes (only differences of addresses)
+10 DIM P% 0:DIM a(99):DIM Q% 0:DIM b(199):DIM R% 0
+20 PRINT "100 more reals: ";(R%-Q%)-(Q%-P%);" bytes"
+30 DIM P% 0:DIM a%(99):DIM Q% 0:DIM b%(199):DIM R% 0
+40 PRINT "100 more integers: ";(R%-Q%)-(Q%-P%);" bytes"
+50 DIM S% 0:DIM c(9,9):DIM T% 0:DIM d(19,9):DIM U% 0
+60 PRINT "10x10 more reals: ";(U%-T%)-(T%-S%);" bytes"
+70 REM a real in memory: 5 bytes with |, an integer 4 bytes with !
+80 DIM m% 9:m%?5=&55:|m%=PI:PRINT m%?5;" ";|m%
+90 !m%=-1:m%?4=&AA:PRINT ~!m%;" ";~m%?4
+RUN
+NEW
+REM integers are processed more quickly: the same sum, two ways
+10 s=0:s%=0
+20 FOR i%=1 TO 1000:s=s+i%:s%=s%+i%:NEXT
+30 PRINT s;" ";s%;" ";s=s%
+RUN
+NEW
+REM accuracy: a real keeps about 9 significant figures, an integer all of them
+a%=123456789:a=123456789:PRINT a%;" ";a;" ";a%=a
+a%=987654321:a=987654321:PRINT a%;" ";a;" ";a%=a
+@%=&A0A:PRINT a%;" ";a:@%=&90A
+REM (a 5-byte real has a 32-bit mantissa: integers up to 2^32 are exact)
+PRINT 2^32-1=4294967295;" ";(2^32-1)-(2^32-2);" ";2^31+1-2^31
+x=1/3:PRINT x*3;" ";x*3=1;" ";1-x*3
+x=0.1:s=0:FOR i%=1 TO 10:s=s+x:NEXT:PRINT s;" ";s=1;" ";ABS(s-1)<1E-8
+PRINT 1E9+0.5-1E9;" ";1E10+1-1E10;" ";100000000+0.1
+PRINT 1+1E-9=1;" ";1+1E-10=1

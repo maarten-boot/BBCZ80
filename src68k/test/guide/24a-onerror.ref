@@ -1,0 +1,15 @@
+LOG of 100 is 2
+LOG of 2 is 0.301029996
+
+Log range at line 30
+LOG of 1000 is 3
+The number must be greater than 0
+LOG of 0.1 is -1
+The number must be greater than 0
+LOG of 10 is 1
+No such variable at line 20
+first handler: -ve root
+second handler: -ve root
+handler off
+
+-ve root at line 70

@@ -1,0 +1,9 @@
+       128
+shell: loaded
+hyper: 144
+after *EXEC: x = 42
+   10 PRINT "shell: ";FNshell
+   15 PRINT "hyper: ";FNhyper(12)
+   20 END
+   30 DEF FNshell = "loaded"
+   40 DEF FNhyper(x) = x * x

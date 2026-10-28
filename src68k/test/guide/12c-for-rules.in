@@ -1,0 +1,39 @@
+REM 12c-for-rules: from the RISC OS BBC BASIC manual, chapter 12 (Control statements)
+REM crossed NEXTs: NEXT N closes the M loop too, then NEXT M has no FOR
+5 ON ERROR PRINT REPORT$;" at line ";ERL:END
+10 FOR N = 3.0 TO -1.0 STEP -2.0
+20   FOR M = 2.5 TO 2.9 STEP 0.2
+30     PRINT N,M
+40 NEXT N
+50   NEXT M
+RUN
+NEW
+REM a FOR loop always runs once
+10 FOR N = 6 TO 0
+20   PRINT N
+30 NEXT
+RUN
+NEW
+REM the values are calculated once; the control variable after the loop
+10 L%=3:S%=1
+20 FOR I%=1 TO L% STEP S%:PRINT I%;:L%=10:S%=5:NEXT:PRINT
+30 PRINT "after: ";I%
+40 FOR X=1 TO 2 STEP 0.5:NEXT:PRINT "after: ";X
+50 FOR I%=10 TO 1 STEP -4:NEXT:PRINT "after: ";I%
+60 FOR I%=1 TO 10:IF I%=4 THEN EXIT FOR
+70 NEXT:PRINT "EXIT FOR at ";I%
+RUN
+NEW
+REM the sine curve: MODE, MOVE and DRAW left out; the step is READ, not INPUT
+10 REM Draw a sine curve
+30 PRINT "Please give me a step size (eg 0.1) "
+40 READ step:PRINT step
+45 @%=&20208
+50 FOR angle = -2*PI TO 2*PI STEP step
+60   PRINT 100*angle, 100*SIN(angle)+512
+70 NEXT
+75 @%=10
+80 END
+90 DATA 1.5
+RUN
+NEW

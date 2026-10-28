@@ -1,0 +1,42 @@
+REM 10a-print: from the RISC OS BBC BASIC manual, chapter 10 (Outputting text)
+10 PRINT "Hello " "Hello ","Hello"'"What's all this?"
+20 A% = 4
+30 PRINT 4;" ";A%
+40 PRINT 10
+50 PRINT &10
+60 PRINT ~10
+70 PRINT ~&10
+RUN
+NEW
+PRINT 1 22 "x" 333:PRINT ;1 22,333:PRINT "a";1;"b";-2.5
+PRINT "abc","defghijklmn","x":PRINT 1,"a",2.5,-3
+10 FOR N% = 1 TO 5
+20 A$ = LEFT$("Hello",N%)
+30 B% = N%*10^(N%-1)
+40 PRINT A$,A$,A$,A$'B%,B%,B%,B%
+50 NEXT N%
+RUN
+NEW
+PRINT 6,9,7/3,57
+REM (the 1.05 interpreter's string form @%="F8.4" is not in the Z80 version)
+@% = &20408:PRINT 6,9,7/3,57
+@% = &20205:PRINT 1,-2.5,1/3;"|"
+@% = &1030A:PRINT 1234.5,0.00123,-7
+@% = &0050A:PRINT 7/3,1E6,123456
+@% = &90A:PRINT 7/3,1E9,1E10
+@% = &20A0C:PRINT 2/3
+@% = &90A
+PRINT TAB(10)"Hello"
+PRINT "abc";TAB(8)"Hello"
+PRINT "abcdefghij";TAB(4)"Hello"
+x=6:PRINT "123456";TAB(x)"Hello";TAB(3)"!"
+PRINT "abcdef";:PRINT COUNT;TAB(15);COUNT
+REM (TAB(x,y), and TAB to a column wider than the screen, need a screen)
+10 PRINT "A";
+20 VDU 8
+30 PRINT "B"
+LIST
+REM (not run: VDU 8 to 30 move the cursor, which a CP/M console need not do)
+NEW
+VDU 65,13,10
+REM (VDU 23 character definition and CHR$(128) need a graphics screen)

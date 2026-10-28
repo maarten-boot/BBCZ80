@@ -1,0 +1,37 @@
+REM 05a-names: from the RISC OS BBC BASIC manual, chapter 5 (Variables and expressions)
+REM three types: Fred, Fred% and Fred$
+Fred=1.5:Fred%=2:Fred$="three"
+PRINT Fred,Fred%,Fred$
+Fred%=7.9:PRINT Fred%
+REM names that are allowed
+X=1:xpos=2:XPOS=3:Xpos=4:x_position=5
+greatest_x_position=6:position_of_X=7:XPOS1=8
+PRINT X;xpos;XPOS;Xpos;x_position
+PRINT greatest_x_position;position_of_X;XPOS1
+REM upper and lower case are different
+xpos=10:PRINT XPOS,xpos,Xpos
+REM names that are not allowed
+10 ON ERROR PRINT ERR;" ";REPORT$:GOTO 1000
+20 ON ERROR PRINT "20 ";ERR;" ";REPORT$:GOTO 30
+21 2pos=1
+30 ON ERROR PRINT "30 ";ERR;" ";REPORT$:GOTO 40
+31 TOTAL_x=1
+40 ON ERROR PRINT "40 ";ERR;" ";REPORT$:GOTO 50
+41 FOREST=1
+50 ON ERROR PRINT "50 ";ERR;" ";REPORT$:GOTO 60
+51 COST=1
+60 ON ERROR PRINT "60 ";ERR;" ";REPORT$:GOTO 70
+61 x-pos=1
+70 ON ERROR PRINT "70 ";ERR;" ";REPORT$:GOTO 80
+71 X Position=1
+80 ON ERROR PRINT "80 ";ERR;" ";REPORT$:GOTO 90
+81 X.pos=1
+90 ON ERROR PRINT "90 ";ERR;" ";REPORT$:GOTO 1000
+91 PRINT "done"
+1000 END
+RUN
+LIST 21,81
+NEW
+REM lower case names are never keywords
+total_x=1:forest=2:cost=3:PRINT total_x;forest;cost
+REM (no LVAR in the Z80 version)

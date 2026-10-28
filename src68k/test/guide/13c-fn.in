@@ -1,0 +1,38 @@
+REM 13c-fn: from the RISC OS BBC BASIC manual, chapter 13 (Procedures and functions)
+REM FNscalar_product: array parameters, = inside IF ... ENDIF, a LOCAL array
+10 DIM P(2),Q(2),R(3),M(1,1)
+20 P()=1,2,3:Q()=4,5,6:R()=1,1,1,1
+30 PRINT FNscalar_product(P(),Q())
+40 PRINT FNscalar_product(P(),R())
+50 PRINT FNscalar_product(M(),P())
+60 PRINT FNscalar_product(Q(),Q())
+70 END
+100 DEF FNscalar_product(A(),B())
+110 REM ** Both arrays must have a dimension of 1 **
+120 IF DIM(A()) <> 1 OR DIM(B()) <> 1 THEN
+130 PRINT "Vectors required"
+140 =0
+150 ENDIF
+160 REM ** Both arrays must be the same size **
+170 IF DIM(A(),1) <> DIM(B(),1) THEN
+180 PRINT "Vectors must be of same size"
+190 =0
+200 ENDIF
+210 REM ** Create a temporary array of the same size **
+220 LOCAL C()
+230 DIM C(DIM(A(),1))
+240 REM ** Multiply the corresponding elements and place in C() **
+250 C() = A()*B()
+260 REM ** Finally sum all the elements of C() **
+270 =SUM(C())
+RUN
+NEW
+REM multi-line and single-line function definitions
+10 PRINT FNdisc(1,5,6),FND(1,5,6),FNdisc(1,2,1),FND(2,1,1)
+20 END
+1000 DEF FNdisc(a,b,c)
+1010 REM find the discriminant of a, b and c
+1020 =b*b-4*a*c
+1030 DEF FND(a,b,c)=b*b-4*a*c
+RUN
+NEW

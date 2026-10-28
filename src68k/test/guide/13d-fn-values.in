@@ -1,0 +1,28 @@
+REM 13d-fn-values: from the RISC OS BBC BASIC manual, chapter 13 (Procedures and functions)
+REM (X = RND(10) is left out: its value varies)
+REM FNvolume (to 5, not 10)
+10 FOR N% = 1 TO 5
+20   PRINT "A sphere of radius ";N%;" has a volume "; FNvolume(N%)
+30 NEXT N%
+40 END
+100 DEF FNvolume(radius%)
+110 = 4/3*PI*radius%^3
+RUN
+NEW
+REM functions return integers, reals or strings; a function's name may start with a digit
+10 PRINT FNint(7);" ";FNreal(7);" ";FNstr$("ab");" ";FN2x(4);" ";LEN FNstr$("xyz")
+20 A$=FNstr$(FNstr$("q")):PRINT A$
+30 PRINT FNmax(3,9);" ";FNmax(9,3);" ";FNmax$("pear","apple")
+40 ON ERROR PRINT REPORT$;" at line ";ERL:END
+50 X=FNstr$("a")
+60 END
+100 DEF FNint(n%)=n% DIV 2
+110 DEF FNreal(n)=n/2
+120 DEF FNstr$(s$)="<"+s$+">"
+130 DEF FN2x(n)=2*n
+140 DEF FNmax(a,b):IF a>b THEN =a ELSE =b
+150 DEF FNmax$(a$,b$)
+160 IF a$>b$ THEN =a$
+170 =b$
+RUN
+NEW

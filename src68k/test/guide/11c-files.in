@@ -1,0 +1,32 @@
+REM 11c-files: from the RISC OS BBC BASIC manual, chapter 11 (Inputting data)
+REM (the keyboard examples' answers come from a file instead: INPUT# reads
+REM  what PRINT# wrote, a whole string with its commas and leading spaces)
+10 f% = OPENOUT "GUIDE11.DAT"
+20 PRINT#f%,21,"Hello, how are you?","  leading spaces"
+30 PRINT#f%,1.5,-7,"third"
+40 CLOSE#f%
+50 f% = OPENIN "GUIDE11.DAT"
+60 INPUT#f%,X
+70 PRINT "Twice ";X " is ";X*2
+80 INPUT#f%,A$,B$
+90 PRINT A$:PRINT "[";B$;"]"
+100 INPUT#f%,A,B,C$
+110 PRINT A;B;" ";C$
+120 CLOSE#f%
+RUN
+NEW
+REM (GET$# reads a line of text from a file, as GET$ reads a key)
+10 f% = OPENOUT "GUIDE11.TXT"
+20 BPUT#f%,"Hello, my name is"
+30 BPUT#f%," Marvin"
+40 BPUT#f%,"Y"
+50 CLOSE#f%
+60 f% = OPENIN "GUIDE11.TXT"
+70 A$ = GET$#f%:B$ = GET$#f%
+80 PRINT A$;B$
+90 key$ = GET$#f%:PRINT "The key you pressed was ";key$;LEN(key$)
+100 CLOSE#f%
+RUN
+NEW
+*ERA GUIDE11.DAT
+*ERA GUIDE11.TXT

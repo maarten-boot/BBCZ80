@@ -1,0 +1,48 @@
+REM 09a-dim: from the RISC OS BBC BASIC manual, chapter 9 (Arrays)
+10 DIM A(9)
+20 PRINT A(0);A(9)
+30 A(1) = 0.56
+40 A(2) = A(1) + 4
+50 PRINT A(1);A(2)
+60 DIM B(2,2)
+70 FOR I%=0 TO 2:FOR J%=0 TO 2:B(I%,J%)=10*I%+J%:PRINT B(I%,J%);:NEXT:PRINT:NEXT
+80 DIM str$(1,3,2)
+90 str$(1,3,2)=STRING$(255,"s"):PRINT "[";str$(0,0,0);"]";LEN(str$(1,3,2))
+100 X = 6
+110 A(X) = 3
+120 A(A(X)) = 1
+130 PRINT A(6);A(3)
+140 A(7.9)=79:A(2*2.6)=52:PRINT A(7);A(5)
+150 ON ERROR PRINT ERR;" ";REPORT$:GOTO 180
+160 DIM name$(2,2,2)
+170 name$(0) = "FRED"
+180 ON ERROR PRINT ERR;" ";REPORT$:GOTO 210
+190 name$(0,0,0) = "FRED":PRINT name$(0,0,0)
+200 DIM position(9,4):position(-1,5) = 1
+210 ON ERROR PRINT ERR;" ";REPORT$:GOTO 230
+220 position(10,0) = 1
+230 ON ERROR PRINT ERR;" ";REPORT$:GOTO 250
+240 position(9,5) = 1
+250 ON ERROR OFF:position(9,4)=94:PRINT position(9,4)
+RUN
+NEW
+10 DIM a(200):angle=0:increment=2.5
+20 a(100*(SINRADangle+1))=a(100*(SINRADangle+1))+increment
+30 a(100*(SINRADangle+1)) += increment
+40 PRINT a(100);a(99)
+50 a(100) -= 1:PRINT a(100)
+60 DIM c$(1):c$(1)="ab":c$(1)+="cd":PRINT c$(1)
+RUN
+NEW
+10 DIM A(4,2,7)
+20 n = DIM(A())
+30 PRINT n
+40 PRINT DIM(A(),n)
+50 PRINT DIM(A(),1);DIM(A(),2)
+60 PROCsize(A()):DIM v(12):PROCsize(v())
+70 ON ERROR PRINT ERR;" ";REPORT$:END
+80 PRINT DIM(A(),4)
+90 DEF PROCsize(x()):LOCAL d%:PRINT "dims";DIM(x());":";
+100 FOR d%=1 TO DIM(x()):PRINT DIM(x(),d%);:NEXT:PRINT:ENDPROC
+RUN
+NEW

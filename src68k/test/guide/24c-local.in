@@ -1,0 +1,48 @@
+REM 24c-local: from the RISC OS BBC BASIC manual, chapter 24 (Error handling and debugging)
+REM (LOCAL ERROR is accepted but does nothing in the Z80 version)
+ 10 PROCcalculate(100)
+ 20 END
+100 DEFPROCcalculate(A)
+110 LOCAL I
+120 LOCAL ERROR
+130 FOR I = -15 TO 15
+140 ON ERROR LOCAL PRINT"Infinite Result":NEXT I:ENDPROC
+150 PRINT A / I
+160 NEXT I
+180 ENDPROC
+RUN
+NEW
+REM (FOR I = -2 TO 2 here, to keep the output short; line 1 without the
+REM  ";" after REPORT$, so the output ends with a new line; the manual's
+REM  RESTORE ERROR at line 170 is left out: LOCAL ERROR does nothing in the
+REM  Z80 version, so there is nothing to restore, which gives "ON ERROR not
+REM  LOCAL" here and nothing at all in the Z80 version 5.4:
+REM  test/diff/d14restoreerror)
+  1 ON ERROR PRINT "Error ";REPORT$:END
+ 10 PROCcalculate(100)
+ 15 this line will give an error !!!
+ 20 END
+100 DEFPROCcalculate(A)
+110 LOCAL I
+120 LOCAL ERROR
+130 FOR I = -2 TO 2
+140 ON ERROR LOCAL PRINT"Infinite Result":NEXT I:ENDPROC
+150 PRINT A / I
+160 NEXT I
+180 ENDPROC
+RUN
+NEW
+REM a local error handler in a loop at the top level, then RESTORE ERROR
+REM (here too ENDWHILE drops it: "ON ERROR not LOCAL" at line 150)
+ 10 ON ERROR PRINT "outer handler: ";REPORT$ : END
+ 20 i% = 0
+100 LOCAL ERROR
+110 WHILE i% < 4
+120   i% += 1 : ON ERROR LOCAL PRINT "local handler: ";REPORT$ : GOTO 140
+130   PRINT 12 / (i% - 2)
+140 ENDWHILE
+150 RESTORE ERROR
+160 PRINT "after the loop ";i%
+170 PRINT 1 / 0
+RUN
+NEW

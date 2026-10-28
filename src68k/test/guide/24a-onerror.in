@@ -1,0 +1,41 @@
+REM 24a-onerror: from the RISC OS BBC BASIC manual, chapter 24 (Error handling and debugging)
+REM (READ instead of INPUT "Number",N; the Z80 version's message for
+REM  error 22 is "Log range", not "Logarithm range")
+10 REPEAT
+20   READ N
+30   L = LOG(N)
+40   PRINT "LOG of ";N" is ";L
+50 UNTIL FALSE
+60 DATA 100, 2, -1
+RUN
+NEW
+  5 ON ERROR PROCerror
+ 10 REPEAT
+ 20   READ N
+ 30   L = LOG(N)
+ 40   PRINT "LOG of ";N" is ";L
+ 50 UNTIL FALSE
+ 60 END
+ 70 DATA 1000, 0, 0.1, -3, 10, TWELVE
+ 80 REM (READ evaluates TWELVE: No such variable, not error 22)
+100 DEFPROCerror
+110 IF ERR=22 THEN
+120   PRINT "The number must be greater than 0"
+130 ELSE REPORT
+140   PRINT " at line ";ERL
+150   END
+160 ENDIF
+170 ENDPROC
+RUN
+NEW
+REM the most recent ON ERROR is used; ON ERROR OFF restores the default
+10 ON ERROR PRINT "first handler: ";REPORT$ : GOTO 30
+20 PRINT SQR(-1)
+30 ON ERROR PRINT "second handler: ";REPORT$ : GOTO 50
+40 PRINT SQR(-1)
+50 ON ERROR OFF
+60 PRINT "handler off"
+70 PRINT SQR(-1)
+80 PRINT "not reached"
+RUN
+NEW

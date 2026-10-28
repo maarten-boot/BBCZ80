@@ -1,0 +1,39 @@
+REM 07b-shifts: from the RISC OS BBC BASIC manual, chapter 7 (Bases)
+100 REM shift left
+110 A% = 10
+120 B% = A% << 1
+130 C% = A% << 2
+140 D% = A% << 3
+150 PROCshow("A%",A%):PROCshow("B%",B%):PROCshow("C%",C%):PROCshow("D%",D%)
+200 REM shift right (unsigned)
+210 A% = %1010
+220 B% = A% >>> 1
+230 C% = A% >>> 2
+240 D% = A% >>> 3
+250 PROCshow("A%",A%):PROCshow("B%",B%):PROCshow("C%",C%):PROCshow("D%",D%)
+300 REM shift right (signed)
+310 A  = -1610612740
+320 B  = 536870912
+330 A% = %10100000000000000000000000000000
+340 B% = %00100000000000000000000000000000
+350 C% = A% >>> 2
+360 D% = B% >>> 2
+370 E% = A% >> 2
+380 F% = B% >> 2
+390 PROCshow("C%",C%):PROCshow("D%",D%):PROCshow("E%",E%):PROCshow("F%",F%)
+395 PRINT A;" ";B;" ";A%=-1610612736;" ";B%=B
+890 END
+910 DEF FNbin(n%):LOCAL b$,i%:FOR i%=31 TO 0 STEP -1
+920 IF n% AND 1<<i% THEN b$+="1" ELSE b$+="0"
+930 NEXT:="%"+b$
+940 DEF PROCshow(n$,n%):PRINT n$;" ";n%;" (";FNbin(n%);")":ENDPROC
+RUN
+NEW
+REM left shift as multiplication
+fred=5:PRINT fred<<3;" ";fred*8;" ";7<<4;" ";7*2^4
+REM (bits shifted off the end are lost, no error)
+PRINT &10000<<16;" ";&10000*&10000;" ";~(&12345678<<4);" ";-1<<31
+REM right shift as division: >> rounds down
+PRINT -3>>1;" ";INT(-3/2);" ";-3 DIV 2;" ";-7>>2;" ";7>>2;" ";-1>>5
+PRINT ~(-1>>>4);" ";-8>>>1;" ";~(&80000000>>>31);" ";~(&80000000>>31)
+PRINT 1<<32;" ";1<<0;" ";5>>0;" ";-1>>32;" ";-1>>>32

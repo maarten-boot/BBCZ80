@@ -64,5 +64,6 @@ src68k/main.s
 # the hand-written expected outputs of the BASIC tests (not linker .exp)
 !src68k/test/bas/*.exp
 !src68k/test/kw/*.exp
+!src68k/test/guide/*.exp
 
 tmp/

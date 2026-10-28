@@ -1,0 +1,18 @@
+Hello
+
+Missing "
+12 - 3
+         9
+       156
+10.0909091
+         4
+         5
+        12         1
+         9
+12 - 3
+        24
+   10 PRINT "Hello from line 10"
+   20 PRINT FRED : REM RUN clears the variables: No such variable
+Hello from line 10
+
+No such variable at line 20

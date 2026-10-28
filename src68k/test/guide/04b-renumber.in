@@ -1,0 +1,47 @@
+REM 04b-renumber: from the RISC OS BBC BASIC manual, chapter 4 (Simple programming)
+23 PRINT "This demonstrates"
+24 PRINT "the use of"
+48 PRINT "the very useful"
+67 PRINT "RENUMBER command"
+RENUMBER 100,20
+LIST
+RENUMBER 100
+LIST
+RENUMBER
+LIST
+RUN
+NEW
+REM (AUTO is left out: it waits for the lines to be typed)
+REM listing sections of a program
+10 PRINT "Can you give me a number ";
+20 READ number
+30 PRINT "The number you typed was ";number
+40 PRINT number;" squared is "; number*number
+50 DATA 6
+LIST 40
+LIST 20,40
+LIST ,30
+LIST 20,
+REM comments
+ 5 REM Read in a value and assign it to number
+25 REM Now print out the number given.
+35 REM And its square
+LIST
+ 6 REM ---------------------------------------
+24 REM
+26 REM ------------------------------
+34 REM
+36 REM --------------
+LIST ,30
+RUN
+REM multiple statements
+10 PRINT "Can you give me a number ";:READ number
+20
+30 PRINT "The number you typed was ";number: REM print out the number
+40 PRINT number;" squared is "; number*number: REM and its square
+LIST 10,40
+RUN
+REM a REM hides the rest of the line
+30 REM print out the number: PRINT "the number you typed was ";number
+RUN
+NEW

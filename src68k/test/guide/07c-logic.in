@@ -1,0 +1,32 @@
+REM 07c-logic: from the RISC OS BBC BASIC manual, chapter 7 (Bases)
+REM the bits of AND, OR and EOR
+10 PRINT "Inputs   AND OR EOR"
+20 FOR X%=0 TO 1:FOR Y%=0 TO 1
+30 PRINT X%;" ";Y%;"      ";X% AND Y%;"   ";X% OR Y%;"  ";X% EOR Y%
+40 NEXT:NEXT
+RUN
+NEW
+A% = %1010
+B% = %1100
+C% = A% AND B%
+D% = A% OR B%
+E% = A% EOR B%
+PRINT A%;" ";B%;" ";C%;" ";D%;" ";E%
+PRINT C%=%1000;" ";D%=%1110;" ";E%=%0110
+REM symmetrical, like + and *
+X=&F0F0:Y=&FF00
+PRINT (X AND Y)=(Y AND X);" ";(X OR Y)=(Y OR X);" ";(X EOR Y)=(Y EOR X)
+PRINT ~(X AND Y);" ";~(X OR Y);" ";~(X EOR Y)
+PRINT TRUE;" ";FALSE
+PRINT "With AND"
+PRINT TRUE AND TRUE;" ";-1 AND -1
+PRINT TRUE AND FALSE;" ";-1 AND 0
+PRINT FALSE AND FALSE;" ";0 AND 0
+PRINT "With OR"
+PRINT TRUE OR TRUE;" ";-1 OR -1
+PRINT TRUE OR FALSE;" ";-1 OR 0
+PRINT FALSE OR FALSE;" ";0 OR 0
+PRINT "With EOR"
+PRINT TRUE EOR TRUE;" ";-1 EOR -1
+PRINT TRUE EOR FALSE;" ";-1 EOR 0
+PRINT FALSE EOR FALSE;" ";0 EOR 0

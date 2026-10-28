@@ -1,0 +1,33 @@
+REM 06b-priority: from the RISC OS BBC BASIC manual, chapter 6 (Numeric variables)
+PRINT 12+3*4^2;" ";12+(3*(4^2))
+PRINT 22 MOD 3/7;" ";(22 MOD 3)/7;" ";22 MOD (3/2)
+REM priority 1: unary minus, NOT, brackets, indirection
+PRINT -2^2;" ";(-2)^2;" ";-(2^2)
+PRINT +3;" ";- -3;" ";NOT 0;" ";NOT -1;" ";NOT 5+1
+DIM b% 7:b%!0=&01020304:b%?4=9
+PRINT ?b%;" ";b%?4+1;" ";!b%=&01020304
+$b%="AB":PRINT $b%+"C"
+10 PRINT 2*FNsq(3)+1;" ";-FNsq(2)^2
+20 END
+30 DEF FNsq(x)=x*x
+RUN
+NEW
+REM priority 2 and 3: ^ before * / DIV MOD, left to right
+PRINT 2^3^2;" ";2^(3^2);" ";2*3^2
+PRINT 7 DIV 2*3;" ";7 DIV (2*3);" ";20/4/5;" ";20 MOD 7 MOD 4
+REM priority 4: + - after * /
+PRINT 10-2-3;" ";10-(2-3);" ";1+2*3-4/2
+REM priority 5: comparisons and shifts after + -
+PRINT 1+2=3;" ";2<1+2;" ";1<<2+1;" ";(1<<2)+1;" ";16>>1+1
+PRINT (1<<2)<<3;" ";1<<(2<<3)
+REM priority 6 and 7: AND before OR and EOR
+PRINT 1=1 AND 2=2;" ";1 OR 2 AND 4;" ";(1 OR 2) AND 4;" ";3 EOR 1 OR 4
+PRINT 6 AND 3+1;" ";5 OR 2=2
+REM only one group 5 operator in an unbracketed expression
+10 ON ERROR PRINT ERR;" ";REPORT$:END
+20 x=1<<2<<3:PRINT x
+RUN
+10 ON ERROR PRINT ERR;" ";REPORT$:END
+20 x=1<2<3:PRINT x
+RUN
+NEW

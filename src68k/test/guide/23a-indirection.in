@@ -1,0 +1,36 @@
+REM 23a-indirection: from the RISC OS BBC BASIC manual, chapter 23 (Accessing memory locations)
+REM (DIM gives an address that need not be a multiple of four in the
+REM  Z80 version; addresses are not printed, only differences)
+DIM pointer% 100
+DIM after% 0
+PRINT after% - pointer% >= 101
+?pointer% = 63
+PRINT ?pointer%
+?pointer% = 356
+PRINT ?pointer%
+PRINT 356 AND &FF
+?(pointer% + 5) = 25
+PRINT pointer%?5
+pointer%?5 = 26
+PRINT ?(pointer% + 5)
+REM (the block is set first: the manual prints uninitialised memory)
+10 DIM block_of_memory% 100
+15 FOR N% = 0 TO 100 : block_of_memory%?N% = N% * 3 : NEXT N%
+20 FOR N% = 0 TO 100 STEP 20
+30   PRINT "Contents of ";N%;" are ";block_of_memory%?N%
+40 NEXT N%
+RUN
+NEW
+DIM pointer% 100
+!pointer% = 356
+PRINT !pointer%
+10 DIM pointer% 100
+20 !pointer% = &12345678
+30 PRINT ~pointer%?0
+40 PRINT ~pointer%?1
+50 PRINT ~pointer%?2
+60 PRINT ~pointer%?3
+70 pointer%!4 = -2 : PRINT ~pointer%?4;" ";~pointer%?7;" ";pointer%!4
+80 PRINT ~!(pointer% + 1)
+RUN
+NEW

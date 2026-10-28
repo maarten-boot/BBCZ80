@@ -1,0 +1,53 @@
+REM 08a-strings: from the RISC OS BBC BASIC manual, chapter 8 (String variables)
+day$ = "Monday":Date$ = "29th February":space$ = " ":Address$ = "10 Downing Street, London":Age$ = "21"
+PRINT day$;"|";Date$;"|";space$;"|";Address$;"|";Age$;"|";LEN(Age$)
+PRINT LEN(STRING$(255,"x"));"" < "a";"" = "";"" < CHR$(0)
+PRINT "A""here"
+10 Road$ = "Downing Street"
+20 City$ = "London"
+30 PRINT Road$ + " " + City$
+40 Address$  = "Downing Street"
+50 Address$ += " "
+60 Address$ += "London"
+70 PRINT Address$
+80 ON ERROR PRINT ERR;" ";REPORT$:GOTO 100
+90 Real_Age$ = 21 * 2
+100 ON ERROR PRINT ERR;" ";REPORT$:GOTO 120
+110 total$ = "12"*"32"
+120 ON ERROR PRINT ERR;" ";REPORT$:GOTO 140
+125 REM (no error in the Z80 version: -= on a string assigns, as = does)
+130 Address$ -= "London":PRINT Address$
+140 ON ERROR PRINT ERR;" ";REPORT$:END
+150 a$=STRING$(200,"a"):a$+=STRING$(56,"b")
+RUN
+NEW
+PRINT LEFT$("HELLO",2),RIGHT$("THERE",2),MID$("GORDON",3,2)
+10 title$ = "Moonlight Sonata"
+20 left_of_string$ = LEFT$(title$,4)
+30 right_of_string$ = RIGHT$(title$,6)
+40 middle_of_string$ = MID$(title$,5,9)
+50 PRINT left_of_string$
+60 PRINT right_of_string$
+70 PRINT middle_of_string$
+80 PRINT LEFT$("Hello")
+90 PRINT RIGHT$("Hello")
+100 PRINT MID$("Hello",3)
+RUN
+NEW
+REM (the Z80 version's LEFT$(A$)= changes up to all but the last character)
+10 A$ = "Hello there."
+20 MID$(A$,7) = "Susan"
+30 PRINT A$
+40 LEFT$(A$) = "Howdy"
+50 PRINT A$
+60 RIGHT$(A$) = "!"
+70 PRINT A$
+80 A$ = "ABCDEFGHIJ"
+90 RIGHT$(A$,3) = "KL"
+100 PRINT A$
+110 LEFT$(A$,4) = "MNOPQR"
+120 PRINT A$
+130 MID$(A$,4,3) = "STUVW"
+140 PRINT A$
+RUN
+NEW

@@ -1,0 +1,58 @@
+Hello
+Hello
+   10 PRINT "Hello"
+   10 PRINT "Hello"
+Hello
+   10 PRINT "Can you give me a number ";
+   20 READ number
+   30 PRINT "The number you typed was ";number
+   50 DATA 6
+Can you give me a number The number you typed was 6
+    5 PRINT "Hello"
+   10 PRINT "Can you give me a number ";
+   20 READ number
+   30 PRINT "The number you typed was ";number
+   40 PRINT "Twice ";number " is ";2*number
+   50 DATA 6
+Hello
+Can you give me a number The number you typed was 6
+Twice 6 is 12
+    5 PRINT "Hello"
+   10 PRINT "Can you give me a number ";
+   20 READ number
+   30 PRINT "The number you typed was ";number
+   40 PRINT number;" squared is ";number*number
+   50 DATA 6
+Hello
+Can you give me a number The number you typed was 6
+         6 squared is 36
+    5 PRINT "Hello"
+   10 PRINT "Can you give me a number ";
+   20 READ number
+   30 PRINT "The number you entered was ";number
+   40 PRINT number;" squared is ";number*number
+   50 DATA 6
+   10 PRINT "Can you give me a number ";
+   20 READ number
+   30 PRINT "The number you entered was ";number
+   40 PRINT number;" squared is ";number*number
+   50 DATA 6
+Can you give me a number The number you entered was 6
+         6 squared is 36
+   40 PRINT number;" squared is ";number*number
+   50 DATA 6
+line 0
+  100 PRINT "line 100"
+65279 PRINT "line 65279"
+line 100
+line 65279
+
+Number too big
+65279 PRINT "line 65279"
+65535 PRINT "line 65535"
+  100 PRINT "line 100"
+65279 PRINT "line 65279"
+65535 PRINT "line 65535"
+  100 PRINT "line 100"
+65535 PRINT "line 65535"
+   10 PRINT "a"
