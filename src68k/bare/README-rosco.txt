@@ -15,6 +15,8 @@ Two copies of the same program:
                     the card; choose BBCBASIC.BIN there)
 
 Both are loaded at &40000, the firmware's load address.
+Tested in MAME with firmware 2.42 and 2.50, both directly and from
+sdfat_menu (built from rosco_m68k's release/version-2.42 branch).
 
 Memory
 ------

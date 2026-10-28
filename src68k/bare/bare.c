@@ -86,7 +86,6 @@ char *bare_argv[3];
 #define TIMER	(3686400L / 16 / 2 / HZ)
 #define VECTOR	0x45		/* the DUART's interrupt vector */
 
-#define SDB_MAGIC	(*(long *) 0x400L)
 #define SDB_UPTICKS	(*(long *) 0x40CL)
 #define SDB_MEMSIZE	(*(long *) 0x414L)
 
@@ -958,7 +957,8 @@ long bare_init(int cold)
 	int i;
 
 	bare_ints(0);
-	memtop = SDB_MAGIC == 0xB105D47AL && SDB_MEMSIZE >= 0x80000L
+	/* not SDB_MAGIC: firmware 2.42 keeps its kernel API pointer there */
+	memtop = SDB_MEMSIZE >= 0x80000L && SDB_MEMSIZE <= 0x1000000L
 	    ? SDB_MEMSIZE : 0x100000L;
 
 	/* the file store: a quarter of the memory above the program */
