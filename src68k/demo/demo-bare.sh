@@ -2,7 +2,7 @@
 # Start the bare BBC BASIC demo: BBC BASIC straight on an emulated
 # rosco_m68k (r68k), no operating system.  Ctrl-] quits the emulator.
 # The SD card is $BBC_CARD/rosco_sd.bin (default: the card directory next
-# to this script): made from card.img.gz (an empty FAT16 card) the first
+# to this script): made from card.img.gz (an empty 256 MB FAT16 card) the first
 # time, kept afterwards, so files saved on it stay.
 here=$(cd "$(dirname "$0")" && pwd)
 card=${BBC_CARD:-$here/card}
@@ -12,7 +12,9 @@ if [ ! -t 0 ]; then
 fi
 mkdir -p "$card" || exit 1
 if [ ! -f "$card/rosco_sd.bin" ]; then
-	gunzip -c "$here/card.img.gz" > "$card/rosco_sd.bin" || exit 1
+	# (sparse where cp can: the empty card is mostly zeros)
+	gunzip -c "$here/card.img.gz" | cp --sparse=always /dev/stdin "$card/rosco_sd.bin" 2>/dev/null ||
+		gunzip -c "$here/card.img.gz" > "$card/rosco_sd.bin" || exit 1
 	echo "A new SD card: $card/rosco_sd.bin"
 fi
 cd "$card" || exit 1

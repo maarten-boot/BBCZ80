@@ -7,7 +7,8 @@ with --docker the container image bbc68k-bare.
 As mkdemo.py, but with bare BBC BASIC (build/bare/demo/ROSCODE1.BIN, make
 bare) instead of Minix: r68k (-O2, static), its firmware, ROSCODE1.BIN,
 demo/demo-bare.sh as demo.sh, demo/README-bare.txt as README.txt, and
-card.img.gz, an empty FAT16 SD card (as the web page's, web/pre.js) that
+card.img.gz, an empty 256 MB FAT16 SD card (laid out as the web page's
+32 MB one, web/pre.js) that
 demo.sh unpacks into the card directory the first time.  In the image the
 card directory is the volume /card (BBC_CARD).
 --test boots the demo and checks the asm demo and the card; with --docker
@@ -40,7 +41,7 @@ TOP = os.path.dirname(SRC)
 WORK = os.path.join(TOP, 'build', 'bare')
 NAME = 'bbc68k-bare'
 IMAGE = 'docker.io/library/bbc68k-bare:latest'	# (docker load: bbc68k-bare)
-CARD = 32 << 20
+CARD = 256 << 20			# (FAT16, 4 KB clusters; the web page's is 32 MB)
 PART = 2048
 
 

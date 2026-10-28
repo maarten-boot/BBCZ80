@@ -58,4 +58,4 @@ Contents and licences
     firmware/rosco_m68k.rom  the firmware (LICENSE-r68k.md)
     ROSCODE1.BIN           BBC BASIC (LICENCE-bbcbasic.txt) with the
                            demo programs
-    card.img.gz            an empty FAT16 SD card, the first card
+    card.img.gz            an empty 256 MB FAT16 SD card, the first card
