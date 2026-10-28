@@ -39,7 +39,9 @@ SCRIPT = [
     '*REN PROG2.BBC=PROG.BBC',
     'F%=OPENIN "there.txt":PRINT "there ";EXT#F%;" ";CHR$BGET#F%:CLOSE#F%',
     'F%=OPENOUT "../outside.txt"',
-    '*DIR', '*BYE',
+    'F%=OPENOUT "A1.TMP":CLOSE#F%:F%=OPENOUT "a2.tmp":CLOSE#F%:F%=OPENOUT "B1.TMP":CLOSE#F%',
+    '*ERA A?.TMP',
+    '*DIR', '*DIR *.TXT', '*DIR P*', '*DIR B*.*', '*DIR *.', '*BYE',
 ]
 
 
@@ -82,6 +84,15 @@ def run(kind):
     check('"../outside.txt" refused, nothing written outside',
           not os.path.exists(os.path.join(base, 'outside.txt')))
     check('*DIR lists the folder', 'Files:' in out and 'there.txt' in out and 'BIG.BIN' in out)
+
+    def listing(cmd):
+        return set(re.findall(r'^(\S+) +\d+$', out.split('>%s\n' % cmd)[-1].split('\n>')[0], re.M))
+    check('*DIR *.TXT: the .TXT files, any case', listing('*DIR *.TXT') == {'DATA.TXT', 'there.txt'})
+    check('*DIR P*: P*.BBC', listing('*DIR P*') == {'PROG2.BBC'})
+    check('*DIR B*.*: B, any extension', listing('*DIR B*.*') == {'BIG.BIN', 'B1.TMP'})
+    check('*ERA A?.TMP: A1.TMP and a2.tmp gone, B1.TMP kept',
+          'a1.tmp' not in files and 'a2.tmp' not in files and 'b1.tmp' in files)
+    check('*DIR *.: no extension (none here)', listing('*DIR *.') == set())
     if failed:
         print(out[-1500:])
         print('(the files are kept in %s)' % base)

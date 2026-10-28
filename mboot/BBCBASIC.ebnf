@@ -640,9 +640,10 @@ on-stmt        = "ON"                                       (* cursor on *)
                                              ONPROC *)
 
 (* ---- OSCLI / * ------------------------------------------------------- *)
-oscli-stmt     = "OSCLI" expression ;     (* string *)
+oscli-stmt     = "OSCLI" expression ;     (* a string: oscli-text, section 9 *)
                                           (* src: EXEC.Z80:CLI *)
-star-command   = "*" raw-text ;           (* passed to OSCLI; left mode only *)
+star-command   = "*" oscli-text ;         (* left mode only; not tokenised,
+                                             handed to OSCLI: section 9 *)
                                           (* src: EXEC.Z80:LET0, EXT;
                                              MAIN.Z80:LEXAN7 *)
 
@@ -1068,5 +1069,111 @@ asm-cond       = "NZ" | "Z" | "NC" | "C" | "PO" | "PE" | "P" | "M" ;
 asm-expr       = expression ;             (* integer *)
                                           (* src: ASMB.Z80:OPRNDS, OPND, OFFSET,
                                              NUMBER, COND, PAIR, REG *)
+
+(* ======================================================================
+   9. STAR COMMANDS  (OSCLI, "*" at the start of a statement)
+   ====================================================================== *)
+
+(* Not part of the interpreter: OSCLI hands the text to the operating
+   system layer, CMOS.Z80 in the CP/M version (AMOS.Z80, ACORN.Z80 for
+   the others).  The rules below are the CP/M version's; "68k:" notes give
+   the 68000 port's (src68k/osl.c, bare/bare.c), which has the same table
+   plus *CD, *MKDIR and *RMDIR.
+   Spaces before the name and between arguments are skipped (SKIPSP).
+   The name is matched in any case, in table order; "." after at least one
+   letter abbreviates it (the first match wins: *E. is *ERASE, *R. is
+   *RENAME).  QUIRK: a full name may run straight into its argument
+   (*DIRX is *DIR X); 68k: the full name must be followed by a non-letter
+   ("Bad command" otherwise).  An unknown name gives "Bad command" (254);
+   68k under Minix: an unknown name is run as a Minix command by /bin/sh
+   (*ls -l); the commands below, *DIR too, are done without the shell.   *)
+                                          (* src: CMOS.Z80:OSCLI, OSCLI0..5,
+                                             COMDS, UPPRC; osl.c:os_cli *)
+
+oscli-text     = ( os-command | "|" { any-char } | ) EOL ;
+    (* "|" starts a comment; an empty line does nothing.  68k: a leading
+       "*" is skipped too (OSCLI "*CMD"); CP/M: that is "Bad command".     *)
+
+os-command     = "BYE" | "QUIT"                                  (* any text after it is ignored *)
+               | ( "DIR" | "." ) [ afsp ]
+               | "DRIVE" drive                                   (* CP/M only *)
+               | ( "ERASE" | "ERA" ) afsp
+               | "ESC" esc-arg
+               | "EXEC" [ filename ]
+               | "HELP"                                          (* text after it ignored *)
+               | "LOAD" filename hex-number [ hex-number ]       (* 68k: one number *)
+               | "OPT" [ hex-number ]
+               | ( "RENAME" | "REN" ) filename "=" filename      (* new = old *)
+               | "RESET"
+               | "SAVE" filename hex-number [ "+" ] hex-number
+               | "SPOOL" [ filename ]
+               | "TYPE" filename
+               | "CD" dirname | "MKDIR" dirname | "RMDIR" dirname ; (* 68k only *)
+
+(* ---- the arguments ---------------------------------------------------- *)
+filename       = [ drive ] name8 [ "." [ ext3 ] ]
+               | '"' filename '"' ;
+    (* No extension: .BBC.  A final "." with nothing after it: no
+       extension.  Letters are made upper case.  At most 8 and 3
+       characters (the CP/M FCB): the rest stays on the line, which gives
+       "Bad command" where the line must end.  "*" fills the rest of the
+       name or extension with "?".  A "?" in the name of a file to create
+       (OPENOUT, SAVE) or in the old name of *REN: "Bad name" (204)
+       (CHKAMB); *ERA takes them and deletes every match.
+       68k: any length, folders with "/" ("SUB/PROG"), "sd:" or "ram:" in
+       front on the rosco_m68k; quotes allowed; case is kept and matched
+       without regard to case; no extension means .BBC unless a file with
+       the lower-case .bbc exists; "*", "?" (except in *ERA) or no name
+       at all: "Bad name".                                                 *)
+                                          (* src: CMOS.Z80:SETUP, SETUP0, PARSE,
+                                             CHKAMB; osl.c:getname, bbcname *)
+drive          = letter ":" ;             (* CP/M only; "A:".."P:" *)
+afsp           = [ drive ] wild-name [ "." [ wild-ext ] ] ;
+    (* ambiguous file name: "*" fills the rest of the name or extension
+       with "?", "?" matches one character.  No extension: .BBC
+       (*DIR B* lists B*.BBC); "*.*" all files; no afsp at all: ????????.BBC.
+       68k: the same rules, in any case and at any length ("*" and "?"
+       anywhere), except that *DIR on its own lists every file (and
+       folder) of the current directory (bare: then the RAM store).        *)
+                                          (* src: CMOS.Z80:DIR, SETUP with fill
+                                             "?"; osl.c:os_dirpat, os_dirmatch,
+                                             wild, each; bare.c:bare_each *)
+dirname        = filename ;               (* 68k: no .BBC is added; ".." the
+                                             parent folder *)
+hex-number     = { hex-digit } ;          (* upper or lower case *)
+    (* CP/M: no digits at all reads as 0 (HEX).  68k: no digits is "Bad
+       command", except for *OPT, where nothing means 0.                   *)
+                                          (* src: CMOS.Z80:HEX; osl.c:hexarg *)
+esc-arg        = [ "O" ] hex-number ;     (* 0: Escape on, else off *)
+    (* *ESC on its own: Escape on (an empty number is 0).
+       68k: also "ON" and "OFF".                                           *)
+                                          (* src: CMOS.Z80:ESCCTL; osl.c:cmd_esc *)
+
+(* ---- what each one checks --------------------------------------------- *)
+(* *DIR: CP/M prints four names to a line, "A: NAME     EXT" ("A:*NAME"
+     for a read-only file); system files are left out.
+     68k: one line each, name and size (or <DIR>), then "free".
+   *DRIVE d: makes d: the current drive; no drive: "Bad command".
+   *ERA, *REN, *RESET, *DIR: text after the argument(s) gives "Bad
+     command".  *ERA deletes every match of a pattern; nothing there:
+     "Bad command" (68k: "File not found", 214).
+     *REN: the new name must not exist ("File exists", 196); the old one
+     not there: "Bad command" (68k: "File not found").
+   *RESET: CP/M resets the disk system (BDOS 13); 68k: does nothing.
+   *EXEC, *SPOOL: without a name they just close the file.  CP/M: they
+     take room below HIMEM (an FCB), so only from immediate mode or the
+     outer level of a program; otherwise the statement is abandoned.
+   *LOAD name addr: the file is loaded at addr.  CP/M reads a second
+     number as *SAVE does; UNSURE: it seems to act as a limit.
+   *OPT n: the low two bits, kept in OPTVAL; CP/M's WRCH uses them to
+     choose how a character goes to the console.
+   *SAVE name start end, or start +length: end must be above start,
+     else "Bad command"; nothing more may follow.
+   *TYPE: CP/M copies the file to the screen byte by byte, the padding
+     after the end too (^Z, or NULs); Escape stops it.  68k: Unix line
+     ends (LF) get a CR.                                                   *)
+                                          (* src: CMOS.Z80:DIR, DRV, ERA, REN, RES,
+                                             XEQ, EXEC, SPOOL, SAVLOD, STLOAD,
+                                             STSAVE, OPT, TYPE; osl.c:cmd_* *)
 
 (* End of grammar *)

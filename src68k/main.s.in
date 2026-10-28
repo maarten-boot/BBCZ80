@@ -95,7 +95,7 @@ COLD:	lea	STAVAR,a0		! clear the scratchpad
 	bne	CHAIN0			! AUTO-RUN
 	bsr	TELL
 VERMSG:
-_vermsg: .ascii	"BBC BASIC (Z80) Version 5.00  "
+_vermsg: .ascii	"BBC BASIC (68k) Version 5.00  "
 	.data1	CR, LF
 NOTICE:	.ascii	"(C) Copyright R.T.Russell 2025"
 	.data1	CR, LF, 0

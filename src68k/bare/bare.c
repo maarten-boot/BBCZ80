@@ -828,8 +828,10 @@ int rename(const char *old, const char *new)
 	return ram_rename(old, new);
 }
 
+int os_dirmatch(char *name);		/* osl.c: *DIR's and *ERA's pattern */
+
 /* *DIR: the primary device's current directory, then the RAM store */
-static void dirline(char *name, long size, int isdir)
+static void dirprint(char *name, long size, int isdir)
 {
 	char line[64 + 16];
 	int n;
@@ -844,6 +846,12 @@ static void dirline(char *name, long size, int isdir)
 		fmtnum(line + n, size, 9);
 	strcpy(line + n + 9, "\r\n");
 	con_write(line, strlen(line));
+}
+
+static void dirline(char *name, long size, int isdir)
+{
+	if (os_dirmatch(name))
+		dirprint(name, size, isdir);
 }
 
 void bare_dir(void)
@@ -861,7 +869,7 @@ void bare_dir(void)
 		fat_list(dirline);
 	}
 	for (i = 0; i < NFILE; i++)
-		if (files[i].name[0])
+		if (files[i].name[0] && os_dirmatch(files[i].name))
 			any = 1;
 	if ((host || sd) && !any)
 		return;
@@ -873,7 +881,25 @@ void bare_dir(void)
 	for (i = 0; i < nblocks; i++)
 		if (next[i] == FREE)
 			nfree++;
-	dirline("free", (long) nfree * BLK, 0);
+	dirprint("free", (long) nfree * BLK, 0);
+}
+
+/* bare_each: every file of the primary device's current directory, then
+ * of the RAM store, as *DIR lists them (for *ERA with a pattern) */
+void bare_each(void (*fn)(char *, long, int))
+{
+	char name[66];
+	int i;
+	long size;
+
+	if (host)
+		for (i = 0; (size = bare_host(H_DIRENT, (long) i, (long) name, 0L)) >= 0; i++)
+			fn(name, size, name[strlen(name) + 1]);
+	else if (sd)
+		fat_list(fn);
+	for (i = 0; i < NFILE; i++)
+		if (files[i].name[0])
+			fn(files[i].name, files[i].size, 0);
 }
 
 int mkdir(const char *name, Mode_t mode)

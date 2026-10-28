@@ -46,6 +46,11 @@ for programs and variables. The PC programs and the tests use 5 MB too. On the b
     name is not 8.3);
   * `sd:` or `ram:` in front of a name chooses.
 * **`*DIR`** lists the card's current directory, then the store.
+  `*DIR afsp` lists only the matching files, with `*` and `?` in the
+  name and the extension, in any case. As in the manual, a pattern
+  without an extension means `.BBC` (`*DIR B*` is `B*.BBC`) and a final
+  `.` means no extension; `*DIR *.*` lists them all, as `*DIR` on its
+  own does. `*ERA afsp` deletes every match the same way.
 
 ## Commands and keys
 
