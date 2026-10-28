@@ -1,0 +1,27 @@
+REM BGET_HASH: from the RISC OS BBC BASIC manual, keywords chapter
+REM BGET#: the file is 128 bytes, one CP/M record, so EOF# is the same
+REM on both; reading past the end is not tested (CP/M pads records)
+10 f%=OPENOUT "KWBGET.DAT"
+20 FOR i%=0 TO 127:BPUT#f%,(i%*5+65) MOD 256:NEXT
+30 CLOSE#f%
+40 channel=OPENIN "KWBGET.DAT"
+50 char%=BGET# channel:PRINT char%;" ";PTR#channel
+60 fileno=channel:char$=CHR$(BGET#fileno):PRINT char$;" ";PTR#channel
+70 n%=0:sum%=0:max%=0
+80 WHILE NOT EOF# channel
+90   char% = BGET# channel
+100  PROCprocess(char%)
+110 ENDWHILE
+120 PRINT n%;" ";sum%;" ";max%;" ";PTR#channel;" ";EOF#channel
+130 PTR#channel=127:PRINT EOF#channel;" ";BGET#channel;" ";EOF#channel
+140 PTR#channel=0:a$="":FOR i%=1 TO 10:a$=a$+CHR$(BGET#channel):NEXT:PRINT a$
+150 PRINT BGET#channel AND 255;" ";BGET#(channel)
+160 CLOSE#channel
+170 ON ERROR PRINT ERR;" ";REPORT$:END
+180 PRINT BGET#channel
+190 END
+200 DEF PROCprocess(c%):n%+=1:sum%+=c%:IF c%>max% max%=c%
+210 ENDPROC
+RUN
+NEW
+*ERA KWBGET.DAT

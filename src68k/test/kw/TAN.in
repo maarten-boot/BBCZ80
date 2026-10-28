@@ -1,0 +1,10 @@
+REM TAN: from the RISC OS BBC BASIC manual, keywords chapter
+adj=10:theta=45:opp=adj*TAN(RAD(theta)):PRINT opp
+theta=60:PRINT adj*TAN(RAD(theta))
+PRINT TAN(0);TAN(PI/4);TAN(-PI/4);TAN 1;TAN(RAD(30))
+PRINT TAN(1)-SIN(1)/COS(1)<1E-8;ABS(TAN(PI/2-1E-9))>1E6
+PRINT TAN(1000000)
+10 ON ERROR PRINT ERR;" ";REPORT$:END
+20 PRINT TAN(1E10)
+RUN
+NEW

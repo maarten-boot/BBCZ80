@@ -1,0 +1,14 @@
+REM ASC: from the RISC OS BBC BASIC manual, keywords chapter
+name$="Fred":x2=ASC(name$):PRINT x2
+PRINT ASC("A");ASC("ABC");ASC("");ASC(" ");ASC("a")
+PRINT ASC(CHR$(0));ASC(CHR$(200));ASC(CHR$(255));ASC"Z"
+a$=STRING$(255,"x"):PRINT ASC(a$);ASC(MID$("hello",2))
+10 FOR I%=1 TO 4:READ c$:code=ASC(c$)
+20 PRINT c$;" ";code;
+100 IF code >= ASC("a") AND code <= ASC("z") THEN PRINT " Lower case" ELSE PRINT
+110 NEXT
+120 DATA a,Q,z,{
+130 ON ERROR PRINT ERR;" ";REPORT$:END
+140 PRINT ASC(65)
+RUN
+NEW

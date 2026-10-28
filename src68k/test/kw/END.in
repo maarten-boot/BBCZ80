@@ -1,0 +1,18 @@
+REM END: from the RISC OS BBC BASIC manual, keywords chapter
+REM (addresses vary: END is compared with TOP and HIMEM, not printed)
+10 PRINT "one"
+20 END
+30 PRINT "not here"
+RUN
+10 PROCa:PRINT "after PROCa"
+20 IF TRUE THEN END
+30 PRINT "not here"
+40 DEF PROCa:PRINT "in PROCa":ENDPROC
+RUN
+NEW
+PRINT END>=TOP;END<HIMEM;END-TOP>=0
+x=1:e=END:DIM big 1000:PRINT END-e>=1000
+10 e1=END:a$=STRING$(100,"x"):e2=END:PRINT e2>e1
+20 h=HIMEM:END=h:PRINT HIMEM=h
+RUN
+NEW

@@ -1,0 +1,19 @@
+REM PTR_HASH: from the RISC OS BBC BASIC manual, keywords chapter
+10 file=OPENOUT "KWPTR.DAT"
+20 PRINT PTR#file;" bytes processed"
+30 FOR i%=65 TO 74:BPUT#file,i%:NEXT
+40 PRINT PTR#file;" bytes processed"
+50 rec_len%=3:chan%=file
+60 PTR#chan%=rec_len%:PRINT CHR$BGET#chan%;" ";PTR#chan%
+70 PTR#chan%=rec_len%*2:BPUT#chan%,ASC"x":PRINT PTR#chan%
+80 PTR#chan%=0:FOR i%=1 TO 10:PRINT CHR$BGET#chan%;:NEXT:PRINT
+90 CLOSE#file
+100 file=OPENIN "KWPTR.DAT"
+110 PTR#file=9:PRINT CHR$BGET#file;" ";PTR#file
+120 PTR#file=PTR#file-5:PRINT CHR$BGET#file;" ";PTR#file
+130 CLOSE#file
+140 ON ERROR PRINT ERR;" ";REPORT$:END
+150 PRINT PTR#file
+RUN
+NEW
+*ERA KWPTR.DAT

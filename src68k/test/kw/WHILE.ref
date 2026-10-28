@@ -1,0 +1,8 @@
+draw 1
+draw 2
+draw 3
+n%=4
+body skipped
+exit at 5
+         00          01          10          11 
+        46 Not in a WHILE loop

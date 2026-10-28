@@ -1,0 +1,16 @@
+REM RIGHT_STRING: from the RISC OS BBC BASIC manual, keywords chapter
+any$="Wednesday":PRINT RIGHT$(any$,4)
+date$="24 May 1984":year$=RIGHT$(date$,2):PRINT year$
+birthday$="1st Jun":RIGHT$(birthday$) = "May":PRINT birthday$
+name$="Anne Smith":RIGHT$(name$,4) = "Mary":PRINT name$
+name$="Anne Smith":RIGHT$(name$,2) = "Mary":PRINT name$
+name$="Anne Smith":RIGHT$(name$) = "Mary":PRINT name$
+name$="Bo":RIGHT$(name$,4) = "Mary":PRINT name$
+PRINT RIGHT$("ABCDEF");"|";RIGHT$("ABCDEF",0);"|";RIGHT$("ABCDEF",6);"|";RIGHT$("ABCDEF",99);"|"
+PRINT RIGHT$("",3);"|";LEN(RIGHT$(STRING$(255,"x"),255));"|";RIGHT$("ABC",2.7);"|"
+s$="12345":RIGHT$(s$,3)="":PRINT s$
+A$="XYZ":PRINT RIGHT$(A$+"123",4);"|";RIGHT$(STR$(1234),2)
+10 ON ERROR PRINT ERR;" ";REPORT$:END
+20 PRINT RIGHT$(5,1)
+RUN
+NEW

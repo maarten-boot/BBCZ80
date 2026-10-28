@@ -1,0 +1,14 @@
+REM LN: from the RISC OS BBC BASIC manual, keywords chapter
+PRINT LN(10)
+PRINT LN(1);LN(2);LN(EXP(1));LN(0.5);LN(1E38);LN(1E-38)
+PRINT LN(100)/LN(10);LN 7;LN(EXP(5))
+10 REM the manual's FNlog2, and the errors for 0 and negatives
+20 FOR n=1 TO 5:PRINT FNlog2(2^n);:NEXT:PRINT
+30 PRINT FNlog2(3);FNlog2(1024);FNlog2(0.25)
+40 PROCtry(0):PROCtry(-1):PROCtry(-1E-10)
+50 END
+60 DEF FNlog2(n)=LN(n)/LN(2)
+70 DEF PROCtry(x):ON ERROR LOCAL PRINT "LN(";x;"): ";ERR;" ";REPORT$:ENDPROC
+80 PRINT LN(x):ENDPROC
+RUN
+NEW

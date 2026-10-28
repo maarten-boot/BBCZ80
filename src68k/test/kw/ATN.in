@@ -1,0 +1,13 @@
+REM ATN: from the RISC OS BBC BASIC manual, keywords chapter
+sin=0.5:cos=SQR(3)/2:ang = DEG(ATN(sin/cos)):PRINT ang
+opposite=1:adjacent=2:PRINT "The slope is  ";ATN(opposite/adjacent)
+PRINT ATN(0);ATN(1);ATN(-1);DEG(ATN(1));ATN(1)=PI/4
+PRINT ATN(1E10);ATN(-1E10);ATN(1E38);ATN 2;TAN(ATN(0.75))
+30 sin=1:cos=0
+40 PROCe("DEG(ATN(sin/cos))")
+50 PROCe("ATN(""1"")")
+90 END
+100 DEF PROCe(e$):ON ERROR LOCAL PRINT e$;": ";ERR;" ";REPORT$:ENDPROC
+110 LOCAL v:v=EVAL(e$):PRINT e$;" = ";v:ENDPROC
+RUN
+NEW

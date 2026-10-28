@@ -1,0 +1,18 @@
+REM NEW: from the RISC OS BBC BASIC manual, keywords chapter
+1000 PRINT "the old program"
+1010 PRINT "line two"
+LIST
+NEW
+LIST
+PRINT "nothing listed"
+REM OLD undoes NEW (the Z80 version keeps the line number 1000;
+REM RISC OS BASIC V would show 1000 MOD 256 = 232)
+OLD
+LIST
+RUN
+NEW
+10 PRINT "a new program"
+RUN
+NEW
+RUN
+PRINT "nothing run"

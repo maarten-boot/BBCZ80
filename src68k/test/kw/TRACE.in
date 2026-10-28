@@ -1,0 +1,18 @@
+REM TRACE: from the RISC OS BBC BASIC manual, keywords chapter
+REM TRACE STEP, TRACE PROC, TRACE TO/CLOSE and the TRACE function left out: not in the Z80 version
+10 debug=TRUE
+20 IF debug THEN TRACE 50
+30 PROCa
+40 x=1
+50 y=2
+60 IF debug THEN TRACE OFF
+70 PRINT
+80 REM TRACE PROC is not in the Z80 version
+90 TRACE ON:x=1
+100 y=2:TRACE OFF:PRINT
+110 END
+200 DEF PROCa
+210 ENDPROC
+220 DEF FNb=3
+RUN
+NEW

@@ -1,0 +1,10 @@
+REM VAL: from the RISC OS BBC BASIC manual, keywords chapter
+date$="1984":date=VAL(date$):PRINT date
+PRINT VAL("12.5");VAL("-3E2");VAL("+7");VAL("1E-3");VAL(".5")
+PRINT VAL("abc");VAL("");VAL("12abc");VAL("1.2.3");VAL("3-4")
+PRINT VAL("  7x");VAL("&FF");VAL("1E2E3");VAL("-");VAL("2147483647")
+a$="25":PRINT VAL(a$)*2;VAL a$+1
+10 ON ERROR PRINT ERR;" ";REPORT$:END
+20 PRINT VAL(5)
+RUN
+NEW

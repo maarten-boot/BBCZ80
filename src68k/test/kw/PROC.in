@@ -1,0 +1,29 @@
+REM PROC: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the manual's PROCdelay waits on TIME, which differs: it counts calls)
+10 DIM flag 0:?flag=0:count%=0
+20 IF ?flag=0 THEN REPEAT PROCdelay(0.1): UNTIL ?flag
+30 PRINT "flag set after ";count%;" calls"
+40 PROCnoargs:PROCargs(1,"two",3.5)
+50 FOR k%=0 TO 3:ON k% PROCnoargs,PROCargs(k%,"on",0) ELSE PRINT "else ";k%
+60 NEXT
+70 x=5:PROClocal(1):PRINT "x is still ";x
+80 n=4:PROCret(n):PRINT "returned ";n
+90 PROCrec(4):PRINT
+100 ON ERROR LOCAL PRINT ERR;" ";REPORT$:GOTO 120
+110 PROCargs(1)
+120 ON ERROR LOCAL PRINT ERR;" ";REPORT$:GOTO 140
+130 PROCmissing
+140 ON ERROR PRINT ERR;" ";REPORT$:END
+150 PROCargs(1,"x",3,4)
+160 DEF PROCdelay(n)
+170 count%+=1:IF count%=3 THEN ?flag=1
+180 ENDPROC
+190 DEF PROCnoargs:PRINT "no arguments":ENDPROC
+200 DEF PROCargs(a,b$,c):PRINT ;a;" ";b$;" ";c:ENDPROC
+210 DEF PROClocal(x):LOCAL y:y=x*2:PRINT "x=";x;" y=";y:ENDPROC
+220 DEF PROCret(RETURN v):v=v*v:ENDPROC
+230 DEF PROCrec(n):IF n=0 ENDPROC
+240 PRINT ;n;" ";:PROCrec(n-1):ENDPROC
+RUN
+NEW
+ENDPROC

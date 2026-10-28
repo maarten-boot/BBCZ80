@@ -43,9 +43,11 @@ def sbin(name):
 
 class Basic:
     def __init__(self, img, card_dir):
-        r68k = os.path.join(TOP, 'build', 'demo', 'bbc68k-demo', 'r68k')
+        # ($R68K, else the r68k checkout, else the demo's, which may be
+        # older; as bascheck)
+        r68k = os.environ.get('R68K') or os.path.join(os.path.dirname(TOP), 'r68k', 'r68k')
         if not os.path.exists(r68k):
-            r68k = os.path.join(os.path.dirname(TOP), 'r68k', 'r68k')
+            r68k = os.path.join(TOP, 'build', 'demo', 'bbc68k-demo', 'r68k')
         self.fd, slave = pty.openpty()
         sin = os.open(os.ttyname(slave), os.O_RDWR)
         self.p = subprocess.Popen([r68k, '-d', img], cwd=card_dir, stdin=sin, stdout=slave,

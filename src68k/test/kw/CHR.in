@@ -1,0 +1,12 @@
+REM CHR: from the RISC OS BBC BASIC manual, keywords chapter
+code=72:PRINT CHR$(code)
+upper$="Q":lower$=CHR$(ASC(upper$) OR &20):PRINT lower$
+PRINT CHR$(65);CHR$65;CHR$(48+9);CHR$(65.7);"|";CHR$(32);"|"
+PRINT LEN(CHR$(0));ASC(CHR$(0));ASC(CHR$(255));ASC(CHR$(127))
+PRINT CHR$(256+66);ASC(CHR$(-1));ASC(CHR$(-256+67))
+a$="":FOR i%=97 TO 122:a$=a$+CHR$(i%):NEXT:PRINT a$
+PRINT CHR$(ASC("a")-32)+CHR$(ASC("b")-32)
+10 ON ERROR PRINT ERR;" ";REPORT$:END
+20 PRINT CHR$("A")
+RUN
+NEW

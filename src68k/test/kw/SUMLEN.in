@@ -1,0 +1,14 @@
+REM SUMLEN: from the RISC OS BBC BASIC manual, keywords chapter
+10 DIM a$(3)
+20 a$()="one","two","three","four"
+30 PRINT SUMLENa$();LENSUMa$();SUMLENa$()=LENSUMa$()
+40 REM the manual's DIM(a(),1) corrected to DIM(a$(),1) (no array a())
+50 DEF FNmeanlen(a$())=SUMLENa$()/DIM(a$(),1)
+60 PRINT FNmeanlen(a$())
+70 DIM e$(4):PRINT SUMLEN(e$())
+80 DIM b$(4):b$()=STRING$(200,"*"):PRINT SUMLEN(b$())
+90 DIM m$(1,2):m$()="ab":PRINT SUMLEN m$()
+100 ON ERROR PRINT ERR;" ";REPORT$:END
+110 DIM n(2):PRINT SUMLEN(n())
+RUN
+NEW

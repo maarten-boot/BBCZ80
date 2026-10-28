@@ -1,0 +1,11 @@
+1/0: Can't use zero; try again!!
+SQR(-1): 21 -ve root
+LN(0): 22 Log range
+EXP(100): 24 Exponent range
+ASC(1): 6 Type mismatch
+ACS(2): 21 -ve root
+undefined: 26 No such variable
+2
+1
+LEFT$(1): 6 Type mismatch
+: 42 Out of DATA

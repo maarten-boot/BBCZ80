@@ -1,0 +1,5 @@
+partA: x=1.5
+partB: A%=12 Z%=26
+partB: No such variable
+part2 runs
+       214 File not found

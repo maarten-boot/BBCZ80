@@ -1,0 +1,15 @@
+REM LEN: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the manual's REPEAT INPUT a$ loop reads DATA here: no keyboard input)
+PRINT LEN("");LEN("a");LEN("hello world");LEN(STRING$(255,"x"));LEN"abc"
+a$="12345":PRINT LEN(a$+a$);LEN(STR$(1E10));LEN(CHR$(0));LEN(""""+"")
+DIM s$(3):s$()="ab","cde","","f":PRINT SUMLEN(s$());LEN(s$(1))
+10 REM the manual's examples
+20 REPEAT READ a$: UNTIL LEN(a$)<=10
+30 PRINT a$
+40 FOR i%=1 TO 2:READ in$:IF LEN(in$) > 12 THEN PRINT "Too long" ELSE PRINT in$
+50 NEXT
+60 DATA "a much longer string",short one,"just right","a very long string",ok
+70 ON ERROR PRINT ERR;" ";REPORT$:END
+80 PRINT LEN(42)
+RUN
+NEW

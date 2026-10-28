@@ -1,0 +1,16 @@
+REM INSTR: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the manual's REPEAT a$=GET$ loop reads DATA here: no keyboard input)
+com$="*FX 1 *FX 2 *FX 3":pos%=INSTR(com$,"*FX",10):PRINT pos%;INSTR(com$,"*FX");INSTR(com$,"*FX",2)
+PRINT INSTR("HELLO","L");INSTR("HELLO","LO");INSTR("HELLO","l");INSTR("HELLO","HELLO")
+PRINT INSTR("abc","abcd");INSTR("","a");INSTR("abc","");INSTR("abc","",2);INSTR("","")
+PRINT INSTR("abcabc","bc",3);INSTR("abcabc","bc",5);INSTR("abcabc","c",6);INSTR("abcabc","c",7)
+PRINT INSTR("abc","",3);INSTR("abc","",4);INSTR("abc","",10);INSTR("abc","a",0)
+a$=STRING$(253,"x")+"yz":PRINT INSTR(a$,"y");INSTR(a$,"z",255);INSTR(a$,"xy",200)
+10 REM the manual's example: wait for Y, y, N or n
+20 REPEAT READ a$:PRINT a$;:UNTIL INSTR("YyNn",a$) <> 0
+30 PRINT
+35 DATA q,x,n,Y
+40 ON ERROR PRINT ERR;" ";REPORT$:END
+50 PRINT INSTR("abc",1)
+RUN
+NEW

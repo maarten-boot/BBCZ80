@@ -1,0 +1,7 @@
+REM SPC: from the RISC OS BBC BASIC manual, keywords chapter
+PRINT SPC(10);"X"
+PRINT "A";SPC(3);"B";SPC(0);"C";SPC 2;"D"
+PRINT "[";SPC(1);"]";SPC(255+3);"|"
+n%=5:PRINT "[";SPC(n%*2);"]"
+PRINT "[";SPC(255);"]"
+REM INPUT SPC(7)"How many",a$ left out: no keyboard input

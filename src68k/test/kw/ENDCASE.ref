@@ -1,0 +1,10 @@
+one
+still one
+after ENDCASE 1
+two
+after ENDCASE 2
+after ENDCASE 3
+empty CASE
+nested
+inner done
+no ENDCASE

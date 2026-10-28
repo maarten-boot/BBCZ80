@@ -147,14 +147,15 @@ def our_keywords():
         for line in f:
             if line.startswith('KEYWDS:'):
                 on = True
-            elif line.startswith('KEYWDL'):
-                break
+            elif line.startswith('CMDTAB'):
+                break			# (KEYWDS, then COMNDS: AUTO .. SAVE)
             m = re.search(r'\.ascii\s+"([^"]*)"', line)
             if on and m:
                 words.add(m.group(1).rstrip(' ('))
     # TIME$ and REPORT$ are TIME and REPORT then $, TOP is TO then P, OPT
     # is the assembler's
-    return words | {'TIME$', 'REPORT$', 'TOP', 'OPT'}
+    # LISTO is LIST then O, SUMLEN SUM then LEN (as in the Z80 version)
+    return words | {'TIME$', 'REPORT$', 'TOP', 'OPT', 'LISTO', 'SUMLEN'}
 
 
 def keyword_names(title):

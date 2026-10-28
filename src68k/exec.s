@@ -1234,8 +1234,9 @@ BPUT:	bsr	CHANEL			! CHANNEL NUMBER
 	move.w	(sp)+,d7
 	tst.b	d6
 	bmi	BPUTS
-	move.b	d7,d6
+	move.w	d7,-(sp)		! (SFIX of a real uses d6)
 	bsr	SFIX
+	move.w	(sp)+,d6		! channel
 	move.b	d0,d4
 	bsr	OSBPUT
 	bra	XEQ

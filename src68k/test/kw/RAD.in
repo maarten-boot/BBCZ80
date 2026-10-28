@@ -1,0 +1,13 @@
+REM RAD: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the manual's example stores 5-byte reals with | indirection)
+10 DIM sin% 90*5+4
+20 FOR i%=0 TO 90 STEP 30:|(sin%+i%*5)=SIN(RAD(i%)):NEXT
+30 FOR i%=0 TO 90 STEP 30:PRINT |(sin%+i%*5);" ";:NEXT:PRINT
+40 theta=90:PRINT RAD(theta)-PI/2
+50 PRINT ;RAD(0);" ";RAD(180);" ";RAD(-90);" ";RAD(360)
+60 PRINT ;RAD(1);" ";RAD 45;" ";RAD(1E30);" ";RAD(-1E-30)
+70 PRINT RAD(180)=PI,RAD(DEG(1)),DEG(RAD(30))
+80 ON ERROR PRINT ERR;" ";REPORT$:END
+90 PRINT RAD("x")
+RUN
+NEW

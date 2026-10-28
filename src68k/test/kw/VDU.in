@@ -1,0 +1,9 @@
+REM VDU: from the RISC OS BBC BASIC manual, keywords chapter
+REM graphics window, beep and flash examples left out: screen and sound codes
+VDU 65,66,67:VDU 13,10
+VDU 72,73,13,10
+VDU 65:VDU 66,13:VDU 10
+VDU &4241;&4443;13,10
+VDU 65+256,66+512,13,10
+PRINT "A";:VDU 66:PRINT "C"
+a%=88:VDU a%,a%+1,a%+2,13,10

@@ -1,0 +1,14 @@
+REM REM: from the RISC OS BBC BASIC manual, keywords chapter
+REM find the next prime
+REM absolutely anything: "unclosed quote ( : PRINT "not printed"
+PRINT "before":REM PRINT "not printed":PRINT "not printed either"
+10 REM find the next prime
+20 n%=20
+30 REPEAT:n%+=1:p%=TRUE:FOR d%=2 TO SQR(n%):IF n% MOD d%=0 p%=FALSE
+40 NEXT:UNTIL p%:REM found it
+50 PRINT "next prime after 20: ";n%
+60 REM:PRINT "not printed"
+70 PRINT "end" : REM a remark after a statement
+RUN
+LIST 60,70
+NEW

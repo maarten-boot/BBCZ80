@@ -1,0 +1,5 @@
+channel non-zero: -1
+       100       200       999       400
+        20
+missing file gives 0
+         6 Type mismatch

@@ -1,0 +1,27 @@
+REM LOAD: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the manual's adfs:: name is replaced by a CP/M one; LOAD is a command,
+REM  so it starts its own line)
+10 REM program saved and loaded again
+20 PRINT "running, A%=";A%;" B%=";B%
+30 DEF FNnextFile="KWPROG2"
+SAVE "KWPROG"
+NEW
+20 PRINT "the second program"
+SAVE "KWPROG2"
+NEW
+A%=12:x=5
+LOAD "KWPROG"
+LIST
+B%=34:RUN
+PRINT A%;B%
+PRINT x
+LOAD FNnextFile
+f$=FNnextFile
+LOAD f$
+LIST
+RUN
+LOAD "KWNONE"
+LIST
+*ERA KWPROG.BBC
+*ERA KWPROG2.BBC
+NEW

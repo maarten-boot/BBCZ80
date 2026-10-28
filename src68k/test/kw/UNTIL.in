@@ -1,0 +1,20 @@
+REM UNTIL: from the RISC OS BBC BASIC manual, keywords chapter
+REM PROCirritate (VDU 7 forever) left out: it never ends
+10 gameOver=FALSE:n%=0
+20 REPEAT PROCmove:UNTIL gameOver
+30 PRINT "moves:";n%
+40 i=0:REPEAT i=i+1:UNTIL i>=3:PRINT i
+50 i=0:REPEAT:i=i+1:UNTIL TRUE:PRINT i
+60 i=0:REPEAT:i=i+1:UNTIL 7:PRINT i
+70 i=0:REPEAT:i=i+1:UNTIL i=2.5 OR i>4:PRINT i
+80 i=0:REPEAT
+90   i+=1:j=0
+100  REPEAT j+=1:UNTIL j=i
+110 UNTIL i=3:PRINT i;j
+120 ON ERROR PRINT ERR;" ";REPORT$:END
+130 UNTIL TRUE
+140 END
+200 DEF PROCmove:n%+=1:IF n%=4 gameOver=TRUE
+210 ENDPROC
+RUN
+NEW

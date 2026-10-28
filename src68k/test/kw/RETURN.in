@@ -1,0 +1,25 @@
+REM RETURN: from the RISC OS BBC BASIC manual, keywords chapter
+10 REM RETURN from GOSUB, RETURN parameters
+20 GOSUB 200:PRINT "back from 200"
+30 GOSUB 220:PRINT "back from nested"
+40 A=5:B=2:PROCSwapIfDisordered(A,B):PRINT A;B
+50 A=1:B=9:PROCSwapIfDisordered(A,B):PRINT A;B
+60 A$="b":B$="a":PROCswaps(A$,B$):PRINT A$;" ";B$
+70 x%=3:PROCtwice(x%):PRINT x%
+80 y=7:PROCnoret(y):PRINT y
+90 DIM a(2):a(1)=4:PROCtwice(a(1)):PRINT a(1)
+100 PRINT FNret(n):PRINT n
+110 ON ERROR PRINT ERR;" ";REPORT$:END
+120 RETURN
+130 PRINT "not here"
+200 PRINT "in 200":RETURN
+220 PRINT "in 220":GOSUB 200:PRINT "in 220 again":RETURN
+300 DEF PROCSwapIfDisordered(RETURN A, RETURN B)
+310   IF A>B SWAP A,B
+320 ENDPROC
+330 DEF PROCswaps(RETURN p$,RETURN q$):SWAP p$,q$:ENDPROC
+340 DEF PROCtwice(RETURN v):v=v*2:ENDPROC
+350 DEF PROCnoret(v):v=v*2:ENDPROC
+360 DEF FNret(RETURN r):r=42:="done"
+RUN
+NEW

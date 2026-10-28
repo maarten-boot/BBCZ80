@@ -1,0 +1,17 @@
+REM HIMEM: from the RISC OS BBC BASIC manual, keywords chapter
+REM (addresses differ between the Z80 and the 68k: relations are printed)
+PRINT "Memory available > 1000: ";HIMEM - LOMEM > 1000
+PRINT HIMEM>LOMEM;HIMEM>TOP;HIMEM>PAGE;HIMEM-END>0
+h%=HIMEM:a%=HIMEM-1000 : HIMEM=a%:PRINT h%-HIMEM;HIMEM=a%
+HIMEM=h%:PRINT HIMEM=h%
+10 REM HIMEM in a program: free memory shrinks by the same amount
+20 h%=HIMEM:f%=HIMEM-END
+30 HIMEM=HIMEM-256:PRINT f%-(HIMEM-END);h%-HIMEM
+40 HIMEM=h%:PRINT HIMEM-END=f%
+50 REM below the variables: "No room", which (error 0) ON ERROR cannot trap
+60 ON ERROR PRINT ERR;" ";REPORT$:END
+70 HIMEM=LOMEM
+80 PRINT "not here"
+RUN
+PRINT HIMEM=h%
+NEW

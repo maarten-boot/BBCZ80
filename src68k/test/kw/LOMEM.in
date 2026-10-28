@@ -1,0 +1,18 @@
+REM LOMEM: from the RISC OS BBC BASIC manual, keywords chapter
+REM (addresses differ between the Z80 and the 68k: differences are printed)
+PRINT LOMEM=TOP;LOMEM>=PAGE;HIMEM>LOMEM;END>=LOMEM
+LOMEM=TOP+&400 : REM reserve 1K above TOP
+PRINT LOMEM-TOP
+v=1:PRINT END-LOMEM>0
+REM setting LOMEM clears the variables (A% to Z% stay)
+A%=7:a=5:LOMEM=TOP+&800:PRINT LOMEM-TOP;A%
+PRINT a
+CLEAR:PRINT LOMEM=TOP
+LOMEM=TOP+&400:PRINT LOMEM-TOP
+10 REM RUN resets LOMEM to TOP
+20 PRINT LOMEM=TOP
+30 LOMEM=LOMEM+100:PRINT LOMEM-TOP
+40 x=3:PRINT x
+RUN
+PRINT LOMEM-TOP
+NEW

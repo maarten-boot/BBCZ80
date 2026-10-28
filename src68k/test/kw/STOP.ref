@@ -1,0 +1,10 @@
+before
+Bad data
+
+STOP at line 20
+after STOP, ok=0
+in PROCa
+
+STOP at line 40
+         0
+end, no message

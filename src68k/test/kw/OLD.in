@@ -1,0 +1,14 @@
+REM OLD: from the RISC OS BBC BASIC manual, keywords chapter
+1000 REM first line 1000
+1010 FOR I%=1 TO 3:PRINT I%;:NEXT:PRINT
+1020 PRINT "recovered"
+NEW
+LIST
+OLD
+REM (the Z80 version keeps 1000; BASIC V shows 1000 MOD 256 = 232)
+LIST
+RUN
+RENUMBER
+LIST
+RUN
+NEW

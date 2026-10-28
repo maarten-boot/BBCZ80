@@ -1,0 +1,14 @@
+one
+small
+two
+small
+Bad input
+draw 30,3
+wait
+more statements up to ENDCASE
+Bad input
+draw 40,4
+wait
+more statements up to ENDCASE
+after CASE
+otherwise z

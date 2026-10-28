@@ -1,0 +1,18 @@
+REM FALSE: from the RISC OS BBC BASIC manual, keywords chapter
+flag=FALSE:PRINT flag;FALSE;NOT FALSE;FALSE=0;TRUE=NOT FALSE
+PRINT FALSE AND TRUE;FALSE OR 5;FALSE EOR TRUE;-FALSE;FALSE+1
+IF FALSE THEN PRINT "true" ELSE PRINT "false"
+f%=FALSE:f$=STR$(FALSE):PRINT f%;" ";f$;" ";LEN(f$)
+10 REM REPEAT ... UNTIL FALSE (the manual's CIRCLE needs graphics:
+20 REM it is a counter here, left with EXIT REPEAT)
+30 n%=0
+40 REPEAT
+50   n%+=1:PRINT n%;
+60   IF n%=5 EXIT REPEAT
+70 UNTIL FALSE
+80 PRINT
+90 flag=FALSE:WHILE NOT flag:n%-=1:IF n%=0 flag=TRUE
+100 ENDWHILE:PRINT n%;flag
+110 PRINT (1=2)=FALSE,(2>1)=FALSE
+RUN
+NEW

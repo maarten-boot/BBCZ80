@@ -1,0 +1,12 @@
+REM INKEY_STRING: from the RISC OS BBC BASIC manual, keywords chapter
+#typed
+REM (no key is ever typed while a line runs: INKEY$ times out with "")
+REM (the manual's 500 is 5 s; 5 here)
+A$ = INKEY$(5):PRINT "[";A$;"]";LEN(A$)
+PRINT "[";INKEY$(0);"][";INKEY$ 1;"]";INKEY$(0)=""
+10 REM where INKEY gives -1, INKEY$ gives ""
+20 k$=INKEY$(0):k%=INKEY(0)
+30 IF k%=-1 THEN PRINT "INKEY -1, INKEY$ [";k$;"]"
+40 PRINT LEN(INKEY$(1)+INKEY$(1)+"x")
+RUN
+NEW

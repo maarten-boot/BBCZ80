@@ -1,0 +1,18 @@
+REM INKEY: from the RISC OS BBC BASIC manual, keywords chapter
+#typed
+REM (no key is ever typed while a line runs, so INKEY(n) times out with -1;
+REM  INKEY with a negative argument, the keyboard scan, and INKEY(-256)
+REM  are not tested: there is no key scan under CP/M)
+PRINT INKEY(0);INKEY(1);INKEY 0;INKEY(2)
+10 REM the manual's PROCwait, with short waits
+20 PROCwait(0):PRINT "waited"
+30 n%=0:REPEAT n%+=1:UNTIL INKEY(0)=-1:PRINT n%
+40 k%=INKEY(5):IF k%=-1 THEN PRINT "no key" ELSE PRINT "key ";k%
+50 PRINT INKEY(0)=INKEY(1);INKEY(0)<0
+60 END
+100 DEF PROCwait(secs%)
+110   IF INKEY(100*secs%): REM throw away result
+120 ENDPROC
+RUN
+LIST 100,120
+NEW

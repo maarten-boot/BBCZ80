@@ -1,0 +1,6 @@
+REM TRUE: from the RISC OS BBC BASIC manual, keywords chapter
+debug=TRUE:PRINT debug
+debug=TRUE:IF debug PRINT"debug in operation"
+PRINT TRUE;1+1<3;(1+1<3)=TRUE;NOT TRUE;TRUE+1
+PRINT ~TRUE;TRUE AND 7;-TRUE;TRUE=-1
+a$=STR$(TRUE):PRINT a$

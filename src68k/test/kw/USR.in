@@ -1,0 +1,14 @@
+REM USR: from the RISC OS BBC BASIC manual, keywords chapter
+REM 68k-only: the routine is 68000 machine code (the Z80 runs Z80 code)
+10 DIM start_of_code 20
+20 P%=start_of_code
+30 [OPT 0
+40 MOVE.L #12345,D0
+50 RTS
+60 ]
+70 DEF FNmachinecode =USR(start_of_code)
+80 PRINT FNmachinecode
+90 P%=start_of_code:[OPT 0:MOVEQ #-1,D0:RTS:]
+100 PRINT USR(start_of_code)
+RUN
+NEW

@@ -1,0 +1,46 @@
+REM CASE: from the RISC OS BBC BASIC manual, keywords chapter
+REM CASE GET$ OF needs a key press, so it is left out
+10 FOR A%=0 TO 4
+20   CASE A% OF
+30     WHEN 1 : PRINT "one"
+40     WHEN 2,3 : PRINT "two or three"
+50     WHEN 4
+60       PRINT "four, ";
+70       PRINT "on two lines"
+80     OTHERWISE PRINT "other ";A%
+90   ENDCASE
+100 NEXT
+110 X=1:Y=2
+120 CASE Y*2 + X*3 OF
+130   WHEN 5 : PRINT "five"
+140   WHEN 7 : PRINT "seven"
+150 ENDCASE
+160 CASE "b" OF
+170   WHEN "a" : PRINT "a"
+180   WHEN "c","b" : PRINT "found b"
+190 ENDCASE
+200 CASE 99 OF
+210   WHEN 1 : PRINT "not here"
+220 ENDCASE
+230 PRINT "no match, no OTHERWISE"
+240 CASE 2.5 OF
+245 WHEN 2.5:PRINT "real":ENDCASE
+250 CASE TRUE OF
+260   WHEN X>Y : PRINT "X>Y"
+270   WHEN X<Y : PRINT "X<Y"
+280 ENDCASE
+290 CASE 3 OF
+300   WHEN 1+2 : PRINT "first match"
+310   WHEN 3 : PRINT "second match"
+320 ENDCASE
+330 ON ERROR PRINT ERR;" ";REPORT$:END
+340 CASE 1 OF
+350   WHEN "x" : PRINT "mismatch"
+360 ENDCASE
+370 END
+380 REM in BBC BASIC (Z80) OF must end the line
+390 ON ERROR PRINT ERR;" ";REPORT$:END
+400 CASE 1 OF WHEN 1:PRINT "one":ENDCASE
+RUN
+GOTO 390
+NEW

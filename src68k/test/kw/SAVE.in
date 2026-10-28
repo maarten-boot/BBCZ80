@@ -1,0 +1,21 @@
+REM SAVE: from the RISC OS BBC BASIC manual, keywords chapter
+REM "10 REM > filename" for SAVE without a name is not in the Z80 version
+10 REM > KWSAVE1
+20 PRINT "saved program"
+30 DEF FNprogName="KWSAVE2"
+SAVE "KWSAVE"
+SAVE FNprogName
+SAVE
+NEW
+LOAD "KWSAVE"
+LIST
+RUN
+NEW
+LOAD "KWSAVE2"
+LIST
+NEW
+10 ON ERROR PRINT ERR;" ";REPORT$:END
+20 SAVE 3
+RUN
+*ERA KWSAVE.BBC
+NEW

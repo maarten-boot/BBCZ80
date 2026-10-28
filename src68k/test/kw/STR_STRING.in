@@ -1,0 +1,14 @@
+REM STR_STRING: from the RISC OS BBC BASIC manual, keywords chapter
+10 DEF FNhex4(a%)=RIGHT$("000"+STR$~(a%),4)
+20 DEF FNdigits(a)=LEN(STR$(a))
+30 PRINT FNhex4(10);" ";FNhex4(&ABCD);" ";FNhex4(&12345)
+40 PRINT FNdigits(0);FNdigits(-123);FNdigits(PI)
+50 any_val=12.75:dp=INSTR(STR$(any_val),"."):PRINT dp
+60 PRINT STR$(1.5);"|";STR$ -7;"|";STR$~255;"|";STR$~-1;"|";STR$(1E10);"|";STR$(1/3);"|"
+70 PRINT STR$(0);"|";STR$(1E-5);"|";STR$(123456789);"|";STR$(1234567890);"|";STR$(-0.5);"|"
+80 @%=&20205:PRINT STR$(PI);"|";STR$(2)
+90 @%=&1020205:PRINT STR$(PI);"|";STR$(2);"|"
+100 @%=&1000003:PRINT STR$(PI);"|"
+110 @%=10:PRINT STR$(PI);"|";STR$~(&7FFFFFFF);"|";STR$~0
+RUN
+NEW

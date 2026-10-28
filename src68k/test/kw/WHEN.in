@@ -1,0 +1,29 @@
+REM WHEN: from the RISC OS BBC BASIC manual, keywords chapter
+10 FOR i%=1 TO 9
+20   CASE i% OF
+30     WHEN 1 : PROCload
+40     WHEN 2,4,6,8 : PRINT "Even" : remainder= 0
+50     WHEN 3
+60       PRINT "three on its own line"
+70     OTHERWISE PRINT "other ";i%
+80   ENDCASE
+90 NEXT
+100 FOR j%=1 TO 4:READ a$
+110   CASE a$ OF
+120     WHEN "Y","y","YES","Yes","yes" : PROCgame
+130     WHEN "N" : PRINT "no game"
+140   ENDCASE
+150 NEXT
+160 CASE 2 OF
+165 WHEN 1+1:PRINT "expression matched":ENDCASE
+170 CASE 1 OF
+180   WHEN 1:PRINT "first match"
+190   WHEN 1:PRINT "second match"
+200 ENDCASE
+210 PRINT "remainder=";remainder
+220 END
+230 DEF PROCload:PRINT "load":ENDPROC
+240 DEF PROCgame:PRINT "game ";a$:ENDPROC
+250 DATA yes,N,maybe,Y
+RUN
+NEW

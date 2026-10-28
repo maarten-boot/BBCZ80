@@ -1,0 +1,41 @@
+   10FOR i%=1 TO 2
+   20REPEAT
+   30IF i%=1 THEN
+   40PRINT "one":i%+=1
+   50ELSE
+   60WHILE FALSE:ENDWHILE
+   70ENDIF
+   80UNTIL TRUE
+   90CASE i% OF
+  100WHEN 2:PRINT "two"
+  110ENDCASE
+  120NEXT
+   10 FOR i%=1 TO 2
+   20 REPEAT
+   30 IF i%=1 THEN
+   10FOR i%=1 TO 2
+   20  REPEAT
+   30    IF i%=1 THEN
+   40      PRINT "one":i%+=1
+   50    ELSE
+   60      WHILE FALSE:ENDWHILE
+   70    ENDIF
+   80  UNTIL TRUE
+   90  CASE i% OF
+  100    WHEN 2:PRINT "two"
+  110  ENDCASE
+  120NEXT
+   10 FOR i%=1 TO 2
+   20   REPEAT
+   30     IF i%=1 THEN
+   40       PRINT "one":i%+=1
+   10 FOR i%=1 TO 2
+   20   REPEAT
+   30     IF i%=1 THEN
+   40       PRINT "one":i%+=1
+   10FOR i%=1 TO 2
+   20REPEAT
+   10 FOR i%=1 TO 2
+   20   REPEAT
+one
+two

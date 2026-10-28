@@ -1,0 +1,38 @@
+REM FN: from the RISC OS BBC BASIC manual, keywords chapter
+10 REM the manual's examples (FNhex4 of GET reads DATA here)
+20 bananas%=4:apples%=3
+30 PRINT FNmin(2*bananas%, 3*apples%+1);FNmin(5,-5);FNmin(7,7)
+40 PRINT FNfact(0);FNfact(1);FNfact(5);FNfact(10)
+50 FOR i%=1 TO 4:READ k%:PRINT FNhex4(k%);" ";:NEXT:PRINT
+60 DATA 65,255,4096,48879
+70 PRINT FNmulti(3);" ";FNmulti(-3);" ";FNmulti(0)
+80 a=1:b=2:PRINT FNret(a,b);a;b
+90 DIM arr(3):arr()=1,2,3,4:PRINT FNsum(arr())
+100 PRINT FNnoargs;" ";FNs$("ab")
+110 PRINT FNloc;q
+120 PROCtry(1):PROCtry(2):PROCtry(3)
+130 END
+200 DEF FNmin(a%,b%) IF a%<b% THEN =a% ELSE =b%
+210 DEF FNfact(n%) IF n%<1 THEN =1 ELSE =n%*FNfact(n%-1)
+220 DEF FNhex4(n%)=RIGHT$("000"+STR$~(n%),4)
+230 DEF FNmulti(n)
+240   IF n>0 THEN ="positive"
+250   IF n<0 THEN ="negative"
+260 ="zero"
+270 DEF FNret(RETURN x,y):x=x*10:y=y*10:=x+y
+280 DEF FNsum(v()):LOCAL i%,s:FOR i%=0 TO DIM(v(),1):s+=v(i%):NEXT:=s
+290 DEF FNnoargs="no args"
+300 DEF FNs$(s$)=s$+s$
+310 DEF FNloc:LOCAL q:q=99:=q
+320 DEF PROCtry(n%):ON ERROR LOCAL PRINT n%;": ";ERR;" ";REPORT$:ENDPROC
+330 IF n%=1 PRINT FNundefined
+340 IF n%=2 PRINT FNmin(1)
+350 IF n%=3 PRINT FNmin(1,2,3)
+360 ENDPROC
+RUN
+NEW
+PRINT FNfive
+10 DEF FNfive=5
+PRINT FNfive
+=5
+NEW

@@ -1,0 +1,20 @@
+REM ABS: from the RISC OS BBC BASIC manual, keywords chapter
+length1=7.5:length2=10:diff=ABS(length1-length2):PRINT diff
+PRINT ABS(-3);ABS(3);ABS(0);ABS(-2.5);ABS(2.5)
+PRINT ABS(-1E-30);ABS(-1E38);ABS -4;ABS(-4)+1
+a%=-2147483647:PRINT ABS(a%);ABS(a%+1);ABS(a%)=2147483647
+REM the largest negative integer: ABS gives the same value
+a%=&80000000:PRINT a%;ABS(a%);ABS(a%)=a%
+PRINT ABS(&80000000);ABS(-2147483648)
+x=-2147483648:PRINT ABS(x)
+10 PROCe("ABS(&80000000)")
+20 PROCe("ABS(-2147483647-1)")
+30 a%=&80000000:b%=ABS(a%):PRINT b%
+40 PROCe("ABS(""x"")")
+50 ON ERROR PRINT ERR;" ";REPORT$:END
+55 a%=-2147483648
+60 END
+100 DEF PROCe(e$):ON ERROR LOCAL PRINT e$;": ";ERR;" ";REPORT$:ENDPROC
+110 LOCAL v:v=EVAL(e$):PRINT e$;" = ";v:ENDPROC
+RUN
+NEW

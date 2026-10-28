@@ -1,0 +1,16 @@
+REM REPORT: from the RISC OS BBC BASIC manual, keywords chapter
+10 ON ERROR REPORT:PRINT " at line ";ERL;:GOTO 30
+20 PRINT 1/0
+30 PRINT
+40 ON ERROR REPORT:PRINT " error!!"'':GOTO 60
+50 x=SQR(-4)
+60 ON ERROR LOCAL REPORT:PRINT " (";ERR;")":GOTO 80
+70 ERROR 99,"My own error"
+80 ON ERROR REPORT:PRINT " at line ";ERL:END
+90 PRINT nosuchvar
+RUN
+NEW
+REM REPORT in immediate mode prints the last error again
+PRINT LOG(0)
+REPORT:PRINT
+PRINT "|":REPORT:PRINT "|"

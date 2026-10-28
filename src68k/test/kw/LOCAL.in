@@ -1,0 +1,48 @@
+REM LOCAL: from the RISC OS BBC BASIC manual, keywords chapter
+10 REM LOCAL variables and arrays
+20 a$="outer":len%=1:price=2.5:PROCvars:PRINT a$;len%;price
+30 DIM a(1):a(1)=7:PROCarrs:PRINT a(1);DIM(a(),1)
+40 PRINT FNrec(4)
+50 REM LOCAL DATA ... RESTORE DATA
+60 RESTORE 300:READ d:PROCdata:READ d:PRINT "main read ";d
+70 REM the manual's LOCAL ERROR example
+80 ON ERROR PROCerror
+90 opp=6:adj=0:res = FNdivide(opp,adj):PRINT res
+100 adj=3:res = FNdivide(opp,adj):PRINT res
+110 PRINT 1/0
+120 END
+200 DEF PROCvars
+210 LOCAL a$,len%,price
+220 PRINT "[";a$;"]";len%;price
+230 a$="inner":len%=9:price=99:ENDPROC
+240 DEF PROCarrs
+250 LOCAL a(), B() : DIM a(2), B(4,5)
+260 a(2)=1:B(4,5)=2:PRINT a(2)+B(4,5);DIM(a(),1);DIM(B(),2):ENDPROC
+270 DEF FNrec(n):LOCAL t:IF n=0 THEN =0
+280 t=n:=t+FNrec(n-1)+t-n
+290 DEF PROCdata:LOCAL DATA:RESTORE 310:READ d:PRINT "proc read ";d:ENDPROC
+300 DATA 1,2,3
+310 DATA 100,200
+320 DEF FNdivide(x,y)
+330 LOCAL ERROR
+340 ON ERROR LOCAL PRINT "attempt to divide by zero" :=0
+350 =x/y : REM end of function restores previous error status
+360 DEF PROCerror:PRINT "PROCerror: ";REPORT$:END
+RUN
+NEW
+10 REM RESTORE ERROR after ON ERROR LOCAL; LOCAL ERROR outside a PROC
+15 REM (in the Z80 version LOCAL ERROR does nothing: RESTORE ERROR needs
+16 REM  an ON ERROR LOCAL, else it is the error "ON ERROR not LOCAL")
+20 ON ERROR PRINT "outer: ";REPORT$:GOTO 30
+25 PROCre(1):PROCre(2)
+30 ON ERROR PRINT "outer: ";REPORT$:GOTO 60
+35 LOCAL ERROR
+40 ON ERROR PRINT "inner: ";REPORT$:GOTO 60
+50 RESTORE ERROR:PRINT SQR(-1)
+60 ON ERROR PRINT ERR;" ";REPORT$:END
+70 LOCAL x
+80 DEF PROCre(n%):ON ERROR LOCAL PRINT "local: ";REPORT$:ENDPROC
+90 IF n%=2 THEN RESTORE ERROR
+100 PRINT 1/0:ENDPROC
+RUN
+NEW

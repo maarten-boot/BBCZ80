@@ -1,0 +1,39 @@
+REM RESTORE_ERROR: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the manual's example uses INPUT x: the values come from DATA.
+REM In the Z80 version LOCAL ERROR does nothing and ON ERROR LOCAL saves
+REM the status; UNTIL restores it, so the example's RESTORE ERROR finds
+REM nothing saved: ON ERROR not LOCAL)
+10 step%=0:ON ERROR PRINT "outer handler: ";REPORT$:step%+=1:ON step% GOTO 40,50 ELSE END
+20 PROCroots
+30 PRINT "not reached"
+40 PROCtwo
+50 PRINT "end":END
+100 DEF PROCroots
+110 LOCAL ERROR
+120 REPEAT
+130   ON ERROR LOCAL PRINT"Negative value"
+140   READ x
+150   IF x>=0 PRINT "Square root of ";x;" = ";SQR(x)
+160   IF x<0 PRINT SQR(x)
+170 UNTIL x=0
+180 RESTORE ERROR
+190 ENDPROC
+200 DEF PROCtwo
+210 ON ERROR LOCAL PRINT "local handler: ";REPORT$:GOTO 230
+220 PRINT 1/0
+230 RESTORE ERROR
+240 PRINT "outer handler restored"
+250 PRINT SQR(-1)
+260 ENDPROC
+270 DATA 4,-1,2.25,-9,0
+RUN
+NEW
+REM RESTORE ERROR without a saved error status
+10 ON ERROR PRINT ERR;" ";REPORT$:END
+20 PROCnosave
+30 PRINT "not reached"
+40 DEF PROCnosave:RESTORE ERROR:ENDPROC
+RUN
+NEW
+RESTORE ERROR
+PRINT "still at the prompt"

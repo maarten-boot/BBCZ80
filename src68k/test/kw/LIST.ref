@@ -1,0 +1,55 @@
+   10 REM a program to list
+   20 fred%=1
+   30 DEF PROCa:fred%=2:ENDPROC
+   40 DEF FNb=fred%
+   50 PRINT "fred%= ";fred%
+   60 IF fred%=3 THEN PRINT "three"
+  100 PRINT "Single space between line number and statement."
+  110 PRINT "Several spaces between line number and statement"
+  120 PRINT "No space between line number and statement."
+ 1000 PRINT TIME
+ 1010 END
+ 1000 PRINT TIME
+ 1010 END
+   10 REM a program to list
+   20 fred%=1
+   30 DEF PROCa:fred%=2:ENDPROC
+   40 DEF FNb=fred%
+   50 PRINT "fred%= ";fred%
+   10 REM a program to list
+   20 fred%=1
+   30 DEF PROCa:fred%=2:ENDPROC
+   40 DEF FNb=fred%
+   60 IF fred%=3 THEN PRINT "three"
+   30 DEF PROCa:fred%=2:ENDPROC
+   40 DEF FNb=fred%
+   20 fred%=1
+   30 DEF PROCa:fred%=2:ENDPROC
+   50 PRINT "fred%= ";fred%
+   60 IF fred%=3 THEN PRINT "three"
+   50 PRINT "fred%= ";fred%
+   60 IF fred%=3 THEN PRINT "three"
+  100 PRINT "Single space between line number and statement."
+  110 PRINT "Several spaces between line number and statement"
+  120 PRINT "No space between line number and statement."
+ 1000 PRINT TIME
+   50 PRINT "fred%= ";fred%
+   60 IF fred%=3 THEN PRINT "three"
+  100 PRINT "Single space between line number and statement."
+  110 PRINT "Several spaces between line number and statement"
+  120 PRINT "No space between line number and statement."
+ 1000 PRINT TIME
+   50 PRINT "fred%= ";fred%
+   60 IF fred%=3 THEN PRINT "three"
+  100 PRINT "Single space between line number and statement."
+  110 PRINT "Several spaces between line number and statement"
+  120 PRINT "No space between line number and statement."
+ 1000 PRINT TIME
+ 1000 PRINT TIME
+   50 PRINT "fred%= ";fred%
+   60 IF fred%=3 THEN PRINT "three"
+  100 PRINT "Single space between line number and statement."
+  110 PRINT "Several spaces between line number and statement"
+  120 PRINT "No space between line number and statement."
+   30 DEF PROCa:fred%=2:ENDPROC
+   40 DEF FNb=fred%

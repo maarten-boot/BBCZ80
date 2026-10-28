@@ -1,0 +1,17 @@
+REM REPEAT: from the RISC OS BBC BASIC manual, keywords chapter
+REM (REPEAT UNTIL INKEY-99 waits for the keyboard: left out)
+10 a%=0:c%=&100
+20 REPEAT
+30   a%+=1:c%=c% >> 1
+40 UNTIL c%=0
+50 PRINT a%;" ";c%
+60 REM the statements are executed at least once
+70 n%=0:REPEAT n%+=1:UNTIL TRUE:PRINT n%
+80 REPEAT:REPEAT:n%+=1:UNTIL n% MOD 3=0:PRINT n%;:UNTIL n%>10:PRINT
+90 i%=0:REPEAT i%+=1:IF i%=4 EXIT REPEAT
+100 UNTIL FALSE:PRINT "left at ";i%
+110 ON ERROR PRINT ERR;" ";REPORT$:END
+120 UNTIL TRUE
+RUN
+NEW
+x%=0:REPEAT x%+=2:PRINT x%;:UNTIL x%>=8:PRINT

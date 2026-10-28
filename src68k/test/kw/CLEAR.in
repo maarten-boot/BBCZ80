@@ -1,0 +1,16 @@
+REM CLEAR: from the RISC OS BBC BASIC manual, keywords chapter
+x=1:y$="text":n%=5:DIM a(3):A%=7:Z%=26
+CLEAR
+PRINT A%;Z%
+PRINT x
+PRINT y$
+PRINT n%
+PRINT a(1)
+DIM a(5):a(5)=5:PRINT a(5)
+10 x=3:PRINT x
+20 CLEAR
+30 ON ERROR PRINT ERR;" ";REPORT$:END
+40 B%=2:PRINT B%
+50 PRINT x
+RUN
+NEW

@@ -1,0 +1,26 @@
+REM ELSE: from the RISC OS BBC BASIC manual, keywords chapter
+a=1:b=1:IF a=b THEN PRINT "hello" ELSE PRINT "good-bye"
+b=2:IF a=b THEN PRINT "hello" ELSE PRINT "good-bye"
+ok=FALSE:IF ok ELSE PRINT "Error"
+ok=TRUE:IF ok ELSE PRINT "Error"
+IF 0 THEN PRINT "a" ELSE IF 1 THEN PRINT "else if" ELSE PRINT "c"
+PRINT "start" ELSE PRINT "ELSE alone ends the statement"
+10 FOR choice=0 TO 3
+20   ON choice GOSUB 100,200 ELSE PRINT"Bad choice"
+30 NEXT
+40 FOR num=4 TO -4 STEP -8
+50 IF num>=0 THEN
+60   PRINT SQR(num)
+70 ELSE
+80   PRINT "Negative number"
+90   PRINT SQR(-num)
+95 ENDIF
+96 NEXT
+97 ON 2 PROCa,PROCb ELSE PRINT "no"
+98 END
+100 PRINT "choice 1":RETURN
+200 PRINT "choice 2":RETURN
+300 DEF PROCa:PRINT "a":ENDPROC
+310 DEF PROCb:PRINT "b":ENDPROC
+RUN
+NEW

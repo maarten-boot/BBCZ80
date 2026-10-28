@@ -1,0 +1,12 @@
+REM LINEINPUT: from the RISC OS BBC BASIC manual, keywords chapter
+REM (LINE INPUT waits for the keyboard: the example is LISTed, not run)
+5 GOTO 40
+10 LINE INPUT "Your message" mess$
+20 LINE INPUT a$
+30 LINE INPUT "Your message ",m$,"Number ";n
+40 IF FALSE THEN LINE INPUT "never" x$
+50 PRINT "skipped the LINE INPUT"
+LIST
+LIST IF LINE INPUT
+RUN
+NEW

@@ -1,0 +1,22 @@
+REM MOD: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the manual's INPUT i% example uses a fixed value instead)
+i%=23:max_num%=7:i% = i% MOD max_num%:PRINT i%
+count%=0:max%=3:FOR k=1 TO 7:count%=count% MOD max% + 1:PRINT count%;:NEXT:PRINT
+result%=123456:PRINT result% MOD 100
+REM the sign of the result is the sign of the lefthand operand
+PRINT 17 MOD 5,-17 MOD 5,17 MOD -5,-17 MOD -5
+PRINT 17.9 MOD 5,-17.9 MOD 5,7.5 MOD 2.5,5 MOD 17
+PRINT &7FFFFFFF MOD 10,-&7FFFFFFF MOD 10,&80000000 MOD 7,1 MOD 1
+X=23:X MOD=7:PRINT X:Y%=-23:Y% MOD=7:PRINT Y%
+10 REM MOD of an array: the square root of the sum of the squares
+20 DIM a(4),b%(2),c(1,1)
+30 a()=1,2,3,4,5:b%()=3,4,12:c()=1,1,1,1
+40 PRINT MOD a(),MOD b%(),MOD c()
+50 PRINT FNrms(a())
+60 ON ERROR PRINT ERR;" ";REPORT$:GOTO 80
+70 PRINT 1E10 MOD 3
+80 ON ERROR PRINT ERR;" ";REPORT$:END
+90 PRINT "A" MOD 3
+100 DEF FNrms(a())=MODa()/SQRDIM(a(),1)
+RUN
+NEW

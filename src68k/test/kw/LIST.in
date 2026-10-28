@@ -1,0 +1,31 @@
+REM LIST: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the Z80 version stores lines without the spaces after the line number
+REM  and skips the spaces after IF: LIST IF PRINT and LIST IFPRINT agree)
+10 REM a program to list
+20 fred%=1
+30 DEF PROCa:fred%=2:ENDPROC
+40 DEF FNb=fred%
+50 PRINT "fred%= ";fred%
+60 IF fred%=3 THEN PRINT "three"
+100 PRINT "Single space between line number and statement."
+110  PRINT "Several spaces between line number and statement"
+120PRINT "No space between line number and statement."
+1000 PRINT TIME
+1010 END
+LIST
+LIST 1000,
+LIST ,50
+LIST 10,40
+LIST 60
+LIST 61,99
+LIST IFDEF
+LIST ,100 IFfred%=
+LIST IF PRINT
+LIST IFPRINT
+LIST IF P.
+LIST IF PR
+LIST IF TIME
+LIST IF"
+L.30,40
+NEW
+LIST

@@ -1,0 +1,11 @@
+    5 GOTO 40
+   10 LINE INPUT "Your message" mess$
+   20 LINE INPUT a$
+   30 LINE INPUT "Your message ",m$,"Number ";n
+   40 IF FALSE THEN LINE INPUT "never" x$
+   50 PRINT "skipped the LINE INPUT"
+   10 LINE INPUT "Your message" mess$
+   20 LINE INPUT a$
+   30 LINE INPUT "Your message ",m$,"Number ";n
+   40 IF FALSE THEN LINE INPUT "never" x$
+skipped the LINE INPUT

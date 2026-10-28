@@ -1,0 +1,23 @@
+REM BPUT_HASH: from the RISC OS BBC BASIC manual, keywords chapter
+5 ON ERROR PRINT ERR;" ";REPORT$;" at line ";ERL:CLOSE#0:END
+10 outputfile=OPENOUT "KWBPUT.DAT"
+20 byte%=65:BPUT#outputfile,byte%
+30 name$="BASIC":pos=2:channel=outputfile
+40 BPUT#channel,ASC(MID$(name$,pos,1))
+50 file=outputfile:BPUT#file,"Hello"
+60 chan=outputfile:A$="ab":B$="cd":BPUT#chan,A$+B$;
+70 BPUT#chan,"";
+80 BPUT#chan,""
+90 BPUT#chan,256+67:BPUT#chan,-1
+95 BPUT#chan,48.9
+100 PRINT PTR#chan
+110 CLOSE#outputfile
+120 f%=OPENIN "KWBPUT.DAT"
+130 FOR i%=1 TO 16:PRINT BGET#f%;" ";:NEXT:PRINT
+140 REM (BPUT# to a file opened with OPENIN: CP/M writes it, others refuse)
+170 CLOSE#f%
+RUN
+NEW
+f%=OPENUP "KWBPUT.DAT":PTR#f%=0:BPUT#f%,"X";:CLOSE#f%
+f%=OPENIN "KWBPUT.DAT":PRINT CHR$BGET#f%;CHR$BGET#f%;CHR$BGET#f%:CLOSE#f%
+*ERA KWBPUT.DAT

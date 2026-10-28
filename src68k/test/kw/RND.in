@@ -1,0 +1,19 @@
+REM RND: from the RISC OS BBC BASIC manual, keywords chapter
+10 REM ranges only, plus repeatability after a seed
+20 dummy=RND(-TIME) : REM reseed the generator 'randomly'
+30 ok%=TRUE
+40 FOR i%=1 TO 200
+50   x%=RND(1280) : y%=RND AND &3FF : REM &3ff in the manual: Z80 hex is upper case
+60   IF x%<1 OR x%>1280 OR x%<>INT(x%) ok%=FALSE
+70   IF y%<0 OR y%>&3FF ok%=FALSE
+80   prob=RND(1) : IF prob<0 OR prob>=1 ok%=FALSE
+90   lastProb=RND(0) : IF lastProb<>prob ok%=FALSE
+100  r%=RND : d%=RND(6) : IF d%<1 OR d%>6 ok%=FALSE
+110 NEXT
+120 PRINT "ranges ok: ";ok%
+130 PRINT RND(-42);RND(-1);RND(-7.9)
+140 s=RND(-123):a=RND(1000):b=RND(1):c%=RND
+150 s=RND(-123):PRINT a=RND(1000);b=RND(1);c%=RND
+160 PRINT RND(1)<>RND(1) OR RND(1)<>RND(1)
+RUN
+NEW

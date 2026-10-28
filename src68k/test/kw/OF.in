@@ -1,0 +1,31 @@
+REM OF: from the RISC OS BBC BASIC manual, keywords chapter
+10 FOR n%=0 TO 3
+20   CASE n% OF
+30     WHEN 1:PRINT "one"
+40     WHEN 2,3:PRINT "two or three"
+50     OTHERWISE PRINT "other ";n%
+60   ENDCASE
+70 NEXT
+80 RESTORE 200
+90 FOR i%=1 TO 4:READ answer$
+100   CASE LEFT$(answer$,1) OF
+110     WHEN "Y","y":PRINT answer$;" means yes"
+120     WHEN "N","n":PRINT answer$;" means no"
+130     OTHERWISE PRINT answer$;" ?"
+140   ENDCASE
+150 NEXT
+160 x=2.5:CASE x*2 OF
+170   WHEN 5:PRINT "a real expression: 5"
+180 ENDCASE
+190 END
+200 DATA Yes,no,maybe,y
+RUN
+NEW
+REM (BASIC V's one-argument LEFT$(answer$) is written LEFT$(answer$,1))
+10 REM OF must be the last item on the line
+20 ON ERROR PRINT ERR;" ";REPORT$:END
+30 CASE 1 OF WHEN 1:PRINT "same line"
+40 ENDCASE
+50 PRINT "end"
+RUN
+NEW

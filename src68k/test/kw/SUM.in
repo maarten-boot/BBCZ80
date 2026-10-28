@@ -1,0 +1,13 @@
+REM SUM: from the RISC OS BBC BASIC manual, keywords chapter
+10 DIM A(9)
+20 A() = 1 : PRINT "There are ";SUM(A())" elements."
+30 DEF FNmean(a())=SUMa()/DIM(a(),1)
+40 DIM B(3):B()=1,2,3,4:PRINT FNmean(B());SUM(B())
+50 DIM I%(2,3):I%()=7:PRINT SUM(I%());SUMI%()
+60 DIM C%(2):C%()=&7FFFFFFF,-1,5:PRINT SUM(C%())
+70 DIM S$(3):S$()="ab","","cd","e":PRINT SUM(S$());"|";LEN(SUM(S$()))
+80 DIM R(1):R()=0.5,-0.25:PRINT SUM(R())
+90 DIM L$(2):L$()=STRING$(100,"x"):ON ERROR PRINT ERR;" ";REPORT$:END
+100 PRINT LEN(SUM(L$()))
+RUN
+NEW

@@ -1,0 +1,12 @@
+     47733
+      BA75
+        15         0        -1       -17  FFFFFFFF
+        -1         0        -1        -1
+         7        -1  80000001
+        FF
+         9
+         0 Bad range
+       5.5 in range
+        11 Bad range
+        20 Number too big
+         6 Type mismatch

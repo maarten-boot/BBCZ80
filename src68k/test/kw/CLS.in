@@ -1,0 +1,8 @@
+REM 68k-only: CLS output differs (CP/M BBC BASIC: none; 68k host: VT100)
+REM CLS: from the RISC OS BBC BASIC manual, keywords chapter
+REM CLS resets COUNT; MODE, COLOUR and VDU 28 of the example are left out
+PRINT "abc";:CLS:PRINT COUNT
+10 PRINT "12345";:c1=COUNT:CLS:c2=COUNT:PRINT c1;" ";c2
+20 PRINT "x";:CLS:PRINT "y";:PRINT COUNT
+RUN
+NEW

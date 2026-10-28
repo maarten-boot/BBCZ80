@@ -1,0 +1,11 @@
+REM TOP: from the RISC OS BBC BASIC manual, keywords chapter
+REM PRINT TOP would print an address: relations only
+PRINT TOP-PAGE
+10 REM a line
+20 PRINT "two lines"
+PRINT TOP>PAGE;LOMEM>=TOP;LOMEM-TOP<4
+a%=TOP-PAGE:PRINT a%
+30 PRINT "length=";TOP-PAGE
+RUN
+NEW
+PRINT TOP-PAGE

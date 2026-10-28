@@ -1,0 +1,25 @@
+REM EVAL: from the RISC OS BBC BASIC manual, keywords chapter
+REM (the manual's INPUT hex$ is an assignment here: no keyboard input)
+hex$="1F":PRINT EVAL("&"+hex$)
+REM the manual's second example as printed (its quotes do not pair up):
+f$="LEFT$(":e$=EVAL(f$+"""ABCDE""",2)"):PRINT e$
+REM and with the quotes paired:
+f$="LEFT$(":e$=EVAL(f$+"""ABCDE"",2)"):PRINT e$
+10 REM EVAL: numbers, strings, functions, variables, errors
+20 x=3:y%=4:a$="abc"
+30 PRINT EVAL("x*y%+1");EVAL("2^10");EVAL("SQR(16)");EVAL("-7 DIV 2")
+40 PRINT EVAL("a$+""def""");" ";EVAL("LEN(a$)");EVAL("""xyz""")
+50 PRINT EVAL("FNsq(5)");EVAL("TRUE");EVAL("1=2");EVAL("  42  ")
+60 b$=EVAL("STR$(x)"):n=EVAL("x/2"):PRINT b$;n
+70 PRINT EVAL(STR$(EVAL("1+2")*2))
+80 PROCtry("a$*2"):PROCtry("x+""s"""):PROCtry("FNnone")
+90 PROCtry("PROCsq(2)"):PROCtry("undefined"):PROCtry("1/0"):PROCtry("1+")
+100 s$=FNstr("""A string""")
+110 END
+200 DEF FNsq(n)=n*n
+210 DEF FNstr(e$):ON ERROR LOCAL PRINT ERR;" ";REPORT$:=""
+220 x=EVAL(e$):=""
+230 DEF PROCtry(e$):ON ERROR LOCAL PRINT e$;": ";ERR;" ";REPORT$:ENDPROC
+240 PRINT e$;" = ";:PRINT EVAL(e$):ENDPROC
+RUN
+NEW

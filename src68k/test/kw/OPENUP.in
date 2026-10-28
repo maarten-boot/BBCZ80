@@ -1,0 +1,16 @@
+REM OPENUP: from the RISC OS BBC BASIC manual, keywords chapter
+10 F%=OPENOUT "RECORDS.DAT":FOR i%=1 TO 4:PRINT#F%,i%*100:NEXT:CLOSE#F%
+20 random_file%=OPENUP("RECORDS.DAT")
+30 PRINT "channel non-zero: ";random_file%<>0
+40 REM each integer record is 5 bytes: change the third one
+50 PTR#random_file%=10:PRINT#random_file%,999
+60 PTR#random_file%=0
+70 FOR i%=1 TO 4:INPUT#random_file%,n%:PRINT n%;:NEXT:PRINT
+80 PRINT PTR#random_file%
+90 CLOSE#random_file%
+100 PRINT "missing file gives ";OPENUP("NOSUCH.DAT")
+110 ON ERROR PRINT ERR;" ";REPORT$:END
+120 F%=OPENUP 7
+RUN
+NEW
+*ERA RECORDS.DAT

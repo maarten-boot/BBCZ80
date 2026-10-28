@@ -1,0 +1,11 @@
+REM AUTO: from the RISC OS BBC BASIC manual, keywords chapter
+REM the manual's examples (AUTO, AUTO 1000, AUTO 12,2) start numbered
+REM entry that ends only with Esc: the harness types a line only after a
+REM ">" prompt, so they are not run; only AUTO's errors are tested
+REM (AUTO 10,300 and AUTO 12,256: the Z80 version keeps the step's low
+REM  byte, 44 or 0, and starts numbering; this port says Silly:
+REM  test/diff/d11auto)
+AUTO 10,0
+10 PRINT "the program is kept"
+LIST
+NEW

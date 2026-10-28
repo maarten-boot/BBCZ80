@@ -1,0 +1,30 @@
+   10 REM renumber me
+   20 RESTORE 70:READ a$:PRINT a$
+   30 IF a$="x" THEN 50 ELSE GOSUB 60
+   40 GOTO 50
+   50 PRINT "end":END
+   60 PRINT "gosub":RETURN
+   70 DATA data line
+data line
+gosub
+end
+ 1000 REM renumber me
+ 1020 RESTORE 1120:READ a$:PRINT a$
+ 1040 IF a$="x" THEN 1080 ELSE GOSUB 1100
+ 1060 GOTO 1080
+ 1080 PRINT "end":END
+ 1100 PRINT "gosub":RETURN
+ 1120 DATA data line
+data line
+gosub
+end
+    5 REM renumber me
+   15 RESTORE 65:READ a$:PRINT a$
+   10 REM renumber me
+   11 RESTORE 16:READ a$:PRINT a$
+   12 IF a$="x" THEN 14 ELSE GOSUB 15
+Failed at 100
+Failed at 105
+  100 GOTO 25
+  105 RESTORE 99
+  110 PRINT "x"

@@ -1,0 +1,19 @@
+REM DATA: from the RISC OS BBC BASIC manual, keywords chapter
+5 DATA executed as a REM: PRINT "not printed"
+7 RESTORE 100
+10 FOR i%=1 TO 12:READ m$:PRINT m$;" ";:NEXT:PRINT
+20 total=0:REPEAT READ v:total=total+v:PRINT v;:UNTIL v=0:PRINT 'total
+30 READ a$,b$,c$:PRINT "[";a$;"] [";b$;"] [";c$;"]"
+40 READ d$,e$,f$:PRINT "[";d$;"] [";e$;"] [";f$;"]"
+50 READ x,y,z$:PRINT x;" ";y;" [";z$;"]"
+60 RESTORE 150:READ m$:PRINT m$
+70 ON ERROR PRINT ERR;" ";REPORT$:END
+80 READ m$:READ n:PRINT "not here"
+100 DATA Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
+110 DATA 3.26,4,4.3,0
+120 DATA "   HI","A,B,", """ABCD"
+130 DATA  lead,trail  ,last  
+140 DATA 2*3+1,&10,2*3+1
+150 DATA again
+RUN
+NEW

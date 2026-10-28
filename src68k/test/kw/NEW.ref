@@ -1,0 +1,9 @@
+ 1000 PRINT "the old program"
+ 1010 PRINT "line two"
+nothing listed
+ 1000 PRINT "the old program"
+ 1010 PRINT "line two"
+the old program
+line two
+a new program
+nothing run

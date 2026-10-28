@@ -1,0 +1,16 @@
+REM STOP: from the RISC OS BBC BASIC manual, keywords chapter
+10 ok=FALSE:PRINT "before"
+20 IF NOT ok THEN PRINT"Bad data":STOP
+30 PRINT "not reached"
+RUN
+PRINT "after STOP, ok=";ok
+10 ON ERROR PRINT "trapped ";ERR;" ";REPORT$:END
+20 PROCa
+30 PRINT "not reached"
+40 DEF PROCa:PRINT "in PROCa":STOP
+RUN
+PRINT ERR
+10 PRINT "end, no message":END
+20 STOP
+RUN
+NEW

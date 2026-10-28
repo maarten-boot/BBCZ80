@@ -1,0 +1,11 @@
+    5 GOTO 40
+   10 INPUT LINE ">" basic$
+   20 INPUT LINE "Name: " n$, "Number" n
+   30 INPUT LINE a$
+   40 IF FALSE THEN INPUT LINE "never" x$
+   50 PRINT "skipped the INPUT LINE"
+   10 INPUT LINE ">" basic$
+   20 INPUT LINE "Name: " n$, "Number" n
+   30 INPUT LINE a$
+   40 IF FALSE THEN INPUT LINE "never" x$
+skipped the INPUT LINE

@@ -1,0 +1,9 @@
+RUN with no program
+count=count: No such variable
+count=7 A%=1
+count=count: No such variable
+count=7 A%=11
+         711
+count=count: No such variable
+count=7 A%=12
+         7
