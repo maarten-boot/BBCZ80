@@ -83,9 +83,12 @@ for programs and variables. The PC programs and the tests use 5 MB too. On the b
   saves, writes 40 KB, and uses `*MKDIR`/`*CD`.
   The bus and address errors of `test/bas/x07fault` give the same
   output there (5 MB, and the 1 MB board: `?&100000`).
-* **`tools/bareprof.py`:** where the cycles go (the interpreter, the C
-  files, the library) in the benchmarks, console output and file I/O,
-  under the profiling r68k (see `tools/bench.py`).
+* **`tools/bareprof.py`:** where the cycles go (the interpreter's, C and
+  library routines) in the benchmarks, console output and file I/O,
+  under the profiling r68k (see `tools/bench.py`). r68k's timing is not
+  the real machine's: it shows where the time goes, not how long.
+* **`tools/mamebare.sh`:** the benchmarks timed in MAME (the real
+  firmware, a 10 MHz 68010), in centiseconds: for timing claims.
 
 ## ACK pitfalls met here
 

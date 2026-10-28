@@ -13,8 +13,7 @@ mboot/patches/r68k-0002-cycle-profiler.patch, and copy r68k's
 firmware/rosco_m68k.rom into it), R68K_RAM=5M, with a FAT16 card made by
 the Minix tree's mkfat.py.  The cycles are split by the objects of the
 link: the interpreter (the .s files), C (osl.c, bare.c, fat.c) and the
-ACK library; for each benchmark the TOP routines in C and the library
-follow.  With -l LABEL the report is also saved as build/prof/LABEL.txt.
+ACK library; for each benchmark the TOP routines follow (from 0.5%).  With -l LABEL the report is also saved as build/prof/LABEL.txt.
 """
 
 import argparse
@@ -198,8 +197,7 @@ def main():
                 continue
             group = parts[i][1]
             per[group] += c
-            if group in ('C', 'lib'):
-                fn[(group, syms[bisect.bisect_right(addrs, pc) - 1][1])] += c
+            fn[(group, syms[bisect.bisect_right(addrs, pc) - 1][1])] += c
         t = max(r['cycles'], 1)
         report.append('%-10s %11d' % (name, r['cycles']) + ''.join(
             ' %6.1f%%' % (100.0 * per[g] / t) for g in GROUPS + ('other',)))

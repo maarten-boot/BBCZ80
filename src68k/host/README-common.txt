@@ -47,6 +47,8 @@ Changes since 2026-10-27 (GitHub Actions run 5)
   version does).
 * *OPT on its own is *OPT 0 (gave "Bad command").
 * *HELP and the start-up line say "BBC BASIC (68k)" (was "(Z80)").
+* BPUT# with a value that is not a whole number (BPUT#c,48.9) gave
+  "Invalid channel"; it writes 48, as in the Z80 version.
 
 Changes since 2026-10-23b
 -------------------------
