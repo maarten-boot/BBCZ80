@@ -114,8 +114,10 @@ def test(out):
                     os.write(fd, bytes([c]))
                     time.sleep(0.003)
             try:
-                until(rb'Return: BASIC prompt\) \? ')
+                until(rb'\n>')
                 if run == 1:
+                    send('CHAIN "menu"\r')
+                    until(rb'Return: BASIC prompt\) \? ')
                     send('5\r')
                     good = 'HELLO FROM THE 68000!' in until(rb'for the menu[^\n]*\n>')
                     print('%s  asm demo' % ('ok  ' if good else 'FAIL'))
@@ -126,7 +128,7 @@ def test(out):
                     good = 'SD card:' in (t := until(rb'free[^\n]*\n>')) and 'KEEPME.BBC' in t
                     print('%s  SAVE "KEEPME" on the SD card' % ('ok  ' if good else 'FAIL'))
                 else:
-                    send('\r*DIR\r')
+                    send('*DIR\r')
                     good = 'KEEPME.BBC' in until(rb'free[^\n]*\n>')
                     print('%s  the card kept KEEPME.BBC for the next start' % ('ok  ' if good else 'FAIL'))
                 ok = ok and good
@@ -175,12 +177,13 @@ def main():
     if a.docker:
         vol = 'bbc68k-bare-test-%d' % os.getpid()
         runs = [(['-v', vol + ':/card'],
-                 [(rb'Return: BASIC prompt\) \?', '5\r'),
+                 [(rb'\n>', 'CHAIN "menu"\r'),
+                  (rb'Return: BASIC prompt\) \?', '5\r'),
                   (rb'for the menu[^\n]*\n>', 'SAVE "INBOX"\r'),
                   (rb'SAVE "INBOX"\r*\n>', '\x1d')],
                  'HELLO FROM THE 68000!'),
                 (['-v', vol + ':/card'],
-                 [(rb'Return: BASIC prompt\) \?', '\r*DIR\r'),
+                 [(rb'\n>', '*DIR\r'),
                   (rb'free[^\n]*\n>', '\x1d')],
                  'INBOX.BBC')]
         tool = os.environ.get('DOCKER', 'podman')

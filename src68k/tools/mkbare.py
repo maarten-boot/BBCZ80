@@ -9,7 +9,8 @@ card) under it, bare/start.s first,
 linked by the ACK's em_led at 0x40000, where the firmware loads
 ROSCODE1.BIN and starts it; aslod makes the flat binary of it.
 --demo builds in the demo programs (demo/progs, tokenised as mkdemo.py
-does) as files in the RAM store, and runs CHAIN "menu" at the start;
+does) as files in the RAM store; BASIC starts at its prompt (CHAIN
+"menu" starts the demo);
 -f FILE puts FILE (a host path) in the store under its own name.  WORK is
 the directory for the objects (default build/bare, build/bare/demo).
 The result is build/bare/ROSCODE1.BIN (with --demo build/bare/demo/
@@ -29,7 +30,7 @@ OBJS = 'data.o main.o exec.o exec2.o eval.o asmb.o math.o minix.o hook.o'.split(
 LOAD = 0x40000
 
 
-def seeds(path, files, autorun):
+def seeds(path, files):
     """seeds.c: the files the image brings along (bare.c bare_seeds)."""
     out = ['/* made by tools/mkbare.py: files in the RAM store at the start */',
            'struct seed { char *name; char *data; long size; };']
@@ -41,7 +42,7 @@ def seeds(path, files, autorun):
     for i, (name, data) in enumerate(files):
         out.append('\t{ "%s", d%d, %dL },' % (name, i, len(data)))
     out.append('\t{ 0, 0, 0L }\n};')
-    out.append('char *bare_autorun = %s;' % ('"%s"' % autorun if autorun else '0'))
+    out.append('char *bare_autorun = 0;	/* (the PC program sets it) */')
     with open(path, 'w') as f:
         f.write('\n'.join(out) + '\n')
 
@@ -80,7 +81,7 @@ def main():
             files.append((f, open(os.path.join(SRC, 'demo', 'progs', f), 'rb').read()))
     for f in a.f:
         files.append((os.path.basename(f), open(f, 'rb').read()))
-    seeds(os.path.join(work, 'seeds.c'), files, 'menu' if a.demo else None)
+    seeds(os.path.join(work, 'seeds.c'), files)
 
     objs = [cc('bare/start.s', os.path.join(work, 'start.o'))]
     objs += [os.path.join(SRC, o) for o in OBJS]

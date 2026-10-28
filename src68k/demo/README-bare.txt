@@ -17,8 +17,8 @@ with Docker (Linux, Mac, Windows):
 
 (-it is needed: it is a terminal program.  -v keeps the SD card, and so
 your files, in the Docker volume bbc68k-card; without it they go with
-the container.)  BBC BASIC starts at once with a menu of demo programs;
-Return at the menu gives the > prompt.
+the container.)  BBC BASIC starts at once at its > prompt; CHAIN "menu"
+starts the menu of demo programs (they are in the RAM store).
 
 Keys
 ----

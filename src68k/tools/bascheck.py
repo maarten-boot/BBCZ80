@@ -30,9 +30,8 @@ the rosco_m68k with its 4 MB expansion.
 BBC_EMU=host and BBC_EMU=hostwin test BBC BASIC as a program on the PC
 (tools/mkhost.py): build/host/linux/bbc68k, or build/host/windows/
 bbc68k.exe under Wine; each test in a new folder with its #file files (the
-program's files), its lines piped in after a Return for the demo menu and
-NEW (the menu program goes), and
-*BYE (which ends the program) at the end.
+program's files), its lines piped in after NEW, and *BYE (which ends the
+program) at the end.
 -k keeps the 68k outputs as build/bas/NAME.out; -n only prints them (no
 Z80 reference, for 68k-only things such as the assembler).
 Exit status 1 if any test differs.
@@ -234,16 +233,16 @@ def run_host(tests, secs):
         with tempfile.TemporaryDirectory(dir=os.path.join(TOP, 'build', 'host')) as d:
             for p in files:
                 shutil.copy(p, os.path.join(d, os.path.basename(p)))
-            inp = ('\rNEW\r' + '\r'.join(lines) + '\r*BYE\r').encode('latin-1')
+            inp = ('NEW\r' + '\r'.join(lines) + '\r*BYE\r').encode('latin-1')
             try:
                 out = subprocess.run((['wine'] if win else []) + [exe], input=inp, cwd=d,
                                      capture_output=True, timeout=secs + 30).stdout
             except subprocess.TimeoutExpired as e:
                 out = (e.stdout or b'') + b'\n(timeout)'
         text = out.decode('latin-1').replace('\r', '')
-        # past the demo menu: its "Type CHAIN" line ends what is not ours
-        k = text.find('Type CHAIN "menu" to come back here.\n')
-        text = text[k + 37:] if k >= 0 else '(no menu)\n' + text
+        # past the banner: its copyright line ends what is not ours
+        k = text.find('\n', text.find('(C) Copyright R.T.Russell'))
+        text = text[k + 1:] if k >= 0 else '(no banner)\n' + text
         res[t] = text
     return res
 

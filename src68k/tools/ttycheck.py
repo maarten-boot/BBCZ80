@@ -121,9 +121,7 @@ def main():
                 f.write(t.all)
 
     try:
-        t.until(r'BASIC prompt\) \? ', 60)
-        t.send('\r')
-        t.until(r'\n>')
+        t.until(r'\n>', 60)
 
         t.prog(['10 REPEAT:I%=I%+1:UNTIL FALSE'])
         t.read(0.5)
@@ -190,7 +188,7 @@ def main():
             except subprocess.TimeoutExpired:
                 check('*BYE ends the program', False)
             raise StopIteration
-        text = t.until(r'(# |Return: BASIC prompt\) \? )')
+        text = t.until(r'(# |Copyright[^\n]*\n>)')
         if text.endswith('# '):		# Minix: the demo's shell
             check('*BYE: back to the demo shell', 'You have left BBC BASIC' in text)
             t.send('bbcbasic\r')

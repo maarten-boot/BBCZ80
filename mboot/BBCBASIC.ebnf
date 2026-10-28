@@ -1083,10 +1083,10 @@ asm-expr       = expression ;             (* integer *)
    The name is matched in any case, in table order; "." after at least one
    letter abbreviates it (the first match wins: *E. is *ERASE, *R. is
    *RENAME).  QUIRK: a full name may run straight into its argument
-   (*DIRX is *DIR X); 68k: the full name must be followed by a non-letter
+   (so *DIRX is *DIR X); 68k: the full name must be followed by a non-letter
    ("Bad command" otherwise).  An unknown name gives "Bad command" (254);
    68k under Minix: an unknown name is run as a Minix command by /bin/sh
-   (*ls -l); the commands below, *DIR too, are done without the shell.   *)
+   (e.g. *ls -l); the commands below, *DIR too, are done without the shell.   *)
                                           (* src: CMOS.Z80:OSCLI, OSCLI0..5,
                                              COMDS, UPPRC; osl.c:os_cli *)
 
@@ -1131,7 +1131,7 @@ drive          = letter ":" ;             (* CP/M only; "A:".."P:" *)
 afsp           = [ drive ] wild-name [ "." [ wild-ext ] ] ;
     (* ambiguous file name: "*" fills the rest of the name or extension
        with "?", "?" matches one character.  No extension: .BBC
-       (*DIR B* lists B*.BBC); "*.*" all files; no afsp at all: ????????.BBC.
+       (so *DIR B* lists B*.BBC); "*.*" all files; no afsp at all: ????????.BBC.
        68k: the same rules, in any case and at any length ("*" and "?"
        anywhere), except that *DIR on its own lists every file (and
        folder) of the current directory (bare: then the RAM store).        *)

@@ -14,8 +14,8 @@ folder:
     cd bbc68k-linux
     ./bbc68k
 
-BBC BASIC starts at once with a menu of demo programs; Return at the
-menu gives the > prompt.
+BBC BASIC starts at once at its > prompt.  The demo programs are built
+in: CHAIN "menu" starts their menu.
 
     ./bbc68k myprog         CHAINs myprog instead; with a directory in
                             the name, that directory is BASIC's
@@ -23,6 +23,5 @@ menu gives the > prompt.
 Scripts
 -------
     ./bbc68k < test.txt > out.txt
-types test.txt in (its first line goes to the demo menu: start it with
-an empty line) and ends when the input is used up and BASIC is waiting.
+types test.txt in and ends when the input is used up and BASIC is waiting.
 

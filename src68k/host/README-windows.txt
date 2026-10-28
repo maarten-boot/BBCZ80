@@ -7,8 +7,8 @@ running on an emulated rosco_m68k (68010) inside this one program.
 
 Put bbc68k.exe in a folder with your BBC BASIC files and start it there
 (double-click it, or run it from a Command Prompt or PowerShell in that
-folder).  BBC BASIC starts at once with a menu of demo programs; Return
-at the menu gives the > prompt.  Windows 10 or 11, 64-bit.
+folder).  BBC BASIC starts at once at its > prompt; CHAIN "menu" starts
+the menu of the built-in demo programs.  Windows 10 or 11, 64-bit.
 
     bbc68k.exe myprog       CHAINs myprog instead (as does dropping a
                             .BBC or .BAS file on bbc68k.exe); with a folder
@@ -17,6 +17,5 @@ at the menu gives the > prompt.  Windows 10 or 11, 64-bit.
 Scripts
 -------
     bbc68k.exe < test.txt > out.txt
-types test.txt in (its first line goes to the demo menu: start it with
-an empty line) and ends when the input is used up and BASIC is waiting.
+types test.txt in and ends when the input is used up and BASIC is waiting.
 

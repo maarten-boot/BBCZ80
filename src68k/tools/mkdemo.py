@@ -6,13 +6,14 @@
 
 The demo (demo/README.txt) is r68k, linked statically, its firmware and a
 ROSCODE1.BIN whose RAM disk root is the Minix tree's rootfs/proto with
-demo/etc/ttytab (the console runs demo/etc/demo, BBC BASIC with the menu,
+demo/etc/ttytab (the console runs demo/etc/demo, BBC BASIC at its prompt,
 instead of getty), bbcbasic and the programs of demo/progs.  The programs
 are tokenised by the Z80 BBC BASIC under RunCPM (runcpm.py, SAVE) and
 stored as /usr/demo/NAME.bbc, with the text as NAME.bas.  R68K_DIR is the
 r68k checkout (default ../r68k next to this repository); its tracked sources
 are built with -O2 in build/demo/r68k-src, the firmware is taken as built.
---test boots the demo and runs each program from the menu.
+--test boots the demo, starts the menu (CHAIN "menu") and runs each
+program from it.
 --progs only tokenises the programs into build/demo/progs (for mkbare.py
 --demo, e.g. in the GitHub Action), with nothing of Minix or r68k.
 
@@ -98,7 +99,8 @@ def make_root(rosco, files):
 
 
 def test(out):
-    """Boot the demo, run every program from the menu, print the output."""
+    """Boot the demo, run every program from the menu (CHAIN "menu"), print
+    the output."""
     fd, slave = pty.openpty()
     # (as demo.sh: r68k makes its standard input non-blocking, which must
     # not reach its standard output, or output is lost when the pty is full)
@@ -128,6 +130,8 @@ def test(out):
 
     ok = True
     try:
+        sys.stdout.write(until(rb'\n>', 60))
+        send('CHAIN "menu"\r')
         sys.stdout.write(until(rb'Return: BASIC prompt\) \?', 60))
         for n, inp in ((1, ''), (2, '\r'), (3, '\r'), (4, ''), (5, ''),
                        (6, '')):
@@ -154,7 +158,7 @@ def test(out):
         send('\r*BYE\r')
         sys.stdout.write(until(rb'# ', 30))
         send('exit\r')
-        sys.stdout.write(until(rb'Return: BASIC prompt\) \?', 60)[-80:])
+        sys.stdout.write(until(rb'Copyright[^\n]*\n>', 60)[-80:])
     except TimeoutError as e:
         print('\nmkdemo --test: timeout waiting for %r; output:\n%s'
               % (e, buf[0].decode('latin-1')))
@@ -207,7 +211,7 @@ def docker(r68k, out, test, name=NAME, image=IMAGE, extra='', runs=None,
     """Build the image (demo/Dockerfile, plus the lines extra) and save it
     as WORK/NAME-image.tar.gz; with test, run it: runs is a list of
     ([docker run options], [(output regex, keys) ...], text the output
-    must have); by default the asm demo from the menu.  Returns ok.
+    must have); by default CHAIN "menu" and its asm demo.  Returns ok.
     """
     tool = os.environ.get('DOCKER', 'podman')
     ctx = os.path.join(work, 'docker')
@@ -234,7 +238,8 @@ def docker(r68k, out, test, name=NAME, image=IMAGE, extra='', runs=None,
     if not test:
         return True
     if runs is None:
-        runs = [([], [(rb'Return: BASIC prompt\) \?', '5\r'),
+        runs = [([], [(rb'\n>', 'CHAIN "menu"\r'),
+                      (rb'Return: BASIC prompt\) \?', '5\r'),
                       (rb'for the menu[^\n]*\n>', '\x1d')],
                  'HELLO FROM THE 68000!')]
     ok = True

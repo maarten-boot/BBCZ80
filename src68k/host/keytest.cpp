@@ -1,8 +1,8 @@
 // keytest.exe EXE: a test of bbc68k.exe's console keys (tools/hostcheck.py,
 // under Wine).  It starts EXE on its own console and puts key events into
 // that console as a Windows keyboard does (WriteConsoleInput: the cursor
-// keys with no character): Return for the demo menu, "PRINT 12" Left "3"
-// Return (132), "PRINT 99" Home "X" Return (Mistake), then Ctrl-].
+// keys with no character): "PRINT 12" Left "3" Return (132),
+// "PRINT 99" Home "X" Return (Mistake), then Ctrl-].
 // (In a terminal Wine's console loses the ESC of the terminal's cursor key
 // sequences, so typing them does not test this.)
 #include <windows.h>
@@ -30,7 +30,6 @@ int main(int argc, char **argv) {
     char *cmd = argv[1];
     if (!CreateProcessA(NULL, cmd, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) { printf("no child\n"); return 1; }
     Sleep(4000);
-    key(VK_RETURN, '\r'); Sleep(500);
     text("PRINT 12"); key(VK_LEFT, 0); text("3"); key(VK_RETURN, '\r'); Sleep(500);
     text("PRINT 99"); key(VK_HOME, 0); text("X"); key(VK_RETURN, '\r'); Sleep(500);
     key(0, 0x1D);
