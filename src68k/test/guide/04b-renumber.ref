@@ -1,0 +1,57 @@
+  100 PRINT "This demonstrates"
+  120 PRINT "the use of"
+  140 PRINT "the very useful"
+  160 PRINT "RENUMBER command"
+  100 PRINT "This demonstrates"
+  110 PRINT "the use of"
+  120 PRINT "the very useful"
+  130 PRINT "RENUMBER command"
+   10 PRINT "This demonstrates"
+   20 PRINT "the use of"
+   30 PRINT "the very useful"
+   40 PRINT "RENUMBER command"
+This demonstrates
+the use of
+the very useful
+RENUMBER command
+   40 PRINT number;" squared is "; number*number
+   20 READ number
+   30 PRINT "The number you typed was ";number
+   40 PRINT number;" squared is "; number*number
+   10 PRINT "Can you give me a number ";
+   20 READ number
+   30 PRINT "The number you typed was ";number
+   20 READ number
+   30 PRINT "The number you typed was ";number
+   40 PRINT number;" squared is "; number*number
+   50 DATA 6
+    5 REM Read in a value and assign it to number
+   10 PRINT "Can you give me a number ";
+   20 READ number
+   25 REM Now print out the number given.
+   30 PRINT "The number you typed was ";number
+   35 REM And its square
+   40 PRINT number;" squared is "; number*number
+   50 DATA 6
+    5 REM Read in a value and assign it to number
+    6 REM ---------------------------------------
+   10 PRINT "Can you give me a number ";
+   20 READ number
+   24 REM
+   25 REM Now print out the number given.
+   26 REM ------------------------------
+   30 PRINT "The number you typed was ";number
+Can you give me a number The number you typed was 6
+         6 squared is 36
+   10 PRINT "Can you give me a number ";:READ number
+   24 REM
+   25 REM Now print out the number given.
+   26 REM ------------------------------
+   30 PRINT "The number you typed was ";number: REM print out the number
+   34 REM
+   35 REM And its square
+   36 REM --------------
+   40 PRINT number;" squared is "; number*number: REM and its square
+Can you give me a number The number you typed was 6
+         6 squared is 36
+Can you give me a number          6 squared is 36

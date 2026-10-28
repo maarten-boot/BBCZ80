@@ -1,0 +1,30 @@
+REM 12d-repeat: from the RISC OS BBC BASIC manual, chapter 12 (Control statements)
+REM REPEAT ... UNTIL; INPUT is replaced by READ/DATA
+10 REM Input a number in a given range
+20 REPEAT
+30   PRINT "Please give me a number between 0 and 9 "
+40   READ N:PRINT N
+50 UNTIL N >= 0 AND N <= 9
+60 PRINT "Thank You"
+70 DATA 12,-3,7
+RUN
+NEW
+REM nested REPEATs; the manual's "UNTIL tries% = 2;" has a stray ";", left out
+10 REM Repeat questions until answered right first time
+20 REPEAT
+30   tries% = 0
+40   REPEAT
+50     PRINT "What is 20 * 23 + 14 * 11 ";
+55     READ ans%:PRINT ans%
+70     tries% += 1
+80   UNTIL ans% = 20 * 23 + 14 * 11
+90   REPEAT
+100     PRINT "What is 12 + 23 * 14 + 6 / 3 ";
+105     READ ans%:PRINT ans%
+120     tries% += 1
+130   UNTIL ans% = 12 + 23 * 14 + 6 / 3
+140 UNTIL tries% = 2
+150 PRINT "tries% = ";tries%
+160 DATA 600,614,336,614,336
+RUN
+NEW

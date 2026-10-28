@@ -1,0 +1,16 @@
+   10 REM >prog1
+   20 PRINT "Can you give me a number ";:READ number
+   30 PRINT "The number you entered was ";number
+   40 PRINT number;" squared is "; number*number
+   50 DATA 6
+Can you give me a number The number you entered was 6
+         6 squared is 36
+   10 REM >prog1
+   20 PRINT "Can you give me a number ";:READ number
+   30 PRINT "The number you entered was ";number
+   40 PRINT number;" squared is "; number*number
+   50 DATA 6
+Can you give me a number The number you entered was 6
+         6 squared is 36
+
+Syntax error

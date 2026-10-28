@@ -1,0 +1,33 @@
+REM 14c-exec: from the RISC OS BBC BASIC manual, chapter 14 (Data and command files)
+REM (*BUILD left out: it reads the keyboard; *SETTYPE, *OBEY and running
+REM  a command file by its name are RISC OS commands, not the Z80 version's;
+REM  INSTALL is a Syntax error in the Z80 version, so the command file
+REM  LOADs, changes, RUNs and SAVEs a program instead of INSTALLing libraries)
+10 PRINT "shell: ";FNshell
+20 END
+30 DEF FNshell = "loaded"
+SAVE "SHELL"
+NEW
+REM the command file, written with BPUT# and CR line ends,
+REM padded by a REM line to one 128-byte record (CP/M files are in 128s)
+10 F% = OPENOUT "INSTALL.CMD"
+20 PROCline("LOAD ""SHELL""")
+30 PROCline("15 PRINT ""hyper: "";FNhyper(12)")
+40 PROCline("40 DEF FNhyper(x) = x * x")
+50 PROCline("RUN")
+60 PROCline("SAVE ""HYPER""")
+70 PROCline("x = 6 * 7")
+80 PROCline("REM " + STRING$(128 - PTR#F% - 5, "-"))
+90 PRINT PTR#F% : CLOSE#F%
+100 END
+110 DEF PROCline(l$) : BPUT#F%, l$; : BPUT#F%, 13 : ENDPROC
+RUN
+NEW
+*EXEC INSTALL.CMD
+PRINT "after *EXEC: x = ";x
+NEW
+LOAD "HYPER"
+LIST
+*ERA INSTALL.CMD
+*ERA SHELL.BBC
+*ERA HYPER.BBC

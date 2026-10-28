@@ -1,0 +1,33 @@
+REM 06a-assign: from the RISC OS BBC BASIC manual, chapter 6 (Numeric variables)
+LET number  = 4/3
+LET number% = 4/3
+PRINT number,number%
+LET number% = -4/3:PRINT number%
+LET base   = 3
+LET height = 4
+LET area   = (base * height)/2
+LET hypot  = SQR(base*base + height*height)
+PRINT base;" ";height;" ";area;" ";hypot
+REM a new value for base does not change area or hypot
+base=6:PRINT base;" ";area;" ";hypot
+x=5:LET x = x+1:PRINT x
+x = x+1:PRINT x
+x += 1:PRINT x
+x -= 3:PRINT x
+n%=10:n% += 5:n% -= 1:PRINT n%
+s$="ab":s$ += "cd":PRINT s$
+REM the resident integer variables A% to Z% and @% survive RUN and NEW
+A%=123:Z%=-7:fred=1
+10 PRINT A%;" ";Z%
+20 ON ERROR PRINT ERR;" ";REPORT$:END
+30 PRINT fred
+RUN
+NEW
+PRINT A%;" ";Z%
+REM TIME: only differences are printed (the values differ)
+T% = TIME:PRINT (TIME - T%)>=0
+TIME = 0:PRINT TIME<100
+10 ON ERROR PRINT ERR;" ";REPORT$:END
+20 LET TIME = 0
+RUN
+NEW

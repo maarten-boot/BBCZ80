@@ -1,0 +1,46 @@
+REM 24d-trace: from the RISC OS BBC BASIC manual, chapter 24 (Error handling and debugging)
+REM (LVAR, TRACE PROC, TRACE STEP and TRACE TO are not in the Z80 version)
+REM STOP: then the variables can be looked at with PRINT
+10 total = 0
+20 FOR I% = 1 TO 4 : total += I% * I% : NEXT
+30 STOP
+40 PRINT "not reached"
+RUN
+PRINT total, I%
+NEW
+REM TRACE ON from the prompt affects the programs run after it
+10 PROCsquare(3)
+20 x = 1
+30 IF x THEN y = 2
+40 PRINT : END
+1000 DEF PROCsquare(n)
+1010 PRINT n * n
+1020 ENDPROC
+TRACE ON
+RUN
+REM TRACE 1000: only the lines below 1000
+TRACE 1000
+RUN
+TRACE OFF
+RUN
+REM an error turns tracing off (the default handler; not a trapped error)
+TRACE ON
+5 ON ERROR PRINT : PRINT REPORT$ : ON ERROR OFF : GOTO 20
+20 x = 1/0
+RUN
+RUN
+NEW
+REM TRACE ON and TRACE OFF inside the procedure that goes wrong
+10 PRINT "start"
+20 PROCwrong(5)
+30 PRINT "back"
+40 END
+100 DEF PROCwrong(a)
+110 TRACE ON
+120 b = a * 2
+130 c = b - 1
+140 TRACE OFF
+150 PRINT
+160 ENDPROC
+RUN
+NEW

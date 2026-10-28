@@ -1,0 +1,22 @@
+
+STOP at line 30
+        30         5
+[10] [1010]          9
+[1020] [20] [30] [40] 
+[10]          9
+[20] [30] [40] 
+         9
+
+[5] [10] [1010]          9
+[1020] [20] 
+Division by zero
+[20] 
+Division by zero at line 20
+         9
+
+Division by zero
+
+Division by zero at line 20
+start
+[120] [130] [140] 
+back

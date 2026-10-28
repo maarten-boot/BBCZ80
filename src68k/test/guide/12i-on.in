@@ -1,0 +1,48 @@
+REM 12i-on: from the RISC OS BBC BASIC manual, chapter 12 (Control statements)
+REM ON ... GOTO; INPUT replaced by READ; 0 gives "ON range"
+5 ON ERROR PRINT REPORT$;" at line ";ERL:IF N%=0 THEN END ELSE GOTO 999
+10 PRINT "Input a number between 1 and 4"
+20 READ N%:PRINT N%
+30 ON N% GOTO 60, 100, 80, 120
+60 PRINT "Your number is 1"
+70 GOTO 999
+80 PRINT "Your number is 3"
+90 GOTO 999
+100 PRINT "Your number is 2"
+110 GOTO 999
+120 PRINT "Your number is 4"
+999 IF N% THEN GOTO 10
+1000 DATA 3,1,4,2,5,0
+RUN
+NEW
+REM ON ... GOTO ... ELSE
+10 PRINT "Input a number between 1 and 4"
+20 READ N%:PRINT N%
+30 ON N% GOTO 60,100,80,120 ELSE PRINT "Number out of range"
+40 GOTO 999
+60 PRINT "Your number is 1"
+70 GOTO 999
+80 PRINT "Your number is 3"
+90 GOTO 999
+100 PRINT "Your number is 2"
+110 GOTO 999
+120 PRINT "Your number is 4"
+999 IF N% THEN GOTO 10
+1000 DATA 2,-1,0
+RUN
+NEW
+REM ON ... GOSUB
+10 FOR T%=1 TO 4:READ N%
+30 ON N% GOSUB 60, 100, 80, 120
+40 NEXT:END
+60 PRINT "Your number is 1"
+70 RETURN
+80 PRINT "Your number is 3"
+90 RETURN
+100 PRINT "Your number is 2"
+110 RETURN
+120 PRINT "Your number is 4"
+130 RETURN
+140 DATA 4,3,2,1
+RUN
+NEW

@@ -1,0 +1,61 @@
+REM 09b-wholearray: from the RISC OS BBC BASIC manual, chapter 9 (Arrays)
+10 DIM A(10), B(10)
+20 n% = 2
+30 A() = (3*n%)
+40 B() = A()
+50 PRINT A(0);A(10);B(0);B(10);SUM(B())
+60 DIM a(5), b(2,2)
+70 a() = 1,2,3,4
+80 b() = 6,5,4,3,2,1
+90 FOR I%=0 TO 5:PRINT a(I%);:NEXT:PRINT
+100 FOR I%=0 TO 2:FOR J%=0 TO 2:PRINT b(I%,J%);:NEXT:PRINT:NEXT
+RUN
+NEW
+REM (line 40 of the manual's example is two lines run together: 40 and 50)
+10 DIM A(2,2), B(2,2)
+20 A(0,0) = 4
+30 A(1,1) = 5
+40 A(2,2) = 6
+50 n% = 2: m% = 3
+60 A() = A() + (n%*n%)
+70 A() = A() - m%
+80 B() = A() * 6
+90 B() = B() / n%
+100 PROCp(A()):PROCp(B())
+110 A() += n%*n%
+120 A() -= m%
+130 PROCp(A())
+140 A() = A() + B()
+150 PROCp(A())
+160 DEF PROCp(x()):LOCAL i%,j%:FOR i%=0 TO 2:FOR j%=0 TO 2:PRINT x(i%,j%);:NEXT:PRINT:NEXT:ENDPROC
+RUN
+NEW
+10 i=2:j=3:k=4
+20 DIM A(i,j),B(j,k),C(i,k)
+30 :
+40 REM Set up the array contents...
+45 A() = 1,2,3,4, 5,6,7,8, 9,10,11,12
+47 B() = 1,0,0,0,1, 0,1,0,0,2, 0,0,1,0,3, 0,0,0,1,4
+50 :
+60 C() = A().B()
+70 FOR r%=0 TO i:FOR c%=0 TO k:PRINT C(r%,c%);:NEXT:PRINT:NEXT
+RUN
+NEW
+REM (the manual's example puts the results in row() and column(); here
+REM  they have arrays of the right size: the Z80 version does not check)
+10 i = 2: j = 3
+20 DIM row(i), column(j)
+30 DIM matrix(i,j), colres(i), rowres(j)
+40:
+50 REM lines to set up the arrays
+60 matrix() = 1,2,3,4, 5,6,7,8, 9,10,11,12
+70 column() = 1,0,2,1
+80 row() = 1,1,-1
+200 colres() = matrix().column()
+220 PROCprint(colres())
+260 rowres() = row().matrix()
+270 PROCprint(rowres())
+280 END
+290 DEF PROCprint(v()):LOCAL i%:FOR i%=0 TO DIM(v(),1):PRINT v(i%);:NEXT:PRINT:ENDPROC
+RUN
+NEW

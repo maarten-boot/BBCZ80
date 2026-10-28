@@ -1,0 +1,53 @@
+REM 13h-recursion: from the RISC OS BBC BASIC manual, chapter 13 (Procedures and functions)
+REM PROCremove_spaces; INPUT A$ replaced by an assignment
+REM (the manual's line 150 has RIGHT$(A$,pos_space%+1), which keeps the
+REM last pos_space%+1 characters; MID$ is what the text describes)
+10 PRINT "Please input a string :"
+20 A$="The quick brown fox"
+30 PROCremove_spaces(A$)
+35 PRINT A$
+40 END
+100 DEF PROCremove_spaces(A$)
+110 LOCAL pos_space%
+120 PRINT A$
+130 pos_space%=INSTR(A$," "):REM =0 if no spaces
+140 IF pos_space% THEN
+150   A$=LEFT$(A$,pos_space%-1)+MID$(A$,pos_space%+1)
+160   PROCremove_spaces(A$)
+170 ENDIF
+180 ENDPROC
+RUN
+NEW
+REM PROCreverseprint with a loop (the manual's LEN A% is a misprint for LEN A$)
+10 PROCreverseprint("Good morning !")
+20 END
+100 DEF PROCreverseprint(A$)
+110 FOR i% = LEN A$ TO 1 STEP -1
+120   PRINT MID$(A$,i%,1)
+130 NEXT
+140 ENDPROC
+RUN
+NEW
+REM recursive PROCreverseprint; RIGHT$(A$) and LEFT$(A$) need a count in the Z80 version
+10 PROCreverseprint("Good morning !")
+15 PRINT
+20 END
+100 DEF PROCreverseprint(A$)
+110 IF LEN(A$) > 0 THEN
+120   PRINT RIGHT$(A$,1);
+130   PROCreverseprint(LEFT$(A$,LEN(A$)-1))
+140 ENDIF
+160 ENDPROC
+RUN
+NEW
+REM recursion in functions, and a moderate depth (200 levels) with a LOCAL each
+10 PRINT FNfact(10);" ";FNfib(15);" ";FNdepth(200)
+20 PROCtower(3,"A","C","B"):PRINT
+30 END
+100 DEF FNfact(n):IF n<=1 THEN =1 ELSE =n*FNfact(n-1)
+110 DEF FNfib(n):IF n<2 THEN =n ELSE =FNfib(n-1)+FNfib(n-2)
+120 DEF FNdepth(n):LOCAL l:l=n:IF n=0 THEN =0 ELSE =FNdepth(n-1)+1+l-n
+130 DEF PROCtower(n%,f$,t$,v$):IF n%=0 ENDPROC
+140 PROCtower(n%-1,f$,v$,t$):PRINT f$;t$;" ";:PROCtower(n%-1,v$,t$,f$):ENDPROC
+RUN
+NEW

@@ -1,0 +1,48 @@
+REM 09c-arrayops: from the RISC OS BBC BASIC manual, chapter 9 (Arrays)
+10 DIM a(3), b(3), c(3), d(4), i%(3)
+20 b() = 1,2,3,4:c() = 10,20,30,40
+30 a() = b()*b()
+40 a() = a()+c()
+50 PROCp(a())
+60 a() = -b():PROCp(a())
+70 a() = b() - c():PROCp(a())
+80 a() = c() / b():PROCp(a())
+90 a() = 7:PROCp(a())
+100 a() = b() + 1:PROCp(a())
+110 a() = 100 - b():PROCp(a())
+120 a() = b() * 3:PROCp(a())
+130 a() = 12 / b():PROCp(a())
+140 a() = 2 * b():a() += 1:a() -= 0.5:PROCp(a())
+150 a() = b() + c():a() = a() + b():a() = a() + a():PROCp(a())
+160 i%() = 5,6,7,8:i%() = i%() * 2:PRINT i%(0),i%(3),SUM(i%())
+170 ON ERROR PRINT ERR;" ";REPORT$:GOTO 190
+180 a() = b() + d()
+190 ON ERROR PRINT ERR;" ";REPORT$:GOTO 210
+200 a() = b() + i%()
+210 ON ERROR PRINT ERR;" ";REPORT$:GOTO 230
+220 PRINT a()*2
+230 ON ERROR PRINT ERR;" ";REPORT$:GOTO 250
+240 PRINT a()
+250 ON ERROR OFF:END
+260 DEF PROCp(x()):LOCAL i%:FOR i%=0 TO 3:PRINT x(i%);:NEXT:PRINT:ENDPROC
+RUN
+NEW
+REM string arrays: assignment, SUM and SUMLEN
+10 DIM s$(3), t$(3)
+20 s$() = "HELLO":PRINT s$(0);s$(3)
+30 t$() = "a","bc","","def":s$() = t$()
+40 PRINT s$(0);"|";s$(1);"|";s$(2);"|";s$(3)
+50 PRINT SUM(s$());SUMLEN(s$());SUMLEN(t$())
+60 REM (concatenation is not supported in the Z80 version: the string
+70 REM  operand replaces the elements)
+80 s$() = s$() + "!"
+90 PRINT s$(0);"|";s$(1);"|";s$(2);"|";s$(3)
+RUN
+NEW
+10 DIM a(100), b(100)
+20 a(0) = 3:a(100) = 4
+90 mod=MODa()
+100 b()=a()*a()
+110 PRINT mod;SQR(SUM(b()));mod=SQR(SUM(b()))
+RUN
+NEW

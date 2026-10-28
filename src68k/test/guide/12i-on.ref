@@ -1,0 +1,31 @@
+Input a number between 1 and 4
+         3
+Your number is 3
+Input a number between 1 and 4
+         1
+Your number is 1
+Input a number between 1 and 4
+         4
+Your number is 4
+Input a number between 1 and 4
+         2
+Your number is 2
+Input a number between 1 and 4
+         5
+ON range at line 30
+Input a number between 1 and 4
+         0
+ON range at line 30
+Input a number between 1 and 4
+         2
+Your number is 2
+Input a number between 1 and 4
+        -1
+Number out of range
+Input a number between 1 and 4
+         0
+Number out of range
+Your number is 4
+Your number is 3
+Your number is 2
+Your number is 1

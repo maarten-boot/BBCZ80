@@ -1,0 +1,45 @@
+REM 29a-abbrev: from the RISC OS BBC BASIC manual, chapter 29 (Appendix B: minimum abbreviations)
+REM (not abbreviations in a program line of the Z80 version: AP. AU. CR.
+REM  DEL. ED. HE. LIB. LV. OV. REN. SA. TE. TEXTL. TW. VO.; there L. is
+REM  LINE, L.O is LINE O, LO. is LOMEM and O. is ON, not LIST, LISTO, LOAD,
+REM  OLD; at the prompt L. L.O LO. O. AU. DEL. REN. SA. are the commands)
+10 F.I%=1TO5S.2:P.I%;:N.:P.
+20 A$="ABCDEF":P.LE.A$,2);" ";M.A$,3,2);" ";RI.A$,1);" ";STRI.3,"*");INS.A$,"D")
+30 J%=0:W.J%<2:J%+=1:ENDW.:P.J%
+40 IF J%=2 TH.P."two" EL.P."not two"
+50 GOS.200:P.EV."6*7";" ";T.0;" ";FA.;" ";5 A.3
+60 RES.300:READ x:P.x:PROCp
+70 CASE J% OF
+72 WHEN 1:P."one"
+74 OT.P."other"
+76 ENDC.
+80 a=1:b=2:SW.a,b:P.a;" ";b;" ";H.>PA.;" ";LOM.>=PA.
+90 ON ERROR REPO.:P." (";ERR;")":G.110
+100 ERR.100,"own error"
+110 ON ERROR P.REPO.$:END
+120 F%=OPENO."ABBREV.DAT":BP.#F%,65:CLO.#F%
+130 F%=OP."ABBREV.DAT":P.B.#F%:CLO.#F%
+140 REP.:K%=K%+1:U.K%=3:P.K%
+150 TR.ON:K%=0:TR.OFF:P.
+160 ERR.200,"the end"
+200 P."gosub":R.
+300 D.5
+400 DEF PROCp:LOC.k:k=1:P."proc";k:E.
+500 REM these are LISTed, not run (graphics, sound, keyboard, time):
+510 AD.1:CA.0:CH."X":C.1:CL.:COU.:DR.0,0:FI.0,0:GC.0
+520 GE.:INK.0:I.x:MO.0:MOU.x,y,z:OR.0,0:OS."X":PL.0,0,0:PO.0,0)
+530 Q.:REC.0,0,0,0:SO.1,1,1,1:TI.=0:P.TI.$:VP.:V.7:WA.:WI.80
+L.
+RUN
+REN.
+L.70,110
+SA."ABBREV"
+NEW
+O.
+L.10,20
+NEW
+LO."ABBREV"
+DEL.20,230
+L.
+*ERA ABBREV.BBC
+*ERA ABBREV.DAT

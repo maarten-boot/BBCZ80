@@ -1,0 +1,57 @@
+REM 11b-data: from the RISC OS BBC BASIC manual, chapter 11 (Inputting data)
+10 FOR I% = 1 TO 4
+20 READ age%, dog$
+30 PRINT "Name: ";dog$ " Age: ";age%
+40 NEXT I%
+50 DATA 9,"Laddie",3,"Watson"
+60 DATA 1
+70 DATA "Mungo",3,"Honey"
+RUN
+NEW
+10 DATA Hello, my name is
+20 DATA Marvin
+30 READ A$,B$
+40 PRINT A$;B$
+RUN
+NEW
+10 DATA "Hello, my name is"
+20 DATA " Marvin"
+30 READ A$,B$
+40 PRINT A$;B$
+RUN
+NEW
+10 ON ERROR PRINT ERR;" ";REPORT$;" at line ";ERL:END
+20 READ a,b,c:PRINT a;b;c
+30 PRINT "next line":DATA 4,5
+40 READ d
+50 DATA 1, 2 , 3
+RUN
+NEW
+10 ON ERROR PRINT ERR;" ";REPORT$:END
+20 READ n%,x,s$:PRINT n%;x;" [";s$;"]"
+30 READ n%
+40 DATA 2.7,&10, quote"s,"x"
+RUN
+NEW
+10 RESTORE 60
+20 READ A$
+30 PRINT A$
+40 END
+50 DATA First line of data
+60 DATA Second line of data
+RUN
+NEW
+REM (RESTORE +1 in the Z80 version reads the next line, as +0 does)
+1000 RESTORE +0
+1010 DATA line 1010
+1020 DATA line 1020
+1030 READ a$:PRINT a$
+1040 RESTORE +1
+1050 DATA line 1050
+1060 DATA line 1060
+1070 READ a$:PRINT a$
+1080 RESTORE +2:READ a$:PRINT a$
+1090 DATA line 1090
+1100 DATA line 1100
+RUN
+NEW

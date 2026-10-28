@@ -1,0 +1,28 @@
+What size do you want the next box to be        100
+       590       462       100       100
+What size do you want the next box to be       2000
+Too large
+What size do you want the next box to be       25.5
+    627.25    499.25      25.5      25.5
+What size do you want the next box to be       1023
+     128.5       0.5      1023      1023
+         3 7 str 2
+Type mismatch at line 30
+Bad arguments at line 60
+Bad arguments at line 80
+No such FN/PROC at line 95
+Enter a number 7
+Type 1 to double it
+Type 2 to square it
+         1
+Your number doubled is 14
+Enter a number 7
+Type 1 to double it
+Type 2 to square it
+         2
+Your number squared is 49
+Enter a number 0
+Type 1 to double it
+Type 2 to square it
+         3
+no action

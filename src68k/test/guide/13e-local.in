@@ -1,0 +1,30 @@
+REM 13e-local: from the RISC OS BBC BASIC manual, chapter 13 (Procedures and functions)
+REM local variables: parameters are local, LOCAL J%; with the manual's line 35
+10 FOR I% = 1 TO 10
+20   PROCsquare(I%)
+30   PROCcube(I%)
+35 PRINT I%
+40 NEXT
+45 PRINT "J% is ";J%
+50 END
+60
+100 DEF PROCsquare(S%)
+110 LOCAL J%
+120 J% = S% ^ 2
+130 PRINT S% " squared equals "J%;
+140 ENDPROC
+150
+200 DEF PROCcube(I%)
+210 I% = I% ^ 3
+220 PRINT " and cubed equals ";I%
+230 ENDPROC
+RUN
+NEW
+REM LOCAL hides the global, a called PROC sees the caller's local; LOCAL starts at 0 or ""
+10 x=1:y$="global"
+20 PROCouter:PRINT x;" ";y$
+30 END
+40 DEF PROCouter:LOCAL x,y$:PRINT x;" [";y$;"]":x=2:y$="outer":PROCinner:ENDPROC
+50 DEF PROCinner:PRINT x;" ";y$:x=3:ENDPROC
+RUN
+NEW

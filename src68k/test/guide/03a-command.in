@@ -1,0 +1,24 @@
+REM 03a-command: from the RISC OS BBC BASIC manual, chapter 03 (Command mode)
+REM (entering BASIC from the desktop and leaving it by QUIT left out:
+REM  QUIT ends BASIC; MODE 12 and CIRCLE FILL left out: no graphics here)
+PRINT "Hello"
+PRINT "Hello
+PRINT "12 - 3"
+PRINT 12 - 3
+PRINT 12 * 13
+PRINT 111 / 11
+LET FRED = 12
+PRINT FRED / 3
+REM keywords are upper case: in lower case they are names
+print = 5
+PRINT print
+fred = 1
+PRINT FRED, fred
+REM an immediate line can hold several statements
+PRINT 12 - 3 : PRINT "12 - 3" : FRED = FRED * 2 : PRINT FRED
+REM a numbered line is stored, not run, until RUN
+10 PRINT "Hello from line 10"
+20 PRINT FRED : REM RUN clears the variables: No such variable
+LIST
+RUN
+NEW

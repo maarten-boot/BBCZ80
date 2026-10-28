@@ -1,0 +1,35 @@
+REM 11a-keyboard: from the RISC OS BBC BASIC manual, chapter 11 (Inputting data)
+REM (INPUT, INPUT LINE, GET, GET$, INKEY and INKEY$ wait for the keyboard:
+REM  the examples are LISTed, not run)
+10 PRINT "Give me a number and I'll double it";
+20 INPUT X
+30 PRINT "Twice ";X " is ";X*2
+40 PRINT "What is your name ";
+50 INPUT A$
+60 PRINT "Hello ";A$
+70 INPUT "What is your name ",A$
+80 PRINT "Hello ";A$
+90 INPUT "What is your name ";A$:INPUT "What is your name "A$
+100 INPUT A$
+110 INPUT LINE B$
+120 PRINT A$
+130 PRINT B$
+140 INPUT A,B,C$
+150 PRINT "Press a key"
+160 A$ = GET$
+170 PRINT "The key you pressed was ";A$
+180 PRINT "You have 2 seconds to press a key"
+190 A$ = INKEY$(200)
+200 key = GET:k% = INKEY(100)
+LIST
+NEW
+REM (the INPUT program, with assignments in place of the keyboard)
+10 PRINT "Give me a number and I'll double it";
+20 X = 21:PRINT "?";X
+30 PRINT "Twice ";X " is ";X*2
+40 A$ = "Hello, how are you?":PRINT "Hello ";A$
+RUN
+NEW
+REM (left out: INKEY with a negative number scans the keyboard; *FX 4,
+REM  *FX 15, *FX 219 and *KEY program keys; MOUSE, MODE, RECTANGLE, GCOL,
+REM  MOVE and DRAW need a screen and a mouse: none in the CP/M version)

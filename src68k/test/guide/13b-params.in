@@ -1,0 +1,49 @@
+REM 13b-params: from the RISC OS BBC BASIC manual, chapter 13 (Procedures and functions)
+REM parameters: RECTANGLE replaced by PRINT, INPUT by READ
+10 REM Draw boxes centred on the screen
+30 FOR N% = 1 TO 4
+40   PRINT "What size do you want the next box to be ";
+50   READ size:PRINT size
+60   IF size<1024 PROCbox(size) ELSE PRINT "Too large"
+70 NEXT N%
+80 END
+90 DATA 100,2000,25.5,1023
+100 DEF PROCbox(edge)
+110 PRINT 640-edge/2, 512-edge/2, edge, edge
+120 ENDPROC
+RUN
+NEW
+REM integer and real parameters mix (the fraction is lost); strings need strings
+10 ON ERROR PRINT REPORT$;" at line ";ERL:GOTO 50
+20 PROCmix(3.75,7,"str",2.5)
+30 PROCmix(1,2,3,4)
+50 ON ERROR PRINT REPORT$;" at line ";ERL:GOTO 70
+60 PROCmix(1,2,"x")
+70 ON ERROR PRINT REPORT$;" at line ";ERL:GOTO 90
+80 PROCmix(1,2,"x",4,5)
+90 ON ERROR PRINT REPORT$;" at line ";ERL:END
+95 PROCnone
+100 END
+110 DEF PROCmix(i%,r,s$,j%)
+120 PRINT i%;" ";r;" ";s$;" ";j%
+130 ENDPROC
+RUN
+NEW
+REM ON ... PROC; INPUT replaced by READ, the endless loop ends at 0
+10 REPEAT
+20   READ num:PRINT "Enter a number ";num
+30   PRINT "Type 1 to double it"
+40   PRINT "Type 2 to square it"
+50   READ action:PRINT action
+60   ON action PROCdouble(num), PROCsquare(num) ELSE PRINT "no action"
+70 UNTIL num=0
+80 END
+90 DATA 7,1,7,2,0,3
+100 DEF PROCdouble(num)
+110 PRINT "Your number doubled is ";num*2
+120 ENDPROC
+200 DEF PROCsquare(num)
+210 PRINT "Your number squared is ";num*num
+220 ENDPROC
+RUN
+NEW

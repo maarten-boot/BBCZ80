@@ -1,0 +1,27 @@
+REM 13f-return-arrays: from the RISC OS BBC BASIC manual, chapter 13 (Procedures and functions)
+REM value-result parameters: RETURN
+10 A=5:B=2:PROCorderedswap(A,B):PRINT A;" ";B
+20 A=1:B=9:PROCorderedswap(A,B):PRINT A;" ";B
+30 a$="x":PROCadd(a$,"yz"):PROCadd(a$,"!"):PRINT a$
+40 END
+100 DEF PROCorderedswap(RETURN A,RETURN B)
+110 IF A > B SWAP A,B
+120 ENDPROC
+130 DEF PROCadd(RETURN s$,t$):s$+=t$:ENDPROC
+RUN
+NEW
+REM arrays are passed by reference; a LOCAL copy simulates value passing
+10 DIM a(2,3),x(2)
+20 a(1,2)=12:a(2,3)=23
+30 PROCfred(a()):PRINT a(1,2);" ";a(2,3)
+40 PROCchange(x()):PRINT x(0);" ";x(1);" ";x(2)
+50 END
+1000 DEF PROCfred(a())
+1010 LOCAL b()
+1020 DIM b(DIM(a(),1), DIM(a(),2)) :REM assume a() is 2D
+1030 b()=a() : REM now b() can be altered at will
+1040 b(1,2)=-1:b(2,3)=b(2,3)*2:PRINT b(1,2);" ";b(2,3);" ";DIM(b(),1);" ";DIM(b(),2)
+1050 ENDPROC
+1060 DEF PROCchange(v()):v()=7,8,9:ENDPROC
+RUN
+NEW

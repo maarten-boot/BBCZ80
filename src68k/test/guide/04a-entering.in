@@ -1,0 +1,57 @@
+REM 04a-entering: from the RISC OS BBC BASIC manual, chapter 4 (Simple programming)
+10 PRINT "Hello"
+RUN
+RUN
+    10       PRINT "Hello"
+LIST
+10PRINT "Hello"
+LIST
+RUN
+NEW
+REM (INPUT number is replaced by READ number: no keyboard input)
+30 PRINT "The number you typed was ";number
+10 PRINT "Can you give me a number ";
+20 READ number
+50 DATA 6
+LIST
+RUN
+5 PRINT "Hello"
+40 PRINT "Twice ";number " is ";2*number
+LIST
+RUN
+40 PRINT number;" squared is ";number*number
+LIST
+RUN
+30 PRINT "The number you entered was ";number
+LIST
+5
+LIST
+RUN
+DELETE 10,30
+LIST
+NEW
+REM the line numbers: 0 to 65279
+REM (the Z80 version: a line typed with the number 0 runs at once)
+0 PRINT "line 0"
+65279 PRINT "line 65279"
+100 PRINT "line 100"
+LIST
+RUN
+REM (the Z80 version takes line numbers up to 65535)
+65535 PRINT "line 65535"
+65536 PRINT "too big"
+LIST 65000,
+DELETE 0,30
+LIST
+DELETE 200,65279
+LIST
+DELETE 100,65535
+LIST
+NEW
+10 PRINT "a"
+20 PRINT "b"
+30 PRINT "c"
+DELETE 20,60000
+LIST
+NEW
+LIST

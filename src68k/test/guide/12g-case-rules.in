@@ -1,0 +1,23 @@
+REM 12g-case-rules: from the RISC OS BBC BASIC manual, chapter 12 (Control statements)
+REM only the first matching WHEN runs; WHEN after OTHERWISE is never reached; nesting
+10 FOR I%=1 TO 4
+20   CASE I% OF
+30     WHEN 1,2
+40       CASE I% OF
+50         WHEN 1:PRINT "one (inner)"
+60         OTHERWISE PRINT "two (inner)"
+70       ENDCASE
+80     WHEN 2,3:PRINT "three"
+90     OTHERWISE PRINT "otherwise ";I%
+100     WHEN 4:PRINT "never"
+110   ENDCASE
+120 NEXT
+130 CASE "x"+"y" OF
+140   WHEN "x":PRINT "x"
+150   WHEN "xy":PRINT "xy"
+160 ENDCASE
+170 CASE 5 OF
+180   WHEN 1:PRINT "no"
+190 ENDCASE:PRINT "no match, no OTHERWISE"
+RUN
+NEW

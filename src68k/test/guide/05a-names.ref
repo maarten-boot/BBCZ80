@@ -1,0 +1,27 @@
+       1.5         2three
+         7
+         12345
+         678
+         3        10         4
+20 16 Syntax error
+30 16 Syntax error
+40 36 Missing TO
+50 16 Syntax error
+60 4 Mistake
+70 4 Mistake
+80 4 Mistake
+done
+   21 2pos=1
+   30 ON ERROR PRINT "30 ";ERR;" ";REPORT$:GOTO 40
+   31 TOTAL_x=1
+   40 ON ERROR PRINT "40 ";ERR;" ";REPORT$:GOTO 50
+   41 FOREST=1
+   50   ON ERROR PRINT "50 ";ERR;" ";REPORT$:GOTO 60
+   51   COST=1
+   60   ON ERROR PRINT "60 ";ERR;" ";REPORT$:GOTO 70
+   61   x-pos=1
+   70   ON ERROR PRINT "70 ";ERR;" ";REPORT$:GOTO 80
+   71   X Position=1
+   80   ON ERROR PRINT "80 ";ERR;" ";REPORT$:GOTO 90
+   81   X.pos=1
+         123

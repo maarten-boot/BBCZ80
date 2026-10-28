@@ -1,0 +1,16 @@
+         0 1 2 3 4 5 6 7
+         8 9 10 11 12 13 14 15
+        16 256 256 255 1000 16
+2.14748365E9 7FFFFFFF 15
+        -1 80000000 -16 32 -1
+        FF 100 FFFFFFFF 100 ABCDEF
+         1 2 3 4 5
+         6 7 8 9 10
+        69 69
+       255 80000000 0 5
+  7FFFFFFF -1
+        20 32 -3
+        28 Bad hex or binary
+        28 Bad hex or binary
+        28 Bad hex or binary
+        28 Bad hex or binary

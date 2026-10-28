@@ -1,0 +1,26 @@
+REM 24b-error: from the RISC OS BBC BASIC manual, chapter 24 (Error handling and debugging)
+REM generating errors: ERROR errnum, errstring
+10 ON ERROR PRINT ERR;" ";REPORT$;" at line ";ERL : GOTO 1020
+20 f$ = "NOFILE.DAT"
+1000 ch=OPENIN(f$)
+1010 IF ch=0 THEN ERROR 214,"File '"+f$+"' not found"
+1020 ON ERROR PRINT "trapped" : END
+1030 ERROR 0, "Fatal: ERROR 0 is not trapped"
+RUN
+NEW
+REM BASIC's default error handler, without QUIT and ERROR EXT (not in
+REM the Z80 version), and @% kept in a DIM block instead of HIMEM-4
+10 DIM save% 3
+20 ON ERROR PROCdefault
+30 @% = 10 : PRINT 1.5
+40 X = 1/0
+50 DEF PROCdefault
+60 RESTORE
+70 !save% = @%
+80 @% = &900
+90 REPORT
+100 IF ERL THEN PRINT " at line "ERL ELSE PRINT
+110 @% = !save% : PRINT 2.5
+120 END
+RUN
+NEW

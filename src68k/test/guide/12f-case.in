@@ -1,0 +1,40 @@
+REM 12f-case: from the RISC OS BBC BASIC manual, chapter 12 (Control statements)
+REM the sketch pad: GET$ replaced by READ k$, MODE/MOVE/DRAW by PRINT,
+REM VDU 7 (a bell) by PRINT; the loop ends at "Q" instead of going on forever
+10 REM Draw a line depending on the L,R,U,D keys
+40 X% = 640: Y% = 512
+50 REPEAT
+55   READ k$
+60   CASE k$ OF
+70     WHEN "L","l": X% -= 40: PRINT X%,Y% :REM go left
+80     WHEN "R","r": X% += 40: PRINT X%,Y% :REM go right
+90     WHEN "D","d": Y% -= 40: PRINT X%,Y% :REM go down
+100     WHEN "U","u": Y% += 40: PRINT X%,Y% :REM go up
+105     OTHERWISE PRINT "bell ";k$ : REM Make a short noise
+110   ENDCASE
+120 UNTIL k$="Q"
+130 DATA L,l,U,x,R,d,D,Q
+RUN
+NEW
+REM guess a number: RND(100) replaced by 42, INPUT by READ
+10 REM Guess a number
+20 X% = 42
+30 Still_guessing% = TRUE
+40 tries% = 0
+50 WHILE Still_guessing%
+60   READ guess%:PRINT "What is your guess ";guess%
+70   CASE guess% OF
+80     WHEN X%
+90     PRINT "Well done, you've guessed it after ";tries% " attempts"
+100     Still_guessing% = FALSE
+110     WHEN X%-1,X%+1
+120     PRINT "Very close"
+130     tries% += 1
+140     OTHERWISE
+150     IF guess%<X% THEN PRINT "Too low" ELSE PRINT "Too high"
+160     tries% += 1
+170   ENDCASE
+180 ENDWHILE
+190 DATA 50,20,41,43,42
+RUN
+NEW

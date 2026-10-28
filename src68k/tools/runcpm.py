@@ -86,6 +86,18 @@ def main():
             t.send(line + '\r')
             t.until(re.escape(line.encode('latin-1')) + rb'\r*\n', 10)
             out = t.until(rb'(^|\n)>', a.t)
+            # *EXEC: a prompt for each line of the file, and keys typed
+            # meanwhile are lost (BASIC polls the keyboard): wait until the
+            # output has been quiet for a second, as bascheck's bare runner
+            while line.lstrip(' *').upper().startswith('EXEC'):
+                try:
+                    chunk = t.until(rb'(^|\n)>', 1)
+                except TimeoutError:
+                    break
+                # (the file's line, echoed after its prompt, is not output)
+                nl = chunk.find(b'\n')
+                if nl >= 0 and chunk[nl + 1:].strip():
+                    out += (b'\n' if out else b'') + chunk[nl + 1:]
             out = out.decode('latin-1').replace('\r', '')
             sys.stdout.write(out + '\n' if out else '')
         sys.stdout.flush()

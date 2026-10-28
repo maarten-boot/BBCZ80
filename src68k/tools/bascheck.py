@@ -4,7 +4,8 @@
 	bascheck.py [-k] [-n] [-t SECS] [TEST ...]
 
 Each TEST is a file of lines typed at the BASIC prompt (default: all of
-test/bas/*.in and test/kw/*.in, the keyword tests).  A line "#file PATH"
+test/bas/*.in, and from the RISC OS manual test/kw/*.in, a test per
+keyword, and test/guide/*.in, its programming chapters).  A line "#file PATH"
 puts that file beside the test; a line "#typed" marks a test that needs
 each line typed after the prompt (INKEY), which BBC_EMU=host/hostwin
 skip.  The Z80 reference output comes from bin/cpm/BBCBASIC.COM
@@ -288,8 +289,8 @@ def main():
     ap.add_argument('-t', type=int, default=60)
     ap.add_argument('tests', nargs='*')
     a = ap.parse_args()
-    tests = a.tests or sorted(glob.glob(os.path.join(SRC, 'test', 'bas', '*.in'))
-                              + glob.glob(os.path.join(SRC, 'test', 'kw', '*.in')))
+    tests = a.tests or sorted(sum((glob.glob(os.path.join(SRC, 'test', d, '*.in'))
+                                   for d in ('bas', 'kw', 'guide')), []))
     refs = {} if a.n else {t: reference(t) for t in tests}
     got = {}
     for g in groups(tests):

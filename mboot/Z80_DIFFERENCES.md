@@ -45,6 +45,12 @@ it non-zero. Ours gives the error in both cases.
 | Test | Z80 5.4 | 68k |
 |---|---|---|
 | `d13restoredata` | `PROCa: no error`, `PROCb: no error` | `54 DATA not LOCAL` twice |
+| `d14restoreerror` | `PROCa: no error`, `back from PROCa` | `outer: ON ERROR not LOCAL` |
+
+The same cause makes `RESTORE ERROR` silent (`d14restoreerror`): `LOCAL
+ERROR` does nothing in the Z80 version (`LOCERR`), so after `LOCAL I` and
+`LOCAL ERROR` there is no saved handler, which should be "ON ERROR not
+LOCAL" (53); the `LOCAL I` frame on top makes `RESLOC` report success.
 
 ## 3. Files and the console: CP/M against a modern file system
 

@@ -1,0 +1,13 @@
+REM RESTORE ERROR with nothing to restore: "ON ERROR not LOCAL" (53).
+REM LOCAL ERROR does nothing in the Z80 version (LOCERR), so in PROCa
+REM there is no saved handler; the Z80 version 5.4 says nothing when a
+REM LOCAL variable's frame is on top (RESLO2's POP IX overwrites the
+REM "nothing restored" flag: as test/diff/d13restoredata)
+10 ON ERROR PRINT "outer: ";REPORT$:END
+20 PROCa:PRINT "back from PROCa"
+30 END
+40 DEF PROCa:LOCAL I
+50 LOCAL ERROR
+60 RESTORE ERROR:PRINT "PROCa: no error"
+70 ENDPROC
+RUN

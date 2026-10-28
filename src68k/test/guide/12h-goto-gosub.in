@@ -1,0 +1,25 @@
+REM 12h-goto-gosub: from the RISC OS BBC BASIC manual, chapter 12 (Control statements)
+REM GOTO 10 for ever, stopped here after three times (no Escape)
+5 c%=0
+10 PRINT "Hello":c%+=1:IF c%=3 END
+20 GOTO 10
+RUN
+NEW
+REM GOTO an expression
+10 start% = 100
+20 GOTO (start%+10)
+30 PRINT "This line should not be executed"
+100 REM start of the action
+110 PRINT "Hello"
+120 END
+RUN
+NEW
+10 GOSUB 100
+20 PRINT "This is printed after the first GOSUB returns"
+30 GOSUB 100
+40 PRINT "This is printed after the second GOSUB returns"
+50 END
+100 PRINT "This is printed in the GOSUB"
+110 RETURN
+RUN
+NEW

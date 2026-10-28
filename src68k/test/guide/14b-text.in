@@ -1,0 +1,26 @@
+REM 14b-text: from the RISC OS BBC BASIC manual, chapter 14 (Data and command files)
+REM PRINT# of a number and a string: the bytes written (the Z80 version's
+REM format: a string is its characters then CR, a number 5 bytes; not
+REM BASIC V's &40 or &00, length, reversed characters)
+10 F% = OPENOUT "PRINTH" : PRINT#F%, 258, "ABC" : n% = PTR#F% : CLOSE#F%
+20 F% = OPENIN "PRINTH" : FOR i% = 1 TO n% : PRINT ;~BGET#F%;" "; : NEXT : PRINT : CLOSE#F%
+RUN
+NEW
+REM text by BPUT#channel,string[;] and back by GET$#channel
+10 channel = OPENOUT "TEXT"
+20 BPUT#channel,"first line"
+30 BPUT#channel,"second ";
+40 BPUT#channel,"line"
+50 BPUT#channel,"third"+CHR$13+"fourth"+CHR$0+"fifth"
+55 n% = PTR#channel
+60 CLOSE#channel
+70 channel = OPENIN "TEXT"
+80 FOR i% = 1 TO 5 : str$ = GET$#channel : PRINT "[";str$;"]" : NEXT
+90 PTR#channel = 0 : PRINT n%;" bytes, ends at";
+95 FOR i% = 1 TO n% : c% = BGET#channel : IF c% < 32 THEN PRINT " ";i%;":";c%;
+96 NEXT : PRINT
+100 CLOSE#channel
+RUN
+NEW
+*ERA PRINTH
+*ERA TEXT

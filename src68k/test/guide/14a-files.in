@@ -1,0 +1,54 @@
+REM 14a-files: from the RISC OS BBC BASIC manual, chapter 14 (Data and command files)
+REM (a sixth title makes the file 128 bytes, one CP/M record, so that
+REM  EOF# is TRUE at the same place under CP/M; file names are 8.3)
+10 A = OPENOUT "BOOKS"
+20 FOR I = 1 TO 6
+30   READ book$
+40   PRINT#A, book$
+50 NEXTI
+55 PRINT "channel ";A>0;", ";PTR#A;" bytes"
+60 CLOSE#A
+70 END
+80 DATA "Black Beauty"
+90 DATA "Lord of the Rings"
+100 DATA "The Wind in the Willows"
+110 DATA "The House at Pooh Corner"
+120 DATA "The BBC BASIC Reference Manual"
+130 DATA "The Hobbit, 1937"
+RUN
+NEW
+10 channel = OPENIN "BOOKS"
+20 REPEAT
+30   INPUT#channel, title$
+35   PRINT title$
+40 UNTIL EOF#channel
+50 CLOSE#channel
+60 END
+RUN
+NEW
+REM after CLOSE the handle is no longer valid
+10 ON ERROR PRINT ERR;" ";REPORT$ : END
+20 A = OPENIN "BOOKS" : CLOSE#A
+30 PRINT EOF#A
+RUN
+NEW
+REM (the letters are padded with dots to one 128-byte record, for CP/M)
+10 channel = OPENOUT "CHARS"
+20 FOR N% = ASC("A") TO ASC("Z")
+30   BPUT#channel,N%
+40 NEXT N%
+45 FOR N% = 27 TO 128 : BPUT#channel,ASC(".") : NEXT N%
+50 CLOSE#channel
+RUN
+NEW
+10 channel = OPENIN "CHARS"
+20 string$ = ""
+30 REPEAT
+40   string$ += CHR$(BGET#channel)
+50 UNTIL EOF#channel
+60 CLOSE#channel
+70 PRINT LEFT$(string$,30);" ";LEN(string$)
+RUN
+NEW
+*ERA BOOKS
+*ERA CHARS
