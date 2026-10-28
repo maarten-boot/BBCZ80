@@ -24,11 +24,16 @@ hand.
 | `d10inkey256` | **`INKEY(-256)` is &44 (68)**, the number of this version, as R.T. Russell suggested. In the README. | waits for a key | `68` |
 | `d11auto` | **`AUTO` with a step over 255 is "Silly".** The Z80 version keeps the low byte of the step (300 becomes 44). In the README. | `   10 ` (AUTO starts) | `Silly` |
 
-## 2. A Z80 bug: ours follows the manual
+## 2. A Z80 bug, now fixed there too
 
-| Test | Difference | Z80 | 68k |
-|---|---|---|---|
-| `d01localdata` | **`RESTORE DATA` after `LOCAL X` and then `LOCAL DATA` in one PROC.** The manual allows this. The Z80 version says "DATA not LOCAL" whenever another LOCAL comes before LOCAL DATA in the same PROC; without it, both work. | `in`, then `DATA not LOCAL at line 70` | `in`, `in` |
+`RESTORE DATA` after `LOCAL X` and then `LOCAL DATA` in one PROC gave
+"DATA not LOCAL" in the Z80 version; the manual allows it. R.T. Russell
+fixed it on 2026-10-27 (BBCZ80 e4ae9ca, version 5.4: in `EXEC.Z80`,
+`RESLO7` now goes to `RESLO8`, which sets the result flag), and notes it
+is unlikely to matter in practice: leaving a PROC or FN does a RESTORE
+DATA anyway. Our `RESLO7` already set the flag. His fix is merged here
+(`bin/cpm/BBCBASIC.COM` too), so the test is now an ordinary one:
+`test/bas/t18localdata` (was `test/diff/d01localdata`).
 
 ## 3. Files and the console: CP/M against a modern file system
 

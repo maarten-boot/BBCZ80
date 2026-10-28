@@ -6,6 +6,7 @@ BBC BASIC's files are the files of the folder it was started in:
     F%=OPENIN "data.txt"   F%=OPENOUT "results.txt"
     *DIR   *CD sub   *MKDIR sub   *RMDIR sub   *ERA name   *REN new=old
     *SPOOL out.txt ... *SPOOL      *EXEC listing.bas
+    *DIR B*  (B*.BBC)   *DIR *.BAS   *DIR *.*   *DIR NAME.  (no extension)
 Long names and subfolders work; a name is matched without regard to
 case.  The demo programs (menu, mandel, sieve, hanoi, life, asm, queens)
 are built in: CHAIN "menu".
@@ -37,6 +38,15 @@ Known differences from the Z80 version
 * AUTO with a step over 255 gives "Silly" (the Z80 version keeps the low
   byte of the step).
 * No graphics or sound; BBC Micro (Acorn) .bbc files are not understood.
+
+Changes since 2026-10-27 (GitHub Actions run 5)
+-----------------------------------------------
+* *DIR takes a pattern, as in the manual: *DIR B*, *DIR *.BAS, *DIR *.*
+  (without an extension it means .BBC files; *DIR alone lists all).
+* *ERA takes a pattern too: *ERA *.TMP deletes every match (as the Z80
+  version does).
+* *OPT on its own is *OPT 0 (gave "Bad command").
+* *HELP and the start-up line say "BBC BASIC (68k)" (was "(Z80)").
 
 Changes since 2026-10-23b
 -------------------------

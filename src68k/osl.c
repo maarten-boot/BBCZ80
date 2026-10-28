@@ -23,6 +23,9 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#ifndef BARE
+#include <sys/dir.h>
+#endif
 
 int rename(const char *_old, const char *_new);	/* (in <stdio.h>) */
 
@@ -492,7 +495,15 @@ int os_line(char *buf)
  * empty name, or one with the wildcards ? or *, is a "Bad name" (as on
  * CP/M); a missing closing quote is a "Bad string".
  */
+static char *getname2(char *s, char *name, int wildok);
+
 static char *getname(char *s, char *name)
+{
+	return getname2(s, name, 0);
+}
+
+/* getname2 - as getname; wildok: "*" and "?" allowed (a pattern) */
+static char *getname2(char *s, char *name, int wildok)
 {
 	int n = 0, q = 0;
 
@@ -504,7 +515,7 @@ static char *getname(char *s, char *name)
 	}
 	while (*s != CR && *s != 0 &&
 	    (q ? *s != '"' : *s != ' ' && *s != '=')) {
-		if (*s == '?' || *s == '*')
+		if ((*s == '?' || *s == '*') && !wildok)
 			n = -1;
 		if (n >= 0 && n < 127)
 			name[n++] = *s;
@@ -988,25 +999,141 @@ static void cmd_cd(char *s)
 		oserror(214, "File not found");
 }
 
+/* *DIR's and *ERA's pattern, as CP/M's and the manual's: a name and an
+ * extension, each with * and ? (any case); no extension means .BBC, a
+ * final '.' no extension.  patall: no pattern, everything (*DIR alone).
+ */
+static char patbase[64], *patext;
+static int patall;
+
+/* wild - s matches p ('*' any run, '?' any one character) */
+static int wild(char *p, char *s)
+{
+	for (; *p; p++, s++) {
+		if (*p == '*') {
+			for (;; s++) {
+				if (wild(p + 1, s))
+					return 1;
+				if (!*s)
+					return 0;
+			}
+		}
+		if (!*s || *p != '?' && upper(*p) != upper(*s))
+			return 0;
+	}
+	return !*s;
+}
+
+static void os_dirpat(char *pat)
+{
+	char *dot;
+
+	patall = !*pat;
+	strncpy(patbase, pat, sizeof(patbase) - 1);
+	dot = strrchr(patbase, '.');
+	if (dot) {
+		*dot = 0;
+		patext = dot + 1;
+	} else
+		patext = "BBC";
+}
+
+int os_dirmatch(char *name)
+{
+	char base[64], *dot;
+
+	if (patall)
+		return 1;
+	strncpy(base, name, sizeof(base) - 1);
+	base[sizeof(base) - 1] = 0;
+	dot = strrchr(base, '.');
+	if (dot)
+		*dot++ = 0;
+	return wild(patbase, base) && wild(patext, dot ? dot : "");
+}
+
+/* each - fn for every file of the current directory (bare: also the RAM
+ * store) */
 #ifdef BARE
 void bare_dir(void);
+void bare_each(void (*fn)(char *, long, int));
+#define each bare_each
+#else
+/* (the directory is read as a file, entries of <sys/dir.h>: opendir
+ * would malloc, and the heap is BASIC's program area) */
+static void each(void (*fn)(char *, long, int))
+{
+	struct direct d;
+	struct stat st;
+	char name[DIRSIZ + 1];
+	int fd;
 
+	if ((fd = open(".", O_RDONLY)) < 0)
+		return;
+	while (read(fd, (char *) &d, sizeof(d)) == sizeof(d)) {
+		if (d.d_ino == 0 || d.d_name[0] == '.')
+			continue;
+		memcpy(name, d.d_name, DIRSIZ);
+		name[DIRSIZ] = 0;
+		if (stat(name, &st) == 0)
+			fn(name, (long) st.st_size, S_ISDIR(st.st_mode));
+	}
+	close(fd);
+}
+
+/* a line of *DIR: the name, then the size or <DIR> (as bare.c's) */
+static void dirshow(char *name, long size, int isdir)
+{
+	char num[12];
+	int n, k;
+
+	if (!os_dirmatch(name))
+		return;
+	for (n = 0; name[n]; n++)
+		out(name[n]);
+	for (; n < 32; n++)
+		out(' ');
+	if (isdir) {
+		for (k = 0; "    <DIR>"[k]; k++)
+			out("    <DIR>"[k]);
+	} else {
+		k = sizeof(num);
+		num[--k] = 0;
+		do {
+			num[--k] = '0' + (int) (size % 10);
+			size /= 10;
+		} while (size > 0 && k > 0);
+		for (n = sizeof(num) - 1 - k; n < 9; n++)
+			out(' ');
+		for (; num[k]; k++)
+			out(num[k]);
+	}
+	out(CR);
+	out(LF);
+}
+#endif
+
+/* *DIR [afsp]: the current directory (bare: and the RAM store), the
+ * files that match afsp; done here (under Minix too: no ls, no fork) */
 static void cmd_dir(char *s)
 {
+	char pat[64];
+	int n = 0;
+
+	s = skipsp(s);
+	while (*s != CR && *s != ' ' && n < sizeof(pat) - 1)
+		pat[n++] = *s++;
+	pat[n] = 0;
+	endarg(s);
+	os_dirpat(pat);
+#ifdef BARE
 	flush();
 	bare_dir();
 	column = 0;
-}
 #else
-static void cmd_dir(char *s)
-{
-	char cmd[140];
-
-	strcpy(cmd, "ls -C ");
-	strcat(cmd, skipsp(s));
-	shell(cmd);
-}
+	each(dirshow);
 #endif
+}
 
 static void cmd_mkdir(char *s)
 {
@@ -1031,12 +1158,36 @@ static void cmd_rmdir(char *s)
 		oserror(214, errno == ENOENT ? "File not found" : "Directory not empty");
 }
 
+/* *ERA afsp: the first match (not a directory) */
+static char erafound[66];
+
+static void erapick(char *name, long size, int isdir)
+{
+	if (!isdir && !erafound[0] && strlen(name) < sizeof(erafound)
+	    && os_dirmatch(name))
+		strcpy(erafound, name);
+}
+
 static void cmd_era(char *s)
 {
 	char name[128], full[140];
+	int n = 0;
 
-	s = getname(s, name);
+	s = getname2(s, name, 1);
 	endarg(s);
+	if (strchr(name, '*') || strchr(name, '?')) {
+		os_dirpat(name);		/* a pattern: every match, */
+		for (;;) {			/* one at a time (deleting */
+			erafound[0] = 0;	/* while a directory is read */
+			each(erapick);		/* could upset it) */
+			if (!erafound[0] || unlink(erafound) != 0)
+				break;
+			n++;
+		}
+		if (n == 0)
+			oserror(214, "File not found");
+		return;
+	}
 	bbcname(name, full);
 	if (unlink(full) != 0)
 		oserror(214, "File not found");
@@ -1095,7 +1246,10 @@ static void cmd_help(char *s)
 
 static void cmd_opt(char *s)
 {
-	optval = (unsigned char) (hexarg(&s) & 3);
+	if (*skipsp(s) == CR)			/* *OPT alone = *OPT 0, as */
+		optval = 0;			/* the Z80 version's HEX */
+	else
+		optval = (unsigned char) (hexarg(&s) & 3);
 }
 
 static void cmd_ren(char *s)		/* *REN new=old, as CP/M */
