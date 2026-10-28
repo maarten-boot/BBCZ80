@@ -1,11 +1,14 @@
 # The Windows and Linux programs, bbc68k.exe and bbc68k (bare BBC BASIC in an
 # emulated rosco_m68k), built and tested by src68k/tools/ci-windows.sh, as two
-# artifacts.  Started by hand: Actions > Windows and Linux programs > Run
-# workflow.  The actions are pinned to
-# commit hashes (their versions in the comments), all running on Node 24.
+# artifacts.  Runs on every push to master (a merged pull request), and by
+# hand: Actions > Windows and Linux programs > Run workflow.  The actions
+# are pinned to commit hashes (their versions in the comments), all
+# running on Node 24.
 name: Windows and Linux programs
 
 on:
+  push:
+    branches: [master]
   workflow_dispatch:
 
 jobs:
