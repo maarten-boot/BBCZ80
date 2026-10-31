@@ -1,0 +1,13 @@
+#!/bin/sh
+# acc: compile for minix68k (Minix on the rosco_m68k: m68k2, 16-bit int)
+# with the ACK of tools/getack.sh (build/ack/dist):
+#
+#	acc [ack options] files		e.g. acc -O -c -o x.o x.c
+#
+# ack -mminix68k with ACKDIR set (the ACK finds its passes there).  This is
+# a host program.
+
+here=$(cd "$(dirname "$0")" && pwd)
+ACKDIR=$(cd "$here/../.." && pwd)/build/ack/dist
+export ACKDIR
+exec "$ACKDIR/bin/ack" -mminix68k "$@"

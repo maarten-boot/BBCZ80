@@ -56,18 +56,18 @@ def main():
     ap.add_argument('-w', default='')
     ap.add_argument('-o', default='')
     a = ap.parse_args()
-    ack = os.path.join(os.path.abspath(a.m), 'src', 'rosco', 'ack')
-    stage = os.path.join(ack, 'ack', '.obj', 'staging')
-    plat = os.path.join(stage, 'share', 'ack', 'minix68k')
+    dist = os.path.join(TOP, 'build', 'ack', 'dist')	# (tools/getack.sh)
+    mlib = os.path.join(TOP, 'build', 'ack', 'minixlib')
+    plat = os.path.join(dist, 'share', 'ack', 'minix68k')
     work = a.w or os.path.join(TOP, 'build', 'bare', 'demo' if a.demo else '')
     os.makedirs(work, exist_ok=True)
 
     subprocess.run(['make', '-s'] + OBJS, cwd=SRC, check=True)
-    acc = os.path.join(ack, 'acc-minix')
+    acc = os.path.join(HERE, 'acc-minix')
 
     def cc(src, obj, *flags):
         subprocess.run([acc, '-c', '-DBARE'] + list(flags) + ['-o', obj, src],
-                       cwd=SRC, check=True)
+                       cwd=SRC, check=True, env=dict(os.environ, MINIX=os.path.abspath(a.m)))
         return obj
 
     files = []
@@ -90,15 +90,15 @@ def main():
     objs.append(cc('bare/fat.c', os.path.join(work, 'fat.o')))
     objs.append(cc(os.path.join(work, 'seeds.c'), os.path.join(work, 'seeds.o')))
     out = os.path.join(work, 'bbcbasic.out')
-    env = dict(os.environ, ACKDIR=stage)
-    subprocess.run([os.path.join(stage, 'lib', 'ack', 'em_led'),
+    env = dict(os.environ, ACKDIR=dist)
+    subprocess.run([os.path.join(dist, 'lib', 'ack', 'em_led'),
                     '-a0:4', '-a1:4', '-a2:4', '-a3:4', '-b0:0x%x' % LOAD,
                     '-o', out] + objs +
-                   [os.path.join(ack, 'lib', 'emrts.o'), os.path.join(ack, 'lib', 'libc.a'),
+                   [os.path.join(mlib, 'emrts.o'), os.path.join(mlib, 'libc.a'),
                     os.path.join(plat, 'libem.a'), os.path.join(plat, 'libend.a')],
                    check=True, env=env)
     binf = a.o or os.path.join(work, 'ROSCODE1.BIN')
-    subprocess.run([os.path.join(stage, 'bin', 'aslod'), out, binf], check=True, env=env)
+    subprocess.run([os.path.join(dist, 'bin', 'aslod'), out, binf], check=True, env=env)
     print('%s: %d bytes' % (binf, os.path.getsize(binf)), file=sys.stderr)
 
 

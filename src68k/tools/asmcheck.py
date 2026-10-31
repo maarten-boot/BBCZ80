@@ -29,7 +29,7 @@ SRC = os.path.dirname(HERE)
 TOP = os.path.dirname(SRC)
 MINIX = os.environ.get('MINIX', os.path.join(os.path.dirname(TOP),
                                              'minix-st-2.0.4'))
-ACC = os.path.join(MINIX, 'src', 'rosco', 'ack', 'acc')
+ACC = os.path.join(HERE, 'acc')			# the ACK (tools/getack.sh)
 WORK = os.path.join(TOP, 'build', 'asm')
 
 INSNS = [

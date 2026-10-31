@@ -36,14 +36,8 @@ jobs:
         timeout-minutes: 40
         run: |
           sudo apt-get -o Acquire::Retries=5 update
-          sudo apt-get -o Acquire::Retries=5 install -y flex bison ninja-build lua5.4 lua-posix zip dosfstools \
+          sudo apt-get -o Acquire::Retries=5 install -y zip dosfstools \
             g++-mingw-w64-x86-64-posix gcc-mingw-w64-x86-64-posix
-
-      - name: ACK cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
-        with:
-          path: minix-st-2.0.4/src/rosco/ack/ack
-          key: ack-${{ hashFiles('minix-st-2.0.4/src/rosco/ack/build-ack.sh', 'minix-st-2.0.4/src/rosco/ack/ack-minix68k.patch') }}
 
       - name: Build and test
         run: BBCZ80/src68k/tools/ci-windows.sh "Version $(date -u '+%Y-%m-%d %H:%M') (commit ${GITHUB_SHA::7}, GitHub Actions run ${{ github.run_number }})"
