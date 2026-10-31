@@ -13,4 +13,4 @@ the date of the commit that added them.)
 * [2026-10-23](log/2026-10-23.md): entries 47-66
 * [2026-10-27](log/2026-10-27.md): entries 67-75
 * [2026-10-28](log/2026-10-28.md): entries 76-93
-* [2026-10-31](log/2026-10-31.md): entries 94-96
+* [2026-10-31](log/2026-10-31.md): entries 94-97
