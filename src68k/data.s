@@ -11,6 +11,7 @@
 !  - STAVAR (@%, A%-Z%) is BASIC-visible: little-endian, 4 bytes each.
 ! Names with a leading underscore are the same variables for the C part of
 ! the OS layer (osl.c).
+.68000				! 68000 only (see bbc.h)
 
 	.sect	.text
 	.sect	.rom

@@ -34,8 +34,8 @@ SRC = os.path.dirname(HERE)
 TOP = os.path.dirname(SRC)
 MINIX = os.environ.get('MINIX', os.path.join(os.path.dirname(TOP),
                                              'minix-st-2.0.4'))
-ACK = os.path.join(MINIX, 'src', 'rosco', 'ack')
-STAGE = os.path.join(ACK, 'ack', '.obj', 'staging')
+STAGE = os.path.join(TOP, 'build', 'ack', 'dist')	# the ACK (tools/getack.sh)
+MLIB = os.path.join(TOP, 'build', 'ack', 'minixlib')
 PROF = os.path.join(TOP, 'build', 'prof')
 EMU = os.path.join(TOP, 'build', 'r68kprof', 'r68k')
 OBJS = ('data.o main.o exec.o exec2.o eval.o asmb.o math.o minix.o osl.o '
@@ -45,9 +45,9 @@ OBJS = ('data.o main.o exec.o exec2.o eval.o asmb.o math.o minix.o osl.o '
 def symbols():
     """Text symbols of bbcbasic: sorted [(address, name)], and STAVAR."""
     out = os.path.join(PROF, 'bbcbasic.out')
-    lib = os.path.join(ACK, 'lib')
+    lib = MLIB
     plat = os.path.join(STAGE, 'share', 'ack', 'minix68k')
-    subprocess.run([os.path.join(ACK, 'acc'), '-c.out', '-o', out,
+    subprocess.run([os.path.join(HERE, 'acc'), '-c.out', '-o', out,
                     os.path.join(lib, 'crtso.o'), os.path.join(lib, 'emrts.o')]
                    + [os.path.join(SRC, o) for o in OBJS] +
                    [os.path.join(lib, 'libc.a'), os.path.join(plat, 'libem.a'),

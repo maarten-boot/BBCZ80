@@ -10,6 +10,7 @@
 !
 ! Also the EM run-time words that ACK's C code and libem.a expect from
 ! the start-off (EXIT, .trpim, .trppc) and the assembly helpers of bare.c.
+.68000				! 68000 only (see bbc.h)
 
 	.define	start, _bare_restart, _bare_isr, _bare_idle, _bare_getvbr
 	.define	_bare_setsr, _bare_ints, EXIT, .trpim, .trppc

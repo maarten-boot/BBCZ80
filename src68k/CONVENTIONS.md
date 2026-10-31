@@ -11,10 +11,14 @@ with the minix68k ACK on 2026-10-20.
   * no `move sr` (privileged on a 68010; the kernel can emulate it, but
     slowly);
   * no `move ccr,<ea>` (the assembler rejects it as "68010 instruction").
-* **Assembler:** ACK `as` for minix68k, run by
-  `../minix-st-2.0.4/src/rosco/ack/acc` (assemble) and `acc-minix` (link with
-  crtso and libc). It assembles for the 68000 only, so 68020 mnemonics are
-  rejected *(probed)*.
+* **Assembler:** ACK `as` for minix68k, run by `tools/acc` (assemble) and
+  `tools/acc-minix` (link with crtso and libc). The ACK is a release of
+  `maarten-boot/ack` (`tools/getack.sh`, pinned by tag and sha256, into
+  `../build/ack`, with the Minix C library compiled by it from the Minix
+  tree's sources). That assembler takes 68010 instructions unless a file
+  says `.68000`: `bbc.h` says it, and so do `data.s`, `hook.s` and
+  `bare/start.s`, which do not include it; then 68010 instructions are
+  rejected ("68010 instruction"), and 68020 mnemonics always are.
 * **Test:** `src68k/tools/runminix.py` boots Minix in r68k and runs commands.
   Use the r68k from `maarten-boot/r68k` (branch `rosco-minix-duart`, cloned
   at `../r68k`) with the illegal-instruction fix, so that a bad opcode
