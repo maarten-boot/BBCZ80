@@ -15,8 +15,9 @@ Two copies of the same program:
                     the card; choose BBCBASIC.BIN there)
 
 Both are loaded at &40000, the firmware's load address.
-Tested in MAME with firmware 2.42 and 2.50, both directly and from
-sdfat_menu (built from rosco_m68k's release/version-2.42 branch).
+Tested on a rosco_m68k Classic (68010, 10 MHz, 5 MB, its ROM's console
+at 38400), and in MAME with firmware 2.42 and 2.50, both directly and
+from sdfat_menu.  BASIC keeps the serial port as the firmware set it.
 
 Memory
 ------
