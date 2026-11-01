@@ -97,6 +97,24 @@ static void put_keys(const char *s, size_t n)
     cv.notify_one();
 }
 
+// Input from a pipe or a file: a text file's line ends (LF, CR LF) become
+// the CR of the Return key; BASIC's editor takes LF as a cursor key.
+static void put_file_keys(char *s, size_t n)
+{
+    static bool cr;			// the last byte was a CR
+    size_t m = 0;
+    for (size_t i = 0; i < n; i++) {
+        char c = s[i];
+        if (c == '\n' && cr) {
+            cr = false;
+            continue;
+        }
+        cr = c == '\r';
+        s[m++] = c == '\n' ? '\r' : c;
+    }
+    put_keys(s, m);
+}
+
 static void restore_console();
 
 static void quit(int code)
@@ -253,7 +271,7 @@ static void reader()
         char b[256];
         DWORD n;
         while (ReadFile(hin, b, sizeof b, &n, nullptr) && n)
-            put_keys(b, n);
+            put_file_keys(b, n);
     }
     input_end = true;
     cv.notify_one();
@@ -303,7 +321,10 @@ static void reader()
             for (ssize_t i = 0; i < n; i++)
                 if (b[i] == QUIT_KEY)
                     quit(0);
-        put_keys(b, (size_t) n);
+        if (console)
+            put_keys(b, (size_t) n);
+        else
+            put_file_keys(b, (size_t) n);
     }
     input_end = true;
     cv.notify_one();

@@ -51,6 +51,11 @@ Changes since 2026-10-27 (GitHub Actions run 5)
   "Invalid channel"; it writes 48, as in the Z80 version.
 * BBC BASIC starts at its > prompt, no longer in the demo menu: the demo
   programs are still built in, CHAIN "menu" starts them.
+* LOCAL on its own (no variables) does nothing, as in the Acorn versions
+  (gave "No such variable", as the Z80 version does).
+* A script piped in (bbc68k < test.txt) may have LF or CR LF line ends,
+  as a text file on Linux or Windows has; before only CR worked (LF
+  moved the cursor in BASIC's line editor).
 
 Changes since 2026-10-23b
 -------------------------

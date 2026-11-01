@@ -23,5 +23,6 @@ in: CHAIN "menu" starts their menu.
 Scripts
 -------
     ./bbc68k < test.txt > out.txt
-types test.txt in and ends when the input is used up and BASIC is waiting.
+types test.txt in (a text file, any line ends) and ends when the input is
+used up and BASIC is waiting.
 

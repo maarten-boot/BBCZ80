@@ -1,4 +1,6 @@
 REM RESTORE DATA with no LOCAL DATA: the manual says "DATA not LOCAL"
+REM A difference between the versions, not a bug (R.T. Russell: leaving
+REM a PROC restores without an error); see mboot/Z80_DIFFERENCES.md 2a
 REM (54); the Z80 version 5.4 does nothing when another LOCAL frame (here
 REM ON ERROR LOCAL, or a LOCAL variable) is on top: RESLO2's POP IX
 REM overwrites the "nothing restored" flag

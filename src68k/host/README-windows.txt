@@ -17,5 +17,6 @@ the menu of the built-in demo programs.  Windows 10 or 11, 64-bit.
 Scripts
 -------
     bbc68k.exe < test.txt > out.txt
-types test.txt in and ends when the input is used up and BASIC is waiting.
+types test.txt in (a text file, any line ends) and ends when the input is
+used up and BASIC is waiting.
 

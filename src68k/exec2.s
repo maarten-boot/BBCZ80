@@ -256,7 +256,9 @@ LOCAL:	cmp.b	#TERROR,d4
 	beq	LOCAL1
 	move.b	#12,d4
 	bra	ERROR			! "Not LOCAL"
-LOCAL1:	move.l	a4,a1			! (preserved by SAVLOC)
+LOCAL1:	bsr	TERMQ			! LOCAL on its own: nothing to
+	beq	XEQ			! do (as Acorn; Z80: No such variable)
+	move.l	a4,a1			! (preserved by SAVLOC)
 	sub.l	#1,a4
 	bsr	SAVLOC
 	move.l	a1,a4

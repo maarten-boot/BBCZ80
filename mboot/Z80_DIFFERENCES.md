@@ -23,6 +23,7 @@ hand.
 | `d09bigarr` | **Arrays can have more than 64K elements.** The Z80 version wraps a dimension at 65536, so `DIM A%(70000)` is `DIM A%(4464)`. In the README. Also `test/bas/x02bigarr`, `x06bigmem`. | `7 4464` | `7 70000` |
 | `d10inkey256` | **`INKEY(-256)` is &44 (68)**, the number of this version, as R.T. Russell suggested. In the README. | waits for a key | `68` |
 | `d11auto` | **`AUTO` with a step over 255 is "Silly".** The Z80 version keeps the low byte of the step (300 becomes 44). In the README. | `   10 ` (AUTO starts) | `Silly` |
+| `d15localnone` | **`LOCAL` with no variables does nothing**, as in the Acorn versions (R.T. Russell pointed out the difference; the user chose Acorn's behaviour, 2026-11-01). `LOCAL` outside a PROC or FN is still "Not in a FN or PROC". | `26 No such variable at line 40` | `a`, `b`, `c 5`, `c done`, `end` |
 
 ## 2. A Z80 bug, now fixed there too
 
@@ -35,22 +36,30 @@ DATA anyway. Our `RESLO7` already set the flag. His fix is merged here
 (`bin/cpm/BBCBASIC.COM` too), so the test is now an ordinary one:
 `test/bas/t18localdata` (was `test/diff/d01localdata`).
 
-**Still open in 5.4** (`d13restoredata`): `RESTORE DATA` with no `LOCAL
-DATA` should give "DATA not LOCAL" (54). The Z80 version does nothing,
-without an error, when another LOCAL frame is on top: a `LOCAL X`, or an
-`ON ERROR LOCAL`. In `RESLOC`, `RESLO2`'s `POP IX` (the variable's
-address) overwrites `IX`, the "nothing restored" flag, so `RESLO8` finds
-it non-zero. Ours gives the error in both cases.
+## 2a. RESTORE with nothing to restore: a difference, not a bug
+
+R.T. Russell (2026-10-28): leaving a PROC or FN restores the LOCAL DATA
+and the ON ERROR LOCAL handler without an error, so an explicit
+`RESTORE DATA` or `RESTORE ERROR` that does not complain is reasonable.
+This is a difference between the versions, not a bug in either.
+
+`RESTORE DATA` with no `LOCAL DATA` (`d13restoredata`): the manual's
+"DATA not LOCAL" (54) comes in the Z80 version only when no other LOCAL
+frame is on top; with a `LOCAL X` or an `ON ERROR LOCAL` on top it does
+nothing. (In `RESLOC`, `RESLO2`'s `POP IX`, the variable's address,
+overwrites `IX`, the "nothing restored" flag, so `RESLO8` finds it
+non-zero.) Ours gives the error in both cases. This port keeps the error, as the manual
+describes it (the user's choice, 2026-11-01).
 
 | Test | Z80 5.4 | 68k |
 |---|---|---|
 | `d13restoredata` | `PROCa: no error`, `PROCb: no error` | `54 DATA not LOCAL` twice |
 | `d14restoreerror` | `PROCa: no error`, `back from PROCa` | `outer: ON ERROR not LOCAL` |
 
-The same cause makes `RESTORE ERROR` silent (`d14restoreerror`): `LOCAL
-ERROR` does nothing in the Z80 version (`LOCERR`), so after `LOCAL I` and
-`LOCAL ERROR` there is no saved handler, which should be "ON ERROR not
-LOCAL" (53); the `LOCAL I` frame on top makes `RESLOC` report success.
+`RESTORE ERROR` (`d14restoreerror`) is the same: `LOCAL ERROR` does
+nothing in the Z80 version (`LOCERR`), so after `LOCAL I` and `LOCAL
+ERROR` there is no saved handler, which would be "ON ERROR not LOCAL"
+(53); the `LOCAL I` frame on top makes `RESLOC` report success.
 
 ## 3. Files and the console: CP/M against a modern file system
 

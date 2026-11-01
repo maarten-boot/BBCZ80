@@ -1,0 +1,13 @@
+REM LOCAL with no variables: Acorn versions accept it and do nothing,
+REM as does this one; the Z80 version 5.4 gives "No such variable"
+10 ON ERROR PRINT ERR;" ";REPORT$;" at line ";ERL:END
+20 PROCa:PROCb:PROCc(1):PRINT "end"
+30 END
+40 DEF PROCa:LOCAL
+50 PRINT "a":ENDPROC
+60 DEF PROCb:LOCAL :PRINT "b":ENDPROC
+70 DEF PROCc(N):LOCAL X:X=5:LOCAL:PRINT "c ";X
+80 IF N THEN LOCAL ELSE PRINT "no"
+90 PRINT "c done":ENDPROC
+RUN
+LOCAL

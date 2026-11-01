@@ -1,4 +1,6 @@
 REM RESTORE ERROR with nothing to restore: "ON ERROR not LOCAL" (53).
+REM A difference between the versions, not a bug (R.T. Russell: leaving
+REM a PROC restores without an error); see mboot/Z80_DIFFERENCES.md 2a
 REM LOCAL ERROR does nothing in the Z80 version (LOCERR), so in PROCa
 REM there is no saved handler; the Z80 version 5.4 says nothing when a
 REM LOCAL variable's frame is on top (RESLO2's POP IX overwrites the
