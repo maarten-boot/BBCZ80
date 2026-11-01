@@ -594,15 +594,18 @@ static void cflush(struct chan *c)
 	}
 }
 
-/* cload - make the buffer hold the file from offset pos on */
+/* cload - make the buffer hold the block of the file (BUFSZ bytes, at a
+ * multiple of BUFSZ: one sector on an SD card) with offset pos, and point
+ * at pos in it
+ */
 static void cload(struct chan *c, long pos)
 {
 	int n;
 
 	cflush(c);
-	c->bstart = pos;
-	c->bpos = 0;
-	lseek(c->fd, pos, SEEK_SET);
+	c->bstart = pos - pos % BUFSZ;
+	c->bpos = (int) (pos - c->bstart);
+	lseek(c->fd, c->bstart, SEEK_SET);
 	n = read(c->fd, c->buf, BUFSZ);
 	c->blen = n > 0 ? n : 0;
 }

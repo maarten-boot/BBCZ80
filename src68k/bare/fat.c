@@ -41,6 +41,19 @@ static long card[8];			/* the firmware's SDCard structure */
 static unsigned char sec[512];
 static long secno = -1;			/* the sector in sec, -1: none */
 
+/* The FAT has a sector of its own, so that walking a chain or taking a
+ * cluster does not throw the data or directory sector out of sec.  A
+ * change is written to every copy of the FAT at once, except within
+ * fat_write (fdefer): there the sector is written when another one is
+ * needed and at the end.  Data and FAT sectors are forgotten (forget) at
+ * the start of each call that looks up or changes the card, since the
+ * card can change in between (the web page writes it); fat_read keeps
+ * the FAT sector, which a reading file does not need again from the card.
+ */
+static unsigned char fsec[512];
+static long fsecno = -1;		/* the FAT sector in fsec (of copy 0) */
+static int fdirty, fdefer;
+
 static int fat32, spc, nfats;
 static long part, fatlba, fatsz, rootlba, rootsecs, datalba, rootcl;
 static long nclusters, fsinfo, hint = 2;
@@ -91,6 +104,36 @@ static int putsec(void)
 	return secno >= 0 && bare_sdwrite((char *) card, secno, (char *) sec) != 0;
 }
 
+/* write the FAT sector to every copy of the FAT */
+static void fflush(void)
+{
+	int i;
+
+	if (fdirty) {
+		for (i = 0; i < nfats; i++)
+			bare_sdwrite((char *) card, fsecno + i * fatsz, (char *) fsec);
+		fdirty = 0;
+	}
+}
+
+static int fgetsec(long n)
+{
+	if (n == fsecno)
+		return 1;
+	fflush();
+	fsecno = -1;
+	if (!bare_sdread((char *) card, n, (char *) fsec))
+		return 0;
+	fsecno = n;
+	return 1;
+}
+
+static void forget(void)
+{
+	secno = -1;
+	fsecno = -1;			/* (never dirty between calls) */
+}
+
 /*==================================================== the volume =====*/
 
 /* find the file system; 1 if there is one */
@@ -103,7 +146,7 @@ int fat_mount(void)
 	memset(card, 0, sizeof(card));
 	if (bare_sdinit((char *) card) != 0)
 		return 0;
-	secno = -1;
+	forget();
 	part = -1;
 	if (!getsec(0L) || sec[510] != 0x55 || sec[511] != 0xAA)
 		return 0;
@@ -162,11 +205,11 @@ static long fat_get(long cl)
 {
 	long off = fat32 ? cl * 4 : cl * 2;
 
-	if (!getsec(fatlba + off / 512))
+	if (!fgetsec(fatlba + off / 512))
 		return EOC32;
 	if (fat32)
-		return le32(sec + (int) (off % 512)) & 0x0FFFFFFFL;
-	return (long) (unsigned) le16(sec + (int) (off % 512));
+		return le32(fsec + (int) (off % 512)) & 0x0FFFFFFFL;
+	return (long) (unsigned) le16(fsec + (int) (off % 512));
 }
 
 static int is_eoc(long v)
@@ -177,18 +220,17 @@ static int is_eoc(long v)
 static void fat_set(long cl, long v)
 {
 	long off = fat32 ? cl * 4 : cl * 2;
-	int i;
 
-	for (i = 0; i < nfats; i++) {
-		if (!getsec(fatlba + i * fatsz + off / 512))
-			continue;
-		if (fat32)
-			put32(sec + (int) (off % 512),
-			    (le32(sec + (int) (off % 512)) & 0xF0000000L) | v);
-		else
-			put16(sec + (int) (off % 512), v);
-		putsec();
-	}
+	if (!fgetsec(fatlba + off / 512))
+		return;
+	if (fat32)
+		put32(fsec + (int) (off % 512),
+		    (le32(fsec + (int) (off % 512)) & 0xF0000000L) | v);
+	else
+		put16(fsec + (int) (off % 512), v);
+	fdirty = 1;
+	if (!fdefer)
+		fflush();
 }
 
 /* a free cluster, marked as the end of a chain; 0 if the card is full */
@@ -513,7 +555,7 @@ int fat_open(const char *path, int flags)
 	struct fh *h;
 	int k;
 
-	secno = -1;				/* (the card may have changed) */
+	forget();				/* (the card may have changed) */
 	for (k = 0; k < NFH && fh[k].used; k++)
 		;
 	if (k == NFH) {
@@ -555,7 +597,7 @@ int fat_close(int k)
 {
 	int ok = 1;
 
-	secno = -1;
+	forget();
 
 	if (fh[k].dirty)
 		ok = entry_update(&fh[k]);
@@ -621,7 +663,9 @@ static int wr(struct fh *h, const char *buf, int n)
 		m = 512 - off;
 		if (m > n - put)
 			m = n - put;
-		if (m < 512 && (h->pos - off < h->size)) {
+		/* the old sector is needed for what stays of it: before off,
+		 * or after the part written and before the end of the file */
+		if ((off > 0 || h->pos + m < h->size) && h->pos - off < h->size) {
 			if (!getsec(lba))
 				break;
 		} else {
@@ -649,17 +693,24 @@ int fat_write(int k, const char *buf, int n)
 	struct fh *h = &fh[k];
 	long pos = h->pos;
 
-	secno = -1;
-
+	forget();
+	fdefer = 1;
 	if (pos > h->size) {			/* (a gap: zeros) */
 		h->pos = h->size;
 		while (h->pos < pos)
 			if (wr(h, (char *) 0, (int) (pos - h->pos > 512 ? 512
-			    : pos - h->pos)) <= 0)
-				return -1;
+			    : pos - h->pos)) <= 0) {
+				n = -1;
+				goto out;
+			}
 	}
 	n = wr(h, buf, n);
-	return n > 0 || errno != ENOSPC ? n : -1;
+	if (n <= 0 && errno == ENOSPC)
+		n = -1;
+out:
+	fdefer = 0;
+	fflush();
+	return n;
 }
 
 int fat_exists(const char *path)
@@ -668,7 +719,7 @@ int fat_exists(const char *path)
 	long dircl;
 	struct found f;
 
-	secno = -1;
+	forget();
 	return walk(path, &dircl, n) && dfind(dircl, n, &f);
 }
 
@@ -679,7 +730,7 @@ int fat_unlink(const char *path)
 	struct found f;
 	int i;
 
-	secno = -1;
+	forget();
 	if (!walk(path, &dircl, n) || !dfind(dircl, n, &f)) {
 		errno = ENOENT;
 		return -1;
@@ -709,7 +760,7 @@ int fat_rename(const char *old, const char *new)
 	long d1, d2;
 	struct found f, g;
 
-	secno = -1;
+	forget();
 	if (!walk(old, &d1, n) || !dfind(d1, n, &f)) {
 		errno = ENOENT;
 		return -1;
@@ -733,7 +784,7 @@ int fat_mkdir(const char *path)
 	struct found f;
 	unsigned char *e;
 
-	secno = -1;
+	forget();
 	if (!walk(path, &dircl, n))
 		return -1;
 	if (dfind(dircl, n, &f)) {
@@ -783,7 +834,7 @@ int fat_rmdir(const char *path)
 	unsigned char *e;
 	int i;
 
-	secno = -1;
+	forget();
 	if (!walk(path, &dircl, n) || !dfind(dircl, n, &f) || !(f.attr & ATTR_DIR)) {
 		errno = ENOENT;
 		return -1;
@@ -817,7 +868,7 @@ int fat_chdir(const char *path)
 	long dircl;
 	struct found f;
 
-	secno = -1;
+	forget();
 	if (strcmp(path, "/") == 0) {
 		cwd = 0;
 		return 0;
@@ -841,7 +892,7 @@ void fat_list(void (*emit)(char *, long, int))
 	int i, k, j, attr;
 	long size;
 
-	secno = -1;
+	forget();
 	dstart(&d, cwd);
 	while ((e = dnext(&d, 0)) != 0 && e[0] != 0) {
 		if (e[0] == 0xE5 || e[11] == ATTR_LFN || (e[11] & ATTR_VOL)
