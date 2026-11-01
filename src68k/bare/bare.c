@@ -11,7 +11,8 @@
  *		(ESC while a program runs: the "SIGINT" handler is called
  *		from the interrupt), IXON (^S/^Q stop and start the output);
  *		no canonical mode (osl.c does not use it here);
- *   time	the DUART counter/timer, HZ interrupts a second;
+ *   time	the DUART counter/timer: the firmware's tick (100 Hz) when
+ *		it runs one, else ours at HZ; counted in HZ ticks;
  *   files	on the SD card's FAT file system (fat.c), if it has one,
  *		and in a RAM file store: up to NFILE files in 512-byte
  *		blocks in the top part of the memory (bare_init), one
@@ -84,12 +85,18 @@ char *bare_argv[3];
 				 * mode, crystal / 16 */
 #define HZ	60		/* osl.c's times() rate */
 #define TIMER	(3686400L / 16 / 2 / HZ)
+#define FWHZ	100		/* the firmware's tick */
 #define VECTOR	0x45		/* the DUART's interrupt vector */
 
 #define SDB_UPTICKS	(*(long *) 0x40CL)
 #define SDB_MEMSIZE	(*(long *) 0x414L)
 
-static volatile long ticks;
+static volatile long ticks;		/* at HZ */
+static int tickhz;		/* the timer's interrupts a second: FWHZ when
+				 * the firmware's tick runs (then ACR and the
+				 * counter, which can make the baud rate, are
+				 * left alone), else HZ (we program it) */
+static int tickfrac;
 static volatile unsigned char sink;	/* reads that are commands: the ACK
 					 * drops "(void) DU(n)" */
 long bare_vbr;			/* where the vectors are */
@@ -142,8 +149,12 @@ void bare_irq(void)
 
 	if (isr & ISR_CTR) {
 		sink = DU(DU_STOP);
-		ticks++;
 		SDB_UPTICKS++;
+		tickfrac += HZ;
+		while (tickfrac >= tickhz) {	/* ticks at HZ */
+			tickfrac -= tickhz;
+			ticks++;
+		}
 	}
 	while ((sr = DU(DU_SRA)) & SR_RXRDY) {
 		int c = DU(DU_RHRA);
@@ -956,6 +967,20 @@ long bare_init(int cold)
 	long memtop, pool, *vbr;
 	int i;
 
+	if (cold) {
+		/* does the firmware run its timer tick (its handler counts
+		 * SDB_UPTICKS)?  Then that is ours too, and the DUART's ACR
+		 * and counter stay as the firmware set them: ACR also selects
+		 * the baud rate set, and a board's ROM may use either */
+		long up = SDB_UPTICKS;
+		volatile long n;
+
+		bare_ints(1);
+		for (n = 0; n < 30000L && SDB_UPTICKS == up; n++)
+			;
+		bare_ints(0);
+		tickhz = SDB_UPTICKS != up ? FWHZ : HZ;
+	}
 	bare_ints(0);
 	/* not SDB_MAGIC: firmware 2.42 keeps its kernel API pointer there */
 	memtop = SDB_MEMSIZE >= 0x80000L && SDB_MEMSIZE <= 0x1000000L
@@ -1014,16 +1039,19 @@ long bare_init(int cold)
 	stopped = 0;
 	sigint = 0;
 
-	/* the DUART: timer at HZ, interrupts for it and the receiver */
+	/* the DUART: the timer (see tickhz), interrupts for it and the
+	 * receiver */
 	DU(DU_IMR) = 0;
 	vbr = (long *) bare_getvbr();
 	vbr[VECTOR] = (long) bare_isr;
 	vbr[2] = (long) bare_buserr;		/* BASIC's error 8 (start.s) */
 	vbr[3] = (long) bare_adrerr;
-	DU(DU_ACR) = ACR_VAL;
-	DU(DU_CTUR) = (unsigned char) (TIMER >> 8);
-	DU(DU_CTLR) = (unsigned char) (TIMER & 0xFF);
-	sink = DU(DU_START);
+	if (tickhz == HZ) {
+		DU(DU_ACR) = ACR_VAL;
+		DU(DU_CTUR) = (unsigned char) (TIMER >> 8);
+		DU(DU_CTLR) = (unsigned char) (TIMER & 0xFF);
+		sink = DU(DU_START);
+	}
 	DU(DU_IVR) = VECTOR;
 	DU(DU_IMR) = ISR_CTR | ISR_RXRDYA;
 	bare_ints(1);
